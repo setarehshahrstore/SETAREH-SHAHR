@@ -4,6 +4,7 @@ import { ShieldCheck, Lock, Mail, AlertCircle, Building2 } from 'lucide-react';
 import { useAuth, UserRole } from '../AuthContext';
 
 export const Login: React.FC = () => {
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -156,17 +157,24 @@ export const Login: React.FC = () => {
                 className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8942E] text-white py-3.5 rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-[#D4AF37]/40 hover:-translate-y-0.5"
               >
                 <ShieldCheck className="w-5 h-5" />
-                ورود امن
+                {isLogin ? 'ورود امن' : 'ثبت نام مشتری'}
               </button>
 
             </form>
             
-            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+            <div className="mt-8 pt-6 border-t border-slate-100 text-center space-y-4">
+              {isLogin ? (
+                <p className="text-sm text-slate-600">
+                  حساب کاربری ندارید؟ <button type="button" onClick={() => setIsLogin(false)} className="text-[#D4AF37] font-bold hover:underline">ثبت نام کنید</button>
+                </p>
+              ) : (
+                <p className="text-sm text-slate-600">
+                  قبلاً ثبت نام کرده‌اید؟ <button type="button" onClick={() => setIsLogin(true)} className="text-[#0B1F3A] font-bold hover:underline">وارد شوید</button>
+                </p>
+              )}
+              
               <p className="text-xs text-slate-500 font-mono" dir="ltr">
-                Demo Accounts:<br/>
-                admin / admin (Owner)<br/>
-                cashier / cashier (POS)<br/>
-                customer / customer (Account)
+                AFG ERP System v2.0 &copy; 2026
               </p>
             </div>
           </div>
