@@ -1,4 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+  --color-brand-blue: #0B1B3D;
+  --color-brand-gold: #D4AF37;
+  --color-brand-green: #2E8B57;
+}
 
 @custom-variant dark (&:where(.dark, .dark *));
 
