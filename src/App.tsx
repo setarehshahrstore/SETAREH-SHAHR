@@ -63,7 +63,7 @@ export default function App() {
               <Route 
                 path="account" 
                 element={
-                  <ProtectedRoute allowedRoles={['Customer', 'Owner', 'Manager']}>
+                  <ProtectedRoute allowedRoles={['Customer']}>
                     <Placeholder title="حساب کاربری من" />
                   </ProtectedRoute>
                 } 

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, Menu, X, MessageCircle, ChevronLeft, MapPin, Phone, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../AuthContext';
 
 export const StorefrontLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const handleNav = (id: string) => {
     setIsMobileMenuOpen(false);
@@ -55,9 +57,15 @@ export const StorefrontLayout: React.FC = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Link to="/account" className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-blue px-6 py-2.5 rounded-xl font-bold hover:bg-brand-lightgold transition-all shadow-md hover:shadow-brand-gold/30 hover:-translate-y-0.5">
-              حساب من
-            </Link>
+            {user && user.role !== 'Customer' ? (
+              <Link to="/admin/dashboard" className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-blue px-6 py-2.5 rounded-xl font-bold hover:bg-brand-lightgold transition-all shadow-md hover:shadow-brand-gold/30 hover:-translate-y-0.5">
+                پنل مدیریت
+              </Link>
+            ) : (
+              <Link to="/account" className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-blue px-6 py-2.5 rounded-xl font-bold hover:bg-brand-lightgold transition-all shadow-md hover:shadow-brand-gold/30 hover:-translate-y-0.5">
+                حساب من
+              </Link>
+            )}
             <button className="relative p-2 text-white hover:text-brand-gold transition-colors bg-brand-navy rounded-xl hidden sm:block">
               <ShoppingCart className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-green text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-brand-navy">۰</span>
@@ -94,7 +102,11 @@ export const StorefrontLayout: React.FC = () => {
               <button onClick={() => handleNav('wholesale')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">خرید عمده</button>
               <button onClick={() => handleNav('about')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">درباره ما</button>
               <button onClick={() => handleNav('contact')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">تماس با ما</button>
-              <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">حساب من / ورود</Link>
+              {user && user.role !== 'Customer' ? (
+                <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">پنل مدیریت</Link>
+              ) : (
+                <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">حساب من / ورود</Link>
+              )}
             </nav>
             
             <div className="mt-auto">
