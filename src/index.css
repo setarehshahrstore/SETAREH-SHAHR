@@ -3,9 +3,14 @@
 
 @theme {
   --font-sans: 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
-  --color-brand-blue: #0B1B3D;
+  --color-brand-blue: #0B1F3A;
+  --color-brand-navy: #123B66;
   --color-brand-gold: #D4AF37;
-  --color-brand-green: #2E8B57;
+  --color-brand-lightgold: #F5D76E;
+  --color-brand-green: #2E7D5B;
+  --color-brand-lightbg: #F8FAFC;
+  --color-brand-darktext: #1F2937;
+  --color-brand-graytext: #6B7280;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
