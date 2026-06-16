@@ -39,3 +39,6 @@ dist-ssr/
 
 # Git Portable
 git-portable/
+
+# Node Portable
+node-portable/
