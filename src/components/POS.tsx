@@ -15,7 +15,9 @@ import {
   Tag, 
   Layers,
   AlertTriangle,
-  FolderPlus
+  FolderPlus,
+  Edit2,
+  Lock
 } from 'lucide-react';
 import { Sale, SaleItem, Product } from '../types';
 
@@ -47,7 +49,19 @@ export const POS: React.FC = () => {
     quantity: number;
     mixedCartons?: number;
     mixedPieces?: number;
+    customPriceAFN?: number;
   }>>([]);
+
+  // Security Modal State
+  const [securityAction, setSecurityAction] = useState<{
+    type: 'remove' | 'editPrice';
+    productId: string;
+    unitKey: string;
+    targetPriceAFN?: number;
+  } | null>(null);
+  const [adminPin, setAdminPin] = useState('');
+  const [adminPinError, setAdminPinError] = useState(false);
+  const DEFAULT_PIN = '1234';
 
   const [customerType, setCustomerType] = useState<'Retail' | 'Wholesale'>('Retail');
   const [customerId, setCustomerId] = useState<string>('walk-in');
@@ -305,12 +319,13 @@ export const POS: React.FC = () => {
     }
 
     const basePriceUSD = customerType === 'Wholesale' ? prod.wholesalePriceUSD : prod.retailPriceUSD;
-    const basePriceAFN = customerType === 'Wholesale' ? prod.wholesalePriceAFN : prod.retailPriceAFN;
+    const basePriceAFN = pItem.customPriceAFN !== undefined ? pItem.customPriceAFN : (customerType === 'Wholesale' ? prod.wholesalePriceAFN : prod.retailPriceAFN);
+    const effectiveBasePriceUSD = pItem.customPriceAFN !== undefined ? (pItem.customPriceAFN / state.exchangeRate) : basePriceUSD;
 
-    const totalUSD = basePriceUSD * baseQty;
+    const totalUSD = effectiveBasePriceUSD * baseQty;
     const totalAFN = basePriceAFN * baseQty;
 
-    const unitPriceUSD = pItem.unitKey === 'mixed' ? basePriceUSD : basePriceUSD * selUnitOpt.multiplier;
+    const unitPriceUSD = pItem.unitKey === 'mixed' ? effectiveBasePriceUSD : effectiveBasePriceUSD * selUnitOpt.multiplier;
     const unitPriceAFN = pItem.unitKey === 'mixed' ? basePriceAFN : basePriceAFN * selUnitOpt.multiplier;
 
     return {
@@ -514,7 +529,7 @@ export const POS: React.FC = () => {
                 <th className="p-3">تعداد</th>
                 <th className="p-3 text-left">فی قیمت کالا</th>
                 <th className="p-3 text-left">مجموع فاکتور (؋)</th>
-                <th className="p-3 text-center">حذف</th>
+                <th className="p-3 text-center">ویرایش/حذف</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 flex-1">
@@ -611,9 +626,14 @@ export const POS: React.FC = () => {
                       <span className="block text-[9px] text-slate-400 font-mono">(${item.totalUSD.toFixed(2)})</span>
                     </td>
                     <td className="p-3 text-center">
-                      <button onClick={() => removePOSItem(item.productId, item.unitKey)} className="text-rose-500 hover:text-rose-700 cursor-pointer">
-                        <Trash2 className="w-4 h-4 mx-auto" />
-                      </button>
+                      <div className="flex items-center justify-center gap-3">
+                        <button onClick={() => setSecurityAction({ type: 'editPrice', productId: item.productId, unitKey: item.unitKey, targetPriceAFN: item.unitKey === 'mixed' ? item.unitPriceAFN : item.unitPriceAFN / item.selUnitOpt.multiplier })} className="text-emerald-500 hover:text-emerald-700 cursor-pointer" title="تغییر قیمت">
+                          <Edit2 className="w-4 h-4 mx-auto" />
+                        </button>
+                        <button onClick={() => setSecurityAction({ type: 'remove', productId: item.productId, unitKey: item.unitKey })} className="text-rose-500 hover:text-rose-700 cursor-pointer" title="حذف از سبد">
+                          <Trash2 className="w-4 h-4 mx-auto" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1673,6 +1693,82 @@ export const POS: React.FC = () => {
                 ✓ بله، فاکتور حذف و برگشت شود
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Security Admin PIN Modal */}
+      {securityAction && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative border border-slate-100">
+            <h3 className="text-xl font-black text-slate-800 mb-2 flex items-center gap-2">
+              <Lock className="w-6 h-6 text-rose-600" />
+              تایید امنیتی مدیریت
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">برای {securityAction.type === 'remove' ? 'حذف این کالا' : 'تغییر قیمت کالا'} نیاز به رمز عبور مدیر دارید.</p>
+            
+            <input 
+              type="password" 
+              value={adminPin}
+              onChange={(e) => {
+                setAdminPin(e.target.value);
+                setAdminPinError(false);
+              }}
+              placeholder="رمز عبور مدیر..."
+              className={`w-full text-center text-xl tracking-[0.3em] p-3 border rounded-xl mb-2 focus:outline-hidden transition-all ${adminPinError ? 'border-rose-500 bg-rose-50' : 'border-slate-300 focus:border-emerald-500'}`}
+              autoFocus
+            />
+            {adminPinError && <p className="text-xs text-rose-500 mb-4 text-center font-bold">رمز عبور اشتباه است!</p>}
+
+            {securityAction.type === 'editPrice' && (
+               <div className="mt-4 mb-4">
+                 <label className="text-xs text-slate-600 font-bold block mb-2">قیمت جدید فی دانه (افغانی):</label>
+                 <input 
+                   type="number"
+                   min="0"
+                   value={securityAction.targetPriceAFN || ''}
+                   onChange={(e) => setSecurityAction({...securityAction, targetPriceAFN: parseFloat(e.target.value) || 0})}
+                   className="w-full p-3 border border-slate-300 rounded-xl text-center font-bold text-lg focus:outline-hidden focus:border-emerald-500"
+                 />
+               </div>
+            )}
+            
+            <div className="flex gap-3 mt-6 text-sm">
+              <button 
+                onClick={() => {
+                  setSecurityAction(null);
+                  setAdminPin('');
+                  setAdminPinError(false);
+                }}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition-colors cursor-pointer"
+              >
+                انصراف
+              </button>
+              <button 
+                onClick={() => {
+                  if (adminPin === DEFAULT_PIN) {
+                    if (securityAction.type === 'remove') {
+                      setPosItems(prev => prev.filter(item => !(item.productId === securityAction.productId && item.unitKey === securityAction.unitKey)));
+                    } else if (securityAction.type === 'editPrice') {
+                      setPosItems(prev => prev.map(item => 
+                        (item.productId === securityAction.productId && item.unitKey === securityAction.unitKey)
+                          ? { ...item, customPriceAFN: securityAction.targetPriceAFN }
+                          : item
+                      ));
+                    }
+                    setSecurityAction(null);
+                    setAdminPin('');
+                    setAdminPinError(false);
+                  } else {
+                    setAdminPinError(true);
+                  }
+                }}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-black transition-colors cursor-pointer"
+              >
+                تایید عملیات
+              </button>
+            </div>
+            <p className="text-[10px] text-center text-slate-400 mt-4 font-mono">Default PIN: 1234</p>
           </div>
         </div>
       )}
