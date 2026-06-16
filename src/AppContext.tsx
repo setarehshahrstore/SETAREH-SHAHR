@@ -42,9 +42,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (!parsed.inquiries) {
-          parsed.inquiries = [];
-        }
+        if (!parsed.inquiries) parsed.inquiries = [];
+        if (!parsed.sales) parsed.sales = [];
+        if (!parsed.products) parsed.products = [];
+        if (!parsed.purchases) parsed.purchases = [];
+        if (!parsed.payments) parsed.payments = [];
+        if (!parsed.customers) parsed.customers = [];
+        if (!parsed.suppliers) parsed.suppliers = [];
+        if (!parsed.exchangeRate) parsed.exchangeRate = 72.5;
         return parsed;
       } catch (e) {
         console.error("Failed to parse saved state", e);

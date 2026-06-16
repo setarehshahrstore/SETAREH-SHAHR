@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component, ErrorInfo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './AppContext';
 import { AuthProvider } from './AuthContext';
@@ -22,9 +22,37 @@ const Placeholder = ({ title }: { title: string }) => (
   </div>
 );
 
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Global Error Caught:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-10 bg-red-50 text-red-900 min-h-screen text-left" dir="ltr">
+          <h1 className="text-3xl font-bold mb-4">React App Crashed</h1>
+          <p className="font-bold mb-2">{this.state.error?.toString()}</p>
+          <pre className="bg-white p-4 overflow-auto rounded text-sm text-gray-800">
+            {this.state.error?.stack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
       <AppProvider>
         <BrowserRouter>
           <Routes>
@@ -152,5 +180,6 @@ export default function App() {
         </BrowserRouter>
       </AppProvider>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
