@@ -65,7 +65,7 @@ export interface Customer {
   city: string;
   address?: string;
   email?: string;
-  savedCart?: SaleItem[];
+  savedCart?: CartItem[];
   debtUSD: number;
   debtAFN: number;
   creditLimitUSD: number;
