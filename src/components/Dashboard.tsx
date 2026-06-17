@@ -169,10 +169,10 @@ export const Dashboard: React.FC = () => {
       {/* Quick Action Buttons */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { to: '/admin/pos', icon: ShoppingCart, label: 'فروش جدید', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600' },
+          { to: '/admin/sales', icon: ShoppingCart, label: 'فروش جدید', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600' },
           { to: '/admin/products', icon: PackagePlus, label: 'افزودن محصول', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600' },
           { to: '/admin/purchases', icon: FilePlus, label: 'ثبت خرید', color: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600' },
-          { to: '/admin/partners', icon: UserPlus, label: 'افزودن مشتری', color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
+          { to: '/admin/customers', icon: UserPlus, label: 'افزودن مشتری', color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
           { to: '/admin/finances', icon: CreditCard, label: 'ثبت پرداخت', color: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white hover:border-rose-600' },
           { to: '/admin/reports', icon: Printer, label: 'چاپ گزارش', color: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-700' }
         ].map((btn, idx) => (
@@ -259,9 +259,9 @@ export const Dashboard: React.FC = () => {
           </div>
           <h3 className="text-lg font-bold text-slate-800 mb-2">هیچ معلوماتی در این تاریخ پیدا نشد</h3>
           <p className="text-sm text-slate-500 mb-6 max-w-sm">در این بازه زمانی هیچگونه اطلاعات فروش یا خریدی ثبت نشده است.</p>
-          <button onClick={() => setDateRange({ from: todayDate, to: todayDate })} className="bg-slate-100 text-slate-700 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition-colors">
-            پاک کردن فلتر
-          </button>
+          <Link to="/sales" className="bg-[#0B1F3A] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#123B66] transition-colors">
+            ثبت فروش جدید
+          </Link>
         </div>
       )}
 
@@ -365,7 +365,7 @@ export const Dashboard: React.FC = () => {
         <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-black text-slate-800 flex items-center gap-2"><Users className="w-4 h-4 text-slate-400" /> مشتریان قرضه‌دار</h3>
-            <Link to="/admin/partners" className="text-xs font-bold text-indigo-600 hover:text-indigo-800">مدیریت حساب‌ها</Link>
+            <Link to="/admin/customers" className="text-xs font-bold text-indigo-600 hover:text-indigo-800">مدیریت حساب‌ها</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-right">

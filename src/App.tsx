@@ -8,6 +8,7 @@ import { StorefrontLayout } from './layouts/StorefrontLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 
 import { Storefront } from './components/Storefront'; // Landing Page
+import { OrderTracking } from './components/OrderTracking';
 import { Dashboard } from './components/Dashboard';
 import { Products } from './components/Products';
 import { Categories } from './components/Categories';
@@ -23,6 +24,7 @@ import { POS } from './components/POS';
 import { Partners } from './components/Partners';
 import { Settings as SettingsView } from './components/Settings';
 import { Login } from './components/Login';
+import { Finances } from './components/Finances';
 
 // Placeholder components for new pages
 const Placeholder = ({ title }: { title: string }) => (
@@ -68,6 +70,7 @@ export default function App() {
             {/* Public Storefront Routes */}
             <Route path="/" element={<StorefrontLayout />}>
               <Route index element={<Storefront />} />
+              <Route path="tracking" element={<OrderTracking />} />
               <Route path="login" element={<Login />} />
               <Route 
                 path="account" 
@@ -160,6 +163,12 @@ export default function App() {
               <Route path="expenses" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
                   <Expenses />
+                </ProtectedRoute>
+              } />
+
+              <Route path="finances" element={
+                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
+                  <Finances />
                 </ProtectedRoute>
               } />
 

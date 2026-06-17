@@ -56,6 +56,12 @@ export interface Customer {
   creditLimitUSD: number;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface Supplier {
   id: string;
   name: string;
@@ -78,6 +84,13 @@ export interface SaleItem {
   unitPriceAFN: number;
   totalUSD: number;
   totalAFN: number;
+  
+  // E-commerce alternative suggestion
+  proposedAlternative?: {
+    productId: string;
+    productName: string;
+  };
+  customerApprovalStatus?: 'Pending' | 'Approved' | 'Rejected';
 }
 
 export interface PurchaseItem {
@@ -112,7 +125,7 @@ export interface Sale {
   changeAFN?: number; // Added for cash change tracking
   paymentMethod: PaymentMethod;
   exchangeRate: number; // USD to AFN rate during sale
-  status: 'Completed' | 'Pending Delivery' | 'Delivered' | 'Cancelled';
+  status: 'Completed' | 'Pending Delivery' | 'Requires Customer Approval' | 'Delivered' | 'Cancelled';
   deliveryAddress?: string;
   deliveryCity?: string;
   deliveryStatus?: DeliveryStatus;
@@ -160,13 +173,24 @@ export interface CustomerInquiry {
   status: 'Pending' | 'Answered';
 }
 
+export interface Expense {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amountUSD: number;
+  amountAFN: number;
+}
+
 export interface AppState {
+  categories: Category[];
   products: Product[];
   customers: Customer[];
   suppliers: Supplier[];
   sales: Sale[];
   purchases: Purchase[];
   payments: DebtPayment[];
+  expenses: Expense[];
   cashRegister: CashRegister;
   exchangeRate: number; // 1 USD = X AFN (defaults to 71.5)
   inquiries?: CustomerInquiry[];

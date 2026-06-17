@@ -1,91 +1,132 @@
 import React, { useState } from 'react';
 import { useAppState } from '../AppContext';
+import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency } from '../utils';
-import { Wallet, Search, ArrowUpRight, ArrowDownRight, CreditCard } from 'lucide-react';
+import { Users, Building2, CreditCard } from 'lucide-react';
 
 export const Debts: React.FC = () => {
   const { state } = useAppState();
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  const todayDate = new Date().toISOString().split('T')[0];
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    to: todayDate
+  });
 
-  const customers = state.customers.filter(c => c.debtUSD > 0 || c.debtAFN > 0);
-  const suppliers = state.suppliers.filter(s => s.debtUSD > 0 || s.debtAFN > 0);
+  const [activeTab, setActiveTab] = useState<'Customers' | 'Suppliers'>('Customers');
 
-  const allDebts = [
-    ...customers.map(c => ({ id: c.id, name: c.name, type: 'Customer', debtUSD: c.debtUSD, debtAFN: c.debtAFN })),
-    ...suppliers.map(s => ({ id: s.id, name: s.name, type: 'Supplier', debtUSD: s.debtUSD, debtAFN: s.debtAFN }))
-  ];
+  // Debts are mostly current state, but we can show payments in the date range
+  // related to debts. For now, we will show current debts but also list recent payments.
+  
+  const customersWithDebt = state.customers.filter(c => c.debtAFN > 0 || c.debtUSD > 0);
+  const suppliersWithDebt = state.suppliers.filter(s => s.debtAFN > 0 || s.debtUSD > 0);
 
-  const filtered = allDebts.filter(d => d.name.includes(searchQuery));
+  const filteredPayments = state.payments.filter(p => {
+    const pDate = p.date.split('T')[0];
+    return pDate >= dateRange.from && pDate <= dateRange.to && p.partnerType === (activeTab === 'Customers' ? 'Customer' : 'Supplier');
+  });
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6 font-sans" dir="rtl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">قرض‌ها و طلبات</h1>
-          <p className="text-xs text-slate-500 mt-1">مدیریت حساب‌های دریافتنی (مشتریان) و پرداختنی (شرکت‌ها)</p>
+          <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">مدیریت قرضه‌ها</h1>
+          <p className="text-xs text-slate-500 mt-1">حسابات دریافتنی (مشتریان) و پرداختنی (تامین‌کنندگان)</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#D4AF37] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#B8942E] transition-all shadow-md">
-          <CreditCard className="w-5 h-5" />
-          ثبت پرداختی جدید
+      </div>
+
+      <div className="flex gap-4 border-b border-slate-200">
+        <button 
+          onClick={() => setActiveTab('Customers')}
+          className={`pb-3 px-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'Customers' ? 'border-[#0B1F3A] text-[#0B1F3A]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <Users className="w-4 h-4" /> قرض مشتریان
+        </button>
+        <button 
+          onClick={() => setActiveTab('Suppliers')}
+          className={`pb-3 px-4 font-bold text-sm border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'Suppliers' ? 'border-[#0B1F3A] text-[#0B1F3A]' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+        >
+          <Building2 className="w-4 h-4" /> طلب فروشندگان
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-        <div className="relative">
-          <Search className="absolute right-3 top-2.5 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="جستجوی نام شخص یا شرکت..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]"
-          />
-        </div>
-      </div>
+      <DateFilter 
+        dateRange={dateRange} 
+        onDateChange={setDateRange} 
+        onSearch={() => {}} 
+        onClear={() => setDateRange({ from: todayDate, to: todayDate })}
+      />
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-[#0B1F3A] text-white text-xs uppercase">
-              <tr>
-                <th className="px-4 py-4 rounded-tr-2xl">نام طرف حساب</th>
-                <th className="px-4 py-4">نوع حساب</th>
-                <th className="px-4 py-4">مبلغ (دالر)</th>
-                <th className="px-4 py-4">مبلغ (افغانی)</th>
-                <th className="px-4 py-4 text-center rounded-tl-2xl">عملیات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.length === 0 ? (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="font-bold text-slate-800">وضعیت فعلی قرضه‌ها</h3>
+          </div>
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-[#0B1F3A] text-white text-xs">
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500 font-medium">هیچ حساب قرضی یافت نشد.</td>
+                  <th className="px-4 py-3 font-bold">نام</th>
+                  <th className="px-4 py-3 font-bold">مبلغ (افغانی)</th>
+                  <th className="px-4 py-3 font-bold">مبلغ (دالر)</th>
+                  <th className="px-4 py-3 font-bold">عملیات</th>
                 </tr>
-              ) : (
-                filtered.map((d, i) => (
-                  <tr key={i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-bold text-[#0B1F3A]">{d.name}</td>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {(activeTab === 'Customers' ? customersWithDebt : suppliersWithDebt).map(person => (
+                  <tr key={person.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-bold text-slate-800">{person.name}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-rose-600">{formatCurrency(person.debtAFN, 'AFN')}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-rose-600">${person.debtUSD.toFixed(2)}</td>
                     <td className="px-4 py-3">
-                      {d.type === 'Customer' ? (
-                        <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1 w-fit"><ArrowDownRight className="w-3 h-3"/> مشتری (طلب ما)</span>
-                      ) : (
-                        <span className="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold flex items-center gap-1 w-fit"><ArrowUpRight className="w-3 h-3"/> شرکت (بدهی ما)</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 font-bold font-mono">{formatCurrency(d.debtUSD, 'USD')}</td>
-                    <td className="px-4 py-3 font-bold font-mono">{formatCurrency(d.debtAFN, 'AFN')}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center">
-                        <button className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-bold text-xs flex items-center gap-1">
-                          <Wallet className="w-4 h-4" /> تصفیه حساب
-                        </button>
-                      </div>
+                      <button className="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-indigo-100">
+                        <CreditCard className="w-3 h-3" /> ثبت پرداخت
+                      </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+                {(activeTab === 'Customers' ? customersWithDebt : suppliersWithDebt).length === 0 && (
+                  <tr><td colSpan={4} className="text-center py-8 text-slate-400 font-bold">هیچ قرضه فعالی وجود ندارد</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate-100 bg-emerald-50 text-emerald-800">
+            <h3 className="font-bold">تاریخچه پرداخت‌ها (در بازه انتخاب شده)</h3>
+          </div>
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-emerald-600 text-white text-xs">
+                <tr>
+                  <th className="px-4 py-3 font-bold">تاریخ</th>
+                  <th className="px-4 py-3 font-bold">نام</th>
+                  <th className="px-4 py-3 font-bold">مبلغ پرداخت</th>
+                  <th className="px-4 py-3 font-bold">توضیحات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredPayments.map(payment => (
+                  <tr key={payment.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{new Date(payment.date).toLocaleDateString('fa-IR')}</td>
+                    <td className="px-4 py-3 font-bold text-slate-800">{payment.partnerName}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-emerald-600">
+                      {payment.amountAFN > 0 ? formatCurrency(payment.amountAFN, 'AFN') : `$${payment.amountUSD.toFixed(2)}`}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500">{payment.notes || '-'}</td>
+                  </tr>
+                ))}
+                {filteredPayments.length === 0 && (
+                  <tr><td colSpan={4} className="text-center py-8 text-slate-400 font-bold">هیچ پرداختی در این بازه ثبت نشده است</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   );
