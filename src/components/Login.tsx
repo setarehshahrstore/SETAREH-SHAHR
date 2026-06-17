@@ -25,6 +25,12 @@ export const Login: React.FC = () => {
     // Load registered users from local storage or use defaults
     let usersList = [
       {
+        username: 'admin@stc.com',
+        passwordHash: 'Admin$',
+        fullName: 'مالک فروشگاه',
+        role: 'Owner'
+      },
+      {
         username: 'admin',
         passwordHash: 'admin',
         fullName: 'مالک فروشگاه',
