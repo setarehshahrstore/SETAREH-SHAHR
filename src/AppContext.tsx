@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage, CartItem } from './types';
 import { INITIAL_APP_STATE } from './mockData';
+import { syncToFirebase, startFirebaseListeners } from './firebaseSync';
 
 interface AppContextType {
   state: AppState;
@@ -66,7 +67,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const LOCAL_STORAGE_KEY = 'AFG_ERP_STATE';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AppState>(() => {
+  const [reactState, setReactState] = useState<AppState>(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
       try {
@@ -91,12 +92,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_APP_STATE;
   });
 
+  const setState = (updater: AppState | ((prev: AppState) => AppState)) => {
+    setReactState(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try {
+        if (!(next as any)._fromFirebase) {
+          syncToFirebase(prev, next);
+        }
+      } catch(e) { console.error("Firebase sync error", e); }
+      
+      const { _fromFirebase, ...cleanNext } = next as any;
+      return cleanNext as AppState;
+    });
+  };
+
+  const state = reactState;
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(reactState));
+  }, [reactState]);
+
+  useEffect(() => {
+    return startFirebaseListeners(setState as any);
+  }, []);
 
   const addCategory = (cat: Category) => setState(prev => ({ ...prev, categories: [...(prev.categories || []), cat] }));
   const editCategory = (cat: Category) => setState(prev => ({ ...prev, categories: (prev.categories || []).map(c => c.id === cat.id ? cat : c) }));
