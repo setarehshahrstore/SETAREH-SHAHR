@@ -7,7 +7,7 @@ import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const ProductCard = ({ product, addToCart, className = '' }: { product: Product, addToCart: (p: Product, t: 'Retail' | 'Wholesale') => void, className?: string }) => (
+const ProductCard = ({ product, addToCart, className = '' }: { product: Product & { originalRetailPriceAFN?: number, originalWholesalePriceAFN?: number }, addToCart: (p: Product, t: 'Retail' | 'Wholesale') => void, className?: string }) => (
   <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group flex flex-col ${className}`}>
     <div className="aspect-square bg-slate-50 relative overflow-hidden">
       {product.image ? (
@@ -23,6 +23,11 @@ const ProductCard = ({ product, addToCart, className = '' }: { product: Product,
         </div>
       )}
       <div className="absolute top-2 right-2 flex flex-col gap-1 z-20">
+        {product.discountPercentage && product.discountExpiry && new Date(product.discountExpiry) > new Date() && (
+          <span className="bg-purple-600 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
+            <Tag className="w-3 h-3" /> {product.discountPercentage}٪ تخفیف
+          </span>
+        )}
         {product.isDiscounted && (
           <span className="bg-rose-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
             <Tag className="w-3 h-3" /> لیلام
@@ -43,7 +48,12 @@ const ProductCard = ({ product, addToCart, className = '' }: { product: Product,
         <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
           <span className="text-[10px] font-bold text-slate-500">قیمت پرچون</span>
           <div className="flex items-center gap-2">
-            <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
+            <div className="flex flex-col items-end">
+              {product.originalRetailPriceAFN && product.originalRetailPriceAFN !== product.retailPriceAFN && (
+                <span className="text-[10px] text-slate-400 line-through font-mono">{formatCurrency(product.originalRetailPriceAFN, 'AFN')}</span>
+              )}
+              <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
+            </div>
             <button 
               disabled={product.stockInBaseUnits <= 0}
               onClick={() => addToCart(product, 'Retail')}
@@ -63,7 +73,12 @@ const ProductCard = ({ product, addToCart, className = '' }: { product: Product,
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-black text-amber-600 font-mono">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
+              <div className="flex flex-col items-end">
+                {product.originalWholesalePriceAFN && product.originalWholesalePriceAFN !== product.wholesalePriceAFN && (
+                  <span className="text-[10px] text-amber-700/50 line-through font-mono">{formatCurrency(product.originalWholesalePriceAFN, 'AFN')}</span>
+                )}
+                <span className="font-black text-amber-600 font-mono">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
+              </div>
               <button 
                 disabled={product.stockInBaseUnits <= 0}
                 onClick={() => addToCart(product, 'Wholesale')}
@@ -97,20 +112,49 @@ export const Storefront: React.FC = () => {
   });
   const [successfulOrder, setSuccessfulOrder] = useState<any | null>(null);
 
-  const categories = ['All', 'تخفیف‌های ویژه', 'پرفروش‌ترین‌ها', ...Array.from(new Set(state.products.map(p => p.category)))];
+  const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
+
+  useEffect(() => {
+    const hasDiscounted = state.products.some(p => p.isDiscounted || (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date()));
+    const seenAnnouncement = sessionStorage.getItem('AFG_ANNOUNCEMENT_SEEN');
+    if (hasDiscounted && !seenAnnouncement) {
+      setIsAnnouncementOpen(true);
+      sessionStorage.setItem('AFG_ANNOUNCEMENT_SEEN', 'true');
+    }
+  }, [state.products]);
+
+  const activeProducts = useMemo(() => {
+    return state.products.map(p => {
+      if (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date()) {
+        const factor = 1 - p.discountPercentage / 100;
+        return {
+          ...p,
+          originalRetailPriceAFN: p.retailPriceAFN,
+          originalWholesalePriceAFN: p.wholesalePriceAFN,
+          retailPriceAFN: p.retailPriceAFN * factor,
+          retailPriceUSD: p.retailPriceUSD * factor,
+          wholesalePriceAFN: p.wholesalePriceAFN * factor,
+          wholesalePriceUSD: p.wholesalePriceUSD * factor,
+        };
+      }
+      return p;
+    });
+  }, [state.products]);
+
+  const categories = ['All', 'تخفیف‌های ویژه', 'پرفروش‌ترین‌ها', ...Array.from(new Set(activeProducts.map(p => p.category)))];
 
   const filteredProducts = useMemo(() => {
-    return state.products.filter(p => {
+    return activeProducts.filter(p => {
       let matchesCat = false;
       if (activeCategory === 'All') matchesCat = true;
-      else if (activeCategory === 'تخفیف‌های ویژه') matchesCat = !!p.isDiscounted;
+      else if (activeCategory === 'تخفیف‌های ویژه') matchesCat = !!p.isDiscounted || !!(p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date());
       else if (activeCategory === 'پرفروش‌ترین‌ها') matchesCat = !!p.isBestSeller;
       else matchesCat = p.category === activeCategory;
 
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCat && matchesSearch;
     });
-  }, [state.products, activeCategory, searchQuery]);
+  }, [activeProducts, activeCategory, searchQuery]);
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -812,6 +856,49 @@ export const Storefront: React.FC = () => {
               </motion.div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Announcement Popup */}
+      <AnimatePresence>
+        {isAnnouncementOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 print:hidden"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative text-center p-8"
+              dir="rtl"
+            >
+              <button 
+                onClick={() => setIsAnnouncementOpen(false)} 
+                className="absolute top-4 left-4 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Tag className="w-10 h-10" />
+              </div>
+              
+              <h2 className="text-2xl font-black text-slate-800 mb-3">فرصت‌های طلایی تخفیف!</h2>
+              <p className="text-slate-600 mb-8 leading-relaxed">
+                مشتری گرامی، محصولات لیلام شده و دارای تخفیف‌های ویژه هم‌اکنون در فروشگاه ستاره شهر موجود است. همین حالا خرید کنید!
+              </p>
+              
+              <button 
+                onClick={() => {
+                  setIsAnnouncementOpen(false);
+                  setActiveCategory('تخفیف‌های ویژه');
+                  scrollTo('products');
+                }}
+                className="w-full bg-rose-600 text-white py-4 rounded-xl font-black text-lg hover:bg-rose-700 shadow-lg shadow-rose-600/30 transition-all"
+              >
+                مشاهده اجناس تخفیف‌دار
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

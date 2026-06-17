@@ -18,7 +18,8 @@ import {
   Barcode,
   Printer,
   Package,
-  X
+  X,
+  Tag
 } from 'lucide-react';
 import { Product, Purchase, PurchaseItem } from '../types';
 
@@ -35,7 +36,7 @@ const IMAGE_PRESETS = [
 ];
 
 export const Inventory: React.FC = () => {
-  const { state, addProduct, editProduct, deleteProduct, deleteProducts, addPurchase } = useAppState();
+  const { state, addProduct, editProduct, bulkUpdateProducts, deleteProduct, deleteProducts, addPurchase } = useAppState();
   
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -44,6 +45,11 @@ export const Inventory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRestocking, setIsRestocking] = useState(false);
+
+  // Bulk Discount States
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [discountPercentage, setDiscountPercentage] = useState('');
+  const [discountExpiryDays, setDiscountExpiryDays] = useState('7');
 
   const location = useLocation();
 
@@ -215,6 +221,7 @@ export const Inventory: React.FC = () => {
     name: '', sku: '', category: 'خواربار و مواد غذایی', baseUnit: 'دانه',
     image: IMAGE_PRESETS[0].url, location: '',
     wholesalePriceUSD: '1.00', retailPriceUSD: '1.50', costPriceUSD: '0.80', 
+    wholesalePriceAFN: '68.00', retailPriceAFN: '102.00', costPriceAFN: '54.40',
     costPriceCarton: '800.00', stockPieces: '0', stockCartons: '0', minStock: '100',
     hasPack: true, packName: 'بسته', packQty: '10',
     hasBox: true, boxName: 'قوطی', boxQty: '100',
@@ -222,23 +229,38 @@ export const Inventory: React.FC = () => {
     minWholesaleQty: '', isDiscounted: false, isBestSeller: false
   });
 
-  const handlePieceCostChange = (val: string) => {
-    const pieceCost = parseFloat(val) || 0;
-    const multiplier = parseInt(formData.cartonQty) || 1;
+  const handleUSDChange = (field: 'costPrice' | 'wholesalePrice' | 'retailPrice', val: string) => {
+    const usdVal = parseFloat(val) || 0;
     setFormData(prev => ({
       ...prev,
-      costPriceUSD: val,
-      costPriceCarton: (pieceCost * multiplier).toFixed(2)
+      [`${field}USD`]: val,
+      [`${field}AFN`]: (usdVal * state.exchangeRate).toFixed(2),
+      ...(field === 'costPrice' ? { costPriceCarton: (usdVal * (parseInt(prev.cartonQty) || 1)).toFixed(2) } : {})
     }));
   };
+
+  const handleAFNChange = (field: 'costPrice' | 'wholesalePrice' | 'retailPrice', val: string) => {
+    const afnVal = parseFloat(val) || 0;
+    const usdVal = state.exchangeRate > 0 ? afnVal / state.exchangeRate : 0;
+    setFormData(prev => ({
+      ...prev,
+      [`${field}AFN`]: val,
+      [`${field}USD`]: usdVal.toFixed(2),
+      ...(field === 'costPrice' ? { costPriceCarton: (usdVal * (parseInt(prev.cartonQty) || 1)).toFixed(2) } : {})
+    }));
+  };
+
+  const handlePieceCostChange = (val: string) => handleUSDChange('costPrice', val);
 
   const handleCartonCostChange = (val: string) => {
     const cartonCost = parseFloat(val) || 0;
     const multiplier = parseInt(formData.cartonQty) || 1;
+    const pieceUsd = cartonCost / multiplier;
     setFormData(prev => ({
       ...prev,
       costPriceCarton: val,
-      costPriceUSD: (cartonCost / multiplier).toFixed(2)
+      costPriceUSD: pieceUsd.toFixed(2),
+      costPriceAFN: (pieceUsd * state.exchangeRate).toFixed(2)
     }));
   };
 
@@ -303,11 +325,11 @@ export const Inventory: React.FC = () => {
       image: formData.image,
       baseUnit: formData.baseUnit,
       wholesalePriceUSD: parseFloat(formData.wholesalePriceUSD) || 0,
-      wholesalePriceAFN: (parseFloat(formData.wholesalePriceUSD) || 0) * state.exchangeRate,
+      wholesalePriceAFN: parseFloat(formData.wholesalePriceAFN) || 0,
       retailPriceUSD: parseFloat(formData.retailPriceUSD) || 0,
-      retailPriceAFN: (parseFloat(formData.retailPriceUSD) || 0) * state.exchangeRate,
+      retailPriceAFN: parseFloat(formData.retailPriceAFN) || 0,
       costPriceUSD: parseFloat(formData.costPriceUSD) || 0,
-      costPriceAFN: (parseFloat(formData.costPriceUSD) || 0) * state.exchangeRate,
+      costPriceAFN: parseFloat(formData.costPriceAFN) || 0,
       stockInBaseUnits: editingProduct ? editingProduct.stockInBaseUnits : (parseInt(formData.stockPieces) || 0),
       minStockInBaseUnits: parseInt(formData.minStock) || 0,
       location: formData.location,
@@ -336,8 +358,11 @@ export const Inventory: React.FC = () => {
       name: p.name, sku: p.sku, category: p.category, baseUnit: p.baseUnit,
       image: p.image, location: p.location || '',
       wholesalePriceUSD: p.wholesalePriceUSD.toString(),
+      wholesalePriceAFN: p.wholesalePriceAFN.toString(),
       retailPriceUSD: p.retailPriceUSD.toString(),
+      retailPriceAFN: p.retailPriceAFN.toString(),
       costPriceUSD: p.costPriceUSD.toString(),
+      costPriceAFN: p.costPriceAFN.toString(),
       costPriceCarton: (p.costPriceUSD * (p.units.carton?.multiplier || 1)).toFixed(2),
       stockPieces: p.stockInBaseUnits.toString(),
       stockCartons: (p.stockInBaseUnits / (p.units.carton?.multiplier || 1)).toFixed(1),
@@ -425,6 +450,30 @@ export const Inventory: React.FC = () => {
     }
   };
 
+  const handleApplyBulkDiscount = (e: React.FormEvent) => {
+    e.preventDefault();
+    const percent = parseFloat(discountPercentage);
+    if (!percent || percent <= 0 || percent > 100) {
+      alert('درصد تخفیف باید بین ۱ تا ۱۰۰ باشد.');
+      return;
+    }
+    const days = parseInt(discountExpiryDays) || 7;
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + days);
+
+    const updates = selectedProductIds.map(id => ({
+      id,
+      discountPercentage: percent,
+      discountExpiry: expiryDate.toISOString()
+    }));
+    bulkUpdateProducts(updates);
+    setIsDiscountModalOpen(false);
+    setSelectedProductIds([]);
+    setDiscountPercentage('');
+    setDiscountExpiryDays('7');
+    alert(`تخفیف ${percent}٪ با موفقیت روی ${selectedProductIds.length} محصول اعمال شد.`);
+  };
+
   // Advanced multi-criteria search
   const filteredProducts = state.products.filter(p => {
     const matchesCategory = filterCategory === 'All' || p.category === filterCategory;
@@ -460,16 +509,25 @@ export const Inventory: React.FC = () => {
 
           <div className="flex gap-2 w-full sm:w-auto">
             {selectedProductIds.length > 0 && (
-              <button
-                onClick={() => {
-                  setIsBulkDeleting(true);
-                  setSecurityModalOpen(true);
-                }}
-                className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-                حذف انتخاب شده‌ها ({selectedProductIds.length})
-              </button>
+              <>
+                <button
+                  onClick={() => setIsDiscountModalOpen(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Tag className="w-4 h-4" />
+                  اعمال تخفیف گروهی ({selectedProductIds.length})
+                </button>
+                <button
+                  onClick={() => {
+                    setIsBulkDeleting(true);
+                    setSecurityModalOpen(true);
+                  }}
+                  className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  حذف انتخاب شده‌ها ({selectedProductIds.length})
+                </button>
+              </>
             )}
             <button
               onClick={() => setIsRestocking(!isRestocking)}
@@ -686,29 +744,55 @@ export const Inventory: React.FC = () => {
               {/* Pricing */}
               <div className="space-y-4">
                 <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2 flex justify-between items-center">
-                  <span>قیمت‌گذاری ارزی (USD)</span>
-                  <span className="text-[10px] text-slate-400 font-normal">تبدیل خودکار قیمت کارتن و دانه فعال است</span>
+                  <span>قیمت‌گذاری</span>
+                  <span className="text-[10px] text-slate-400 font-normal">تغییر در قیمت دالر یا افغانی یکدیگر را بروز می‌کند</span>
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
-                    <label className="block text-xs font-bold text-emerald-800 mb-1">قیمت خرید (فی دانه)</label>
-                    <input type="number" step="0.01" required value={formData.costPriceUSD} onChange={e => handlePieceCostChange(e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Cost Price */}
+                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-3">
+                    <label className="block text-sm font-bold text-emerald-800">قیمت خرید (تمام شد)</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12 text-slate-500">دالر:</span>
+                      <input type="number" step="0.01" required value={formData.costPriceUSD} onChange={e => handleUSDChange('costPrice', e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12 text-slate-500">افغانی:</span>
+                      <input type="number" step="0.01" required value={formData.costPriceAFN} onChange={e => handleAFNChange('costPrice', e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-emerald-100/50">
+                      <span className="text-[10px] font-bold text-slate-500">کارتن (دالر):</span>
+                      <input type="number" step="0.01" required value={formData.costPriceCarton} onChange={e => handleCartonCostChange(e.target.value)} className="w-full p-1 border border-emerald-200 rounded text-xs bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                    </div>
                   </div>
-                  <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
-                    <label className="block text-xs font-bold text-emerald-800 mb-1">قیمت خرید (کارتن)</label>
-                    <input type="number" step="0.01" required value={formData.costPriceCarton} onChange={e => handleCartonCostChange(e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+
+                  {/* Wholesale Price */}
+                  <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100 space-y-3">
+                    <label className="block text-sm font-bold text-amber-800">قیمت فروش عمده</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12 text-slate-500">دالر:</span>
+                      <input type="number" step="0.01" required value={formData.wholesalePriceUSD} onChange={e => handleUSDChange('wholesalePrice', e.target.value)} className="w-full p-2 border border-amber-200 rounded-lg text-sm bg-white font-mono text-left focus:border-amber-500" dir="ltr" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12 text-slate-500">افغانی:</span>
+                      <input type="number" step="0.01" required value={formData.wholesalePriceAFN} onChange={e => handleAFNChange('wholesalePrice', e.target.value)} className="w-full p-2 border border-amber-200 rounded-lg text-sm bg-white font-mono text-left focus:border-amber-500" dir="ltr" />
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-amber-100/50">
+                      <span className="text-[10px] font-bold text-slate-500">حداقل خرید عمده:</span>
+                      <input type="number" min="1" value={formData.minWholesaleQty} onChange={e => setFormData({...formData, minWholesaleQty: e.target.value})} className="w-full p-1 border border-amber-200 rounded text-xs bg-white font-mono text-left" dir="ltr" placeholder="اختیاری" />
+                    </div>
                   </div>
-                  <div className="pt-2">
-                    <label className="block text-xs font-bold text-slate-600 mb-1">نرخ فروش عمده</label>
-                    <input type="number" step="0.01" required value={formData.wholesalePriceUSD} onChange={e => setFormData({...formData, wholesalePriceUSD: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" />
-                  </div>
-                  <div className="pt-2">
-                    <label className="block text-xs font-bold text-slate-600 mb-1">حداقل خرید عمده (اختیاری)</label>
-                    <input type="number" min="1" value={formData.minWholesaleQty} onChange={e => setFormData({...formData, minWholesaleQty: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" placeholder="مثال: 50" />
-                  </div>
-                  <div className="pt-2">
-                    <label className="block text-xs font-bold text-slate-600 mb-1">نرخ فروش پرچون</label>
-                    <input type="number" step="0.01" required value={formData.retailPriceUSD} onChange={e => setFormData({...formData, retailPriceUSD: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" />
+
+                  {/* Retail Price */}
+                  <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-3">
+                    <label className="block text-sm font-bold text-indigo-800">قیمت فروش پرچون</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12 text-slate-500">دالر:</span>
+                      <input type="number" step="0.01" required value={formData.retailPriceUSD} onChange={e => handleUSDChange('retailPrice', e.target.value)} className="w-full p-2 border border-indigo-200 rounded-lg text-sm bg-white font-mono text-left focus:border-indigo-500" dir="ltr" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold w-12 text-slate-500">افغانی:</span>
+                      <input type="number" step="0.01" required value={formData.retailPriceAFN} onChange={e => handleAFNChange('retailPrice', e.target.value)} className="w-full p-2 border border-indigo-200 rounded-lg text-sm bg-white font-mono text-left focus:border-indigo-500" dir="ltr" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1114,6 +1198,58 @@ export const Inventory: React.FC = () => {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Discount Modal */}
+      {isDiscountModalOpen && (
+        <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-fade-in relative text-right">
+            <div className="p-4 bg-purple-600 flex justify-between items-center text-white">
+              <h3 className="font-bold flex items-center gap-2">
+                <Tag className="w-5 h-5" /> 
+                اعمال تخفیف گروهی
+              </h3>
+              <button onClick={() => setIsDiscountModalOpen(false)} className="hover:text-purple-200"><X className="w-5 h-5" /></button>
+            </div>
+            
+            <form onSubmit={handleApplyBulkDiscount} className="p-5 space-y-4">
+              <p className="text-sm font-bold text-slate-700">تخفیف روی {selectedProductIds.length} محصول اعمال می‌شود.</p>
+              
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">درصد تخفیف (%)</label>
+                <input 
+                  type="number" 
+                  min="1" max="100" 
+                  required 
+                  value={discountPercentage} 
+                  onChange={e => setDiscountPercentage(e.target.value)} 
+                  className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-purple-500" 
+                  placeholder="مثال: 15"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">مدت زمان اعتبار (روز)</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  required 
+                  value={discountExpiryDays} 
+                  onChange={e => setDiscountExpiryDays(e.target.value)} 
+                  className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-purple-500" 
+                  placeholder="مثال: 7"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setIsDiscountModalOpen(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200">لغو</button>
+                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 shadow-md flex items-center gap-2">
+                  <Tag className="w-4 h-4" /> تایید و ثبت تخفیف
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

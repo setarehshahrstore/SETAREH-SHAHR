@@ -23,6 +23,7 @@ interface AppContextType {
   updateExchangeRate: (rate: number) => void;
   addProduct: (product: Product) => void;
   editProduct: (product: Product) => void;
+  bulkUpdateProducts: (updates: Partial<Product> & { id: string }[]) => void;
   deleteProduct: (id: string) => void;
   addCustomer: (customer: Customer) => void;
   editCustomer: (customer: Customer) => void;
@@ -364,6 +365,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev,
       products: prev.products.map(p => p.id === product.id ? product : p)
     }));
+  };
+
+  const bulkUpdateProducts = (updates: (Partial<Product> & { id: string })[]) => {
+    setState((prev) => {
+      const updateMap = new Map(updates.map(u => [u.id, u]));
+      return {
+        ...prev,
+        products: prev.products.map(p => {
+          if (updateMap.has(p.id)) {
+            return { ...p, ...updateMap.get(p.id) } as Product;
+          }
+          return p;
+        })
+      };
+    });
   };
 
   const deleteProduct = (id: string) => {
@@ -893,6 +909,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateExchangeRate,
       addProduct,
       editProduct,
+      bulkUpdateProducts,
       deleteProduct,
       addCustomer,
       editCustomer,

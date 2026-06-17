@@ -46,8 +46,10 @@ export interface Product {
 
   // Advanced features
   minWholesaleQty?: number; // Minimum quantity to allow wholesale pricing
-  isDiscounted?: boolean;   // Clearance / Discount flag
+  isDiscounted?: boolean;   // Clearance flag
   isBestSeller?: boolean;   // Best-seller flag
+  discountPercentage?: number; // Percentage discount (e.g. 10 for 10%)
+  discountExpiry?: string;     // ISO date string for when the discount expires
 }
 
 export interface Customer {
