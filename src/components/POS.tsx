@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   FolderPlus,
   Edit2,
-  Lock
+  Lock,
+  Users
 } from 'lucide-react';
 import { Sale, SaleItem, Product } from '../types';
 
@@ -32,7 +33,7 @@ const QUICK_PRESETS = [
 ];
 
 export const POS: React.FC = () => {
-  const { state, addSale, addProduct, editSale, deleteSale, deleteSales } = useAppState();
+  const { state, addSale, addProduct, editSale, deleteSale, deleteSales, addCustomer } = useAppState();
   
   const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -100,6 +101,10 @@ export const POS: React.FC = () => {
 
   const [quickCustomCatOpen, setQuickCustomCatOpen] = useState(false);
   const [quickCustomCatText, setQuickCustomCatText] = useState('');
+
+  // Quick Customer Modal
+  const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({ name: '', phone: '', company: '' });
 
   // Local storage custom categories load
   const [localCategories, setLocalCategories] = useState<string[]>(() => {
@@ -246,6 +251,25 @@ export const POS: React.FC = () => {
     setQuickName('');
     alert(`کالای نو [ ${quickName} ] ثبت سیستم گردید، ۱۵۰ پایه موجودی اولیه به گدام شارژ شد و روی فاکتور صندوق درج گردید!`);
     playBeep();
+  };
+
+  const handleCreateQuickCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerForm.name.trim()) return;
+    
+    const newId = `c${Date.now()}`;
+    addCustomer({
+      id: newId,
+      name: newCustomerForm.name,
+      phone: newCustomerForm.phone || '',
+      companyName: newCustomerForm.company || '',
+      city: 'نامشخص',
+      debtAFN: 0,
+      debtUSD: 0
+    });
+    setCustomerId(newId);
+    setIsNewCustomerModalOpen(false);
+    setNewCustomerForm({ name: '', phone: '', company: '' });
   };
 
   const handleAddQuickCustomCat = () => {
@@ -752,15 +776,23 @@ export const POS: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] text-slate-400 font-bold mb-1">حساب مشتری دفتری:</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-[10px] text-slate-400 font-bold">انتخاب شخص / مشتری:</label>
+                  <button 
+                    onClick={() => setIsNewCustomerModalOpen(true)}
+                    className="text-[9px] text-emerald-500 font-bold hover:text-emerald-400 flex items-center gap-0.5"
+                  >
+                    <Plus className="w-3 h-3" /> ثبت مشتری جدید
+                  </button>
+                </div>
                 <select
                   value={customerId}
                   onChange={(e) => setCustomerId(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:outline-hidden font-bold"
+                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 focus:outline-none font-bold"
                 >
-                  <option value="walk-in">مشتری گذری (نقد صندوق)</option>
+                  <option value="walk-in">مشتری متفرقه (نقد بدون حساب)</option>
                   {state.customers.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} ({c.companyName || 'حساب مستقل'})</option>
+                    <option key={c.id} value={c.id}>{c.name} {c.companyName ? `(${c.companyName})` : ''}</option>
                   ))}
                 </select>
               </div>
@@ -1558,6 +1590,56 @@ export const POS: React.FC = () => {
                 </button>
               </div>
 
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Customer Register Modal */}
+      {isNewCustomerModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-4 bg-emerald-600 text-white flex justify-between items-center">
+              <h2 className="text-lg font-black flex items-center gap-2">
+                <Users className="w-5 h-5" /> ثبت سریع مشتری
+              </h2>
+              <button onClick={() => setIsNewCustomerModalOpen(false)} className="text-white/80 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateQuickCustomer} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">نام و نام خانوادگی</label>
+                <input 
+                  type="text" 
+                  required
+                  value={newCustomerForm.name} 
+                  onChange={e => setNewCustomerForm({...newCustomerForm, name: e.target.value})} 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 font-bold" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس (اختیاری)</label>
+                <input 
+                  type="text" 
+                  dir="ltr"
+                  value={newCustomerForm.phone} 
+                  onChange={e => setNewCustomerForm({...newCustomerForm, phone: e.target.value})} 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 font-mono text-right" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">نام شرکت/فروشگاه (اختیاری)</label>
+                <input 
+                  type="text" 
+                  value={newCustomerForm.company} 
+                  onChange={e => setNewCustomerForm({...newCustomerForm, company: e.target.value})} 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 font-bold" 
+                />
+              </div>
+              <button type="submit" className="w-full bg-emerald-600 text-white hover:bg-emerald-700 py-3 rounded-xl font-black transition-colors shadow-lg shadow-emerald-200">
+                ثبت مشتری و انتخاب در فاکتور
+              </button>
             </form>
           </div>
         </div>

@@ -23,8 +23,7 @@ export const AdminPasswordPrompt: React.FC<AdminPasswordPromptProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Use hardcoded password admin12345 as per agreement
-    if (password === 'admin12345') {
+    if (password === 'Admin$') {
       setError('');
       setPassword('');
       onSuccess();

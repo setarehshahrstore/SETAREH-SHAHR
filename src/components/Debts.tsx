@@ -26,6 +26,18 @@ export const Debts: React.FC = () => {
   const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
   const [debtForm, setDebtForm] = useState({ afn: '', usd: '' });
 
+  // New Debt Form Modal (Add any person)
+  const [isNewDebtModalOpen, setIsNewDebtModalOpen] = useState(false);
+  const [newDebtForm, setNewDebtForm] = useState({ 
+    mode: 'existing' as 'existing' | 'new',
+    partnerId: '', 
+    name: '',
+    phone: '',
+    company: '',
+    afn: '', 
+    usd: '' 
+  });
+
   // Payment Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(null);
@@ -35,8 +47,6 @@ export const Debts: React.FC = () => {
     amountUSD: '',
     notes: ''
   });
-
-  const { updateCustomerDebt, updateSupplierDebt, deletePayment, editPayment } = useAppState();
 
   const customersWithDebt = state.customers.filter(c => c.debtAFN > 0 || c.debtUSD > 0);
   const suppliersWithDebt = state.suppliers.filter(s => s.debtAFN > 0 || s.debtUSD > 0);
@@ -96,6 +106,62 @@ export const Debts: React.FC = () => {
     });
   };
 
+  const handleCreateNewDebt = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newDebtForm.mode === 'existing' && !newDebtForm.partnerId) {
+      alert('لطفاً یک شخص را انتخاب کنید.');
+      return;
+    }
+    if (newDebtForm.mode === 'new' && !newDebtForm.name.trim()) {
+      alert('لطفاً نام شخص را وارد کنید.');
+      return;
+    }
+
+    setAdminPrompt({
+      isOpen: true,
+      title: 'ثبت قرضه جدید',
+      action: () => {
+        const afn = parseFloat(newDebtForm.afn) || 0;
+        const usd = parseFloat(newDebtForm.usd) || 0;
+        
+        let targetId = newDebtForm.partnerId;
+
+        if (newDebtForm.mode === 'new') {
+          targetId = (activeTab === 'Customers' ? 'c' : 's') + Date.now();
+          if (activeTab === 'Customers') {
+            addCustomer({
+              id: targetId,
+              name: newDebtForm.name,
+              phone: newDebtForm.phone,
+              companyName: newDebtForm.company,
+              city: 'نامشخص',
+              debtAFN: afn,
+              debtUSD: usd
+            });
+          } else {
+            addSupplier({
+              id: targetId,
+              name: newDebtForm.name,
+              phone: newDebtForm.phone,
+              companyName: newDebtForm.company,
+              city: 'نامشخص',
+              debtAFN: afn,
+              debtUSD: usd
+            });
+          }
+        } else {
+          // Update existing
+          if (activeTab === 'Customers') updateCustomerDebt(targetId, afn, usd);
+          else updateSupplierDebt(targetId, afn, usd);
+        }
+
+        setIsNewDebtModalOpen(false);
+        setNewDebtForm({ mode: 'existing', partnerId: '', name: '', phone: '', company: '', afn: '', usd: '' });
+      }
+    });
+  };
+
   const handleSubmitPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPartner) return;
@@ -144,8 +210,14 @@ export const Debts: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">مدیریت قرضه‌ها و پرداخت‌ها</h1>
-          <p className="text-xs text-slate-500 mt-1">حسابات دریافتنی (مشتریان) و پرداختنی (تامین‌کنندگان) به همراه سابقه پرداخت</p>
+          <p className="text-xs text-slate-500 mt-1">حساب‌های دریافتی (مشتریان) و پرداختی (تامین‌کنندگان) به همراه سابقه پرداخت</p>
         </div>
+        <button 
+          onClick={() => setIsNewDebtModalOpen(true)}
+          className="bg-amber-500 text-white hover:bg-amber-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" /> افزودن قرضه جدید
+        </button>
       </div>
 
       <div className="flex gap-4 border-b border-slate-200">
@@ -378,6 +450,120 @@ export const Debts: React.FC = () => {
 
               <button type="submit" className="w-full bg-amber-500 text-white hover:bg-amber-600 py-4 rounded-xl font-black text-lg transition-all shadow-xl mt-4">
                 ذخیره میزان قرضه
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isNewDebtModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-6 bg-amber-500 text-white flex justify-between items-center">
+              <h2 className="text-xl font-black">ثبت قرضه جدید</h2>
+              <button onClick={() => setIsNewDebtModalOpen(false)} className="text-white/80 hover:text-white transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateNewDebt} className="p-6 space-y-4 text-sm">
+              <div className="flex gap-2 p-1 bg-slate-100 rounded-lg mb-4">
+                <button
+                  type="button"
+                  onClick={() => setNewDebtForm({...newDebtForm, mode: 'existing'})}
+                  className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors ${newDebtForm.mode === 'existing' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+                >
+                  شخص موجود
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewDebtForm({...newDebtForm, mode: 'new'})}
+                  className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors ${newDebtForm.mode === 'new' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500'}`}
+                >
+                  ثبت شخص جدید
+                </button>
+              </div>
+
+              {newDebtForm.mode === 'existing' ? (
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    انتخاب {activeTab === 'Customers' ? 'مشتری' : 'تامین‌کننده'}
+                  </label>
+                  <select 
+                    value={newDebtForm.partnerId} 
+                    onChange={e => setNewDebtForm({...newDebtForm, partnerId: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 font-bold"
+                    required
+                  >
+                    <option value="">-- انتخاب کنید --</option>
+                    {(activeTab === 'Customers' ? state.customers : state.suppliers).map(p => (
+                      <option key={p.id} value={p.id}>{p.name} {p.companyName ? `(${p.companyName})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">نام و نام خانوادگی</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={newDebtForm.name} 
+                      onChange={e => setNewDebtForm({...newDebtForm, name: e.target.value})} 
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-amber-500" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس</label>
+                    <input 
+                      type="text" 
+                      dir="ltr"
+                      value={newDebtForm.phone} 
+                      onChange={e => setNewDebtForm({...newDebtForm, phone: e.target.value})} 
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-amber-500 text-right font-mono" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">شرکت/فروشگاه (اختیاری)</label>
+                    <input 
+                      type="text" 
+                      value={newDebtForm.company} 
+                      onChange={e => setNewDebtForm({...newDebtForm, company: e.target.value})} 
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-amber-500" 
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">میزان قرضه (افغانی)</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="any" 
+                    dir="ltr" 
+                    value={newDebtForm.afn} 
+                    onChange={e => setNewDebtForm({...newDebtForm, afn: e.target.value})} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-right font-mono" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">میزان قرضه (دالر)</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="any" 
+                    dir="ltr" 
+                    value={newDebtForm.usd} 
+                    onChange={e => setNewDebtForm({...newDebtForm, usd: e.target.value})} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-right font-mono" 
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="w-full bg-amber-500 text-white hover:bg-amber-600 py-4 rounded-xl font-black text-lg transition-all shadow-xl mt-4">
+                ثبت قرضه در سیستم
               </button>
             </form>
           </div>
