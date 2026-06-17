@@ -418,16 +418,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateDeliveryStatus = (saleId: string, status: string, driver?: string) => {
     setState((prev) => ({
       ...prev,
-      sales: prev.sales.map(sale =>
-        sale.id === saleId
-          ? {
-              ...sale,
-              deliveryStatus: status as any,
-              deliveryDriver: driver || sale.deliveryDriver,
-              status: status === 'Delivered' ? 'Completed' : 'Pending Delivery'
-            }
-          : sale
-      )
+      sales: prev.sales.map(sale => {
+        if (sale.id === saleId) {
+          const updatedSale: any = { ...sale, status: status };
+          if (driver !== undefined) updatedSale.deliveryDriver = driver;
+          if (status === 'Delivered' || status === 'Pending' || status === 'In Transit' || status === 'Cancelled') {
+            updatedSale.deliveryStatus = status;
+          }
+          if (status === 'Delivered') {
+            updatedSale.status = 'Completed';
+          }
+          
+          // Remove any undefined values to avoid Firebase crash
+          Object.keys(updatedSale).forEach(key => {
+            if (updatedSale[key] === undefined) delete updatedSale[key];
+          });
+          
+          return updatedSale;
+        }
+        return sale;
+      })
     }));
   };
 
