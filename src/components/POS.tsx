@@ -1117,6 +1117,7 @@ export const POS: React.FC = () => {
                 بله، فاکتورها حذف شوند
               </button>
             </div>
+          </div>
         </div>
       )}
 
