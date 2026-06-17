@@ -1,8 +1,8 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
-import {  ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User , Phone, Tag, Star, Users, Truck, ArrowLeft, Mail, MapPin, Clock, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box } from 'lucide-react';
+import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box } from 'lucide-react';
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -37,6 +37,10 @@ export const Storefront: React.FC = () => {
       return matchesCat && matchesSearch;
     });
   }, [state.products, activeCategory, searchQuery]);
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const addToCart = (product: Product, type: 'Retail' | 'Wholesale') => {
     setCart(prev => {
