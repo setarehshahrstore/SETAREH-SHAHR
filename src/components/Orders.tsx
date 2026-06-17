@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAppState } from '../AppContext';
 import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency } from '../utils';
-import { Search, Eye, Check, X, Trash2, ShieldAlert, Package, RefreshCw, Printer } from 'lucide-react';
+import { Search, Eye, Check, X, Trash2, ShieldAlert, Package, RefreshCw, Printer, Plus } from 'lucide-react';
 import { Sale, SaleItem } from '../types';
 
 export const Orders: React.FC = () => {
@@ -133,8 +134,14 @@ export const Orders: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm print:hidden">
         <div>
           <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">سفارشات مشتریان</h1>
-          <p className="text-xs text-slate-500 mt-1">مدیریت سفارشات آنلاین، تایید و پیشنهاد جایگزین</p>
+          <p className="text-xs text-slate-500 mt-1">مدیریت سفارشات آنلاین، ثبت شده و پیگیری وضعیت ارسال</p>
         </div>
+        <Link 
+          to="/admin/sales" 
+          className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" /> ثبت سفارش جدید (تلفنی / حضوری)
+        </Link>
       </div>
 
       <div className="print:hidden">
