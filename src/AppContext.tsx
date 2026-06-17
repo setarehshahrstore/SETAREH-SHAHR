@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage, CartItem } from './types';
+import { useAuth } from './AuthContext';
 import { INITIAL_APP_STATE } from './mockData';
 import { syncToFirebase, startFirebaseListeners } from './firebaseSync';
 
@@ -110,10 +111,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const { user } = useAuth();
   const state = reactState;
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Sync cart from customer profile on login
+  useEffect(() => {
+    if (user && user.role === 'Customer') {
+      const customer = state.customers.find(c => c.name === user.fullName);
+      if (customer && customer.savedCart) {
+        setCart(customer.savedCart);
+      }
+    } else if (!user) {
+      setCart([]);
+    }
+  }, [user?.fullName]);
+
+  // Sync cart back to customer profile on change
+  const initialLoadDone = useRef(false);
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true;
+      return;
+    }
+    if (user && user.role === 'Customer') {
+      const customer = state.customers.find(c => c.name === user.fullName);
+      if (customer) {
+        // Prevent infinite loop by checking if cart is actually different
+        if (JSON.stringify(customer.savedCart) !== JSON.stringify(cart)) {
+          editCustomer({ ...customer, savedCart: cart });
+        }
+      }
+    }
+  }, [cart, user]);
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(reactState));

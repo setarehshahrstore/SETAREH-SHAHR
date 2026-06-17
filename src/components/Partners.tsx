@@ -1036,28 +1036,26 @@ export const Partners: React.FC = () => {
                           {(activePartnerDetails as Customer).passwordResetRequested ? (
                             <button 
                               onClick={() => {
-                                const newPassword = window.prompt('رمز عبور جدید را وارد کنید:');
-                                if (newPassword) {
-                                  editCustomer({ ...activePartnerDetails as Customer, passwordHash: newPassword, passwordResetRequested: false });
-                                  alert('رمز عبور با موفقیت تغییر کرد.');
-                                }
+                                const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+                                editCustomer({ ...activePartnerDetails as Customer, passwordHash: otpCode, passwordResetRequested: false, requirePasswordChange: true });
+                                alert(`رمز عبور بازنشانی شد.\nرمز یکبار مصرف (OTP) برای این مشتری: ${otpCode}\nمشتری پس از ورود ملزم به تغییر رمز خواهد بود.`);
                               }}
                               className="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-lg font-bold hover:bg-rose-200"
                             >
-                              درخواست بازیابی رمز! (کلیک کنید)
+                              بازنشانی رمز با OTP (درخواست شده!)
                             </button>
                           ) : (
                             <button 
                               onClick={() => {
-                                const newPassword = window.prompt('رمز عبور جدید را وارد کنید:');
-                                if (newPassword) {
-                                  editCustomer({ ...activePartnerDetails as Customer, passwordHash: newPassword });
-                                  alert('رمز عبور با موفقیت تغییر کرد.');
+                                if (window.confirm('آیا مایلید رمز عبور این مشتری را با یک رمز یکبار مصرف (OTP) بازنشانی کنید؟')) {
+                                  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+                                  editCustomer({ ...activePartnerDetails as Customer, passwordHash: otpCode, requirePasswordChange: true });
+                                  alert(`رمز عبور بازنشانی شد.\nرمز یکبار مصرف (OTP) برای این مشتری: ${otpCode}\nمشتری پس از ورود ملزم به تغییر رمز خواهد بود.`);
                                 }
                               }}
                               className="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-lg font-bold hover:bg-slate-300"
                             >
-                              تغییر رمز عبور
+                              بازنشانی رمز (OTP)
                             </button>
                           )}
                         </div>
