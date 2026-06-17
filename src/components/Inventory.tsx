@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppState } from '../AppContext';
 import { formatCurrency, formatStock, getUnitOptions, decomposeStock } from '../utils';
 import { SecurityGateModal } from './SecurityGate';
@@ -43,6 +44,15 @@ export const Inventory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRestocking, setIsRestocking] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('add') === 'true') {
+      setIsAddModalOpen(true);
+    }
+  }, [location]);
 
   // Editing Product states
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);

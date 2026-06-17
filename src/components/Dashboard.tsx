@@ -170,7 +170,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
           { to: '/admin/sales', icon: ShoppingCart, label: 'فروش جدید', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600' },
-          { to: '/admin/products', icon: PackagePlus, label: 'افزودن محصول', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600' },
+          { to: '/admin/inventory?add=true', icon: PackagePlus, label: 'افزودن محصول', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600' },
           { to: '/admin/purchases', icon: FilePlus, label: 'ثبت خرید', color: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600' },
           { to: '/admin/customers', icon: UserPlus, label: 'افزودن مشتری', color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
           { to: '/admin/finances', icon: CreditCard, label: 'ثبت پرداخت', color: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white hover:border-rose-600' },

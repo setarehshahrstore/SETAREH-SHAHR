@@ -164,7 +164,7 @@ export const AdminLayout: React.FC = () => {
               <ShoppingCart className="w-4 h-4" />
               فروش جدید
             </Link>
-            <Link to="/admin/products" className="hidden sm:flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#B8942E] text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
+            <Link to="/admin/inventory?add=true" className="hidden sm:flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#B8942E] text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
               <Plus className="w-4 h-4" />
               افزودن محصول
             </Link>
