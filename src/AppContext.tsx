@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category } from './types';
+import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage } from './types';
 import { INITIAL_APP_STATE } from './mockData';
 
 interface AppContextType {
@@ -130,7 +130,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...s,
           messages: [...s.messages, message],
-          status: message.sender === 'Customer' ? 'Waiting' : 'Active',
+          status: (message.sender === 'Customer' ? 'Waiting' : 'Active') as 'Active' | 'Waiting' | 'Closed',
           unreadByAdmin: message.sender === 'Customer' ? s.unreadByAdmin + 1 : s.unreadByAdmin,
           unreadByCustomer: message.sender !== 'Customer' ? s.unreadByCustomer + 1 : s.unreadByCustomer
         };
