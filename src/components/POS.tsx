@@ -18,7 +18,8 @@ import {
   FolderPlus,
   Edit2,
   Lock,
-  Users
+  Users,
+  X
 } from 'lucide-react';
 import { Sale, SaleItem, Product } from '../types';
 
@@ -265,7 +266,9 @@ export const POS: React.FC = () => {
       companyName: newCustomerForm.company || '',
       city: 'نامشخص',
       debtAFN: 0,
-      debtUSD: 0
+      debtUSD: 0,
+      creditLimitAFN: 0,
+      creditLimitUSD: 0
     });
     setCustomerId(newId);
     setIsNewCustomerModalOpen(false);

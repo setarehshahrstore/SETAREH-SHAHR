@@ -7,7 +7,7 @@ import { AdminPasswordPrompt } from './AdminPasswordPrompt';
 import { DebtPayment } from '../types';
 
 export const Debts: React.FC = () => {
-  const { state, addPayment } = useAppState();
+  const { state, addPayment, updateCustomerDebt, updateSupplierDebt, deletePayment, editPayment, addCustomer, addSupplier } = useAppState();
   
   const todayDate = new Date().toISOString().split('T')[0];
   const [dateRange, setDateRange] = useState<DateRange>({
