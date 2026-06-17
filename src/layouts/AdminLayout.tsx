@@ -27,6 +27,7 @@ const MENU_ITEMS = [
 
 export const AdminLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { user, logout } = useAuth();
   const { state } = useAppState();
   const location = useLocation();
@@ -167,10 +168,54 @@ export const AdminLayout: React.FC = () => {
               افزودن محصول
             </Link>
 
-            <button className="relative p-2 text-slate-400 hover:text-[#0B1F3A] transition-colors rounded-full hover:bg-slate-50">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="relative p-2 text-slate-400 hover:text-[#0B1F3A] transition-colors rounded-full hover:bg-slate-50"
+              >
+                <Bell className="w-5 h-5" />
+                {totalUnreadChats > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              <AnimatePresence>
+                {isNotificationsOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50"
+                  >
+                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                      <h3 className="font-bold text-slate-800">اعلان‌ها</h3>
+                      {totalUnreadChats > 0 && (
+                        <span className="bg-rose-100 text-rose-600 text-[10px] px-2 py-1 rounded-lg font-bold">
+                          {totalUnreadChats} پیام جدید
+                        </span>
+                      )}
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {totalUnreadChats > 0 ? (
+                        <Link 
+                          to="/admin/live-chat" 
+                          onClick={() => setIsNotificationsOpen(false)}
+                          className="flex flex-col gap-1 p-4 hover:bg-slate-50 border-b border-slate-100 transition-colors"
+                        >
+                          <span className="text-sm font-bold text-slate-800">پیام جدید در پشتیبانی زنده</span>
+                          <span className="text-xs text-slate-500">مشتری منتظر پاسخ شماست. برای مشاهده کلیک کنید.</span>
+                        </Link>
+                      ) : (
+                        <div className="p-8 text-center text-slate-500 text-sm">
+                          هیچ اعلان جدیدی وجود ندارد
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             
             <Link to="/" title="بازگشت به سایت عمومی" className="p-2 text-slate-400 hover:text-emerald-600 transition-colors rounded-full hover:bg-slate-50">
               <Store className="w-5 h-5" />

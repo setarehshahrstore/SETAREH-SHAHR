@@ -138,6 +138,12 @@ export interface Sale {
   deliveryDriver?: string;
 }
 
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  type: 'Retail' | 'Wholesale';
+}
+
 export interface Purchase {
   id: string;
   invoiceNo: string;

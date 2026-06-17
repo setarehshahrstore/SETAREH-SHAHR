@@ -1,12 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage } from './types';
+import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage, CartItem } from './types';
 import { INITIAL_APP_STATE } from './mockData';
 
 interface AppContextType {
   state: AppState;
+  
+  // Cart State
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  isCartOpen: boolean;
+  setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
   addSale: (sale: Sale) => void;
   addPurchase: (purchase: Purchase) => void;
   addPayment: (payment: DebtPayment) => void;
+  deletePayment: (id: string) => void;
+  editPayment: (payment: DebtPayment) => void;
+  updateCustomerDebt: (id: string, amountAFN: number, amountUSD: number) => void;
+  updateSupplierDebt: (id: string, amountAFN: number, amountUSD: number) => void;
   updateProductStock: (productId: string, changeBaseQty: number) => void;
   updateExchangeRate: (rate: number) => void;
   addProduct: (product: Product) => void;
@@ -45,6 +56,7 @@ interface AppContextType {
   updateChatStatus: (sessionId: string, status: 'Active' | 'Waiting' | 'Closed') => void;
   markChatReadByAdmin: (sessionId: string) => void;
   markChatReadByCustomer: (sessionId: string) => void;
+  deleteChatSession: (sessionId: string) => void;
 
   resetState: () => void;
 }
@@ -78,6 +90,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return INITIAL_APP_STATE;
   });
+
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
@@ -540,6 +555,115 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const deletePayment = (id: string) => {
+    setState((prev) => {
+      const payment = prev.payments.find(p => p.id === id);
+      if (!payment) return prev;
+      
+      const newCustomers = [...prev.customers];
+      const newSuppliers = [...prev.suppliers];
+      const newCash = { ...prev.cashRegister };
+
+      // Reverse cash
+      newCash.balanceAFN -= payment.amountAFN;
+      newCash.balanceUSD -= payment.amountUSD;
+
+      // Reverse debt
+      if (payment.partnerType === 'Customer') {
+        const idx = newCustomers.findIndex(c => c.id === payment.partnerId);
+        if (idx !== -1) {
+          newCustomers[idx] = { 
+            ...newCustomers[idx], 
+            debtAFN: newCustomers[idx].debtAFN + payment.amountAFN,
+            debtUSD: newCustomers[idx].debtUSD + payment.amountUSD
+          };
+        }
+      } else {
+        const idx = newSuppliers.findIndex(s => s.id === payment.partnerId);
+        if (idx !== -1) {
+          newSuppliers[idx] = { 
+            ...newSuppliers[idx], 
+            debtAFN: newSuppliers[idx].debtAFN + payment.amountAFN,
+            debtUSD: newSuppliers[idx].debtUSD + payment.amountUSD
+          };
+        }
+      }
+
+      return {
+        ...prev,
+        payments: prev.payments.filter(p => p.id !== id),
+        customers: newCustomers,
+        suppliers: newSuppliers,
+        cashRegister: newCash
+      };
+    });
+  };
+
+  const editPayment = (updatedPayment: DebtPayment) => {
+    setState((prev) => {
+      const oldPayment = prev.payments.find(p => p.id === updatedPayment.id);
+      if (!oldPayment) return prev;
+      
+      const newCustomers = [...prev.customers];
+      const newSuppliers = [...prev.suppliers];
+      const newCash = { ...prev.cashRegister };
+
+      // Reverse old cash, add new cash
+      newCash.balanceAFN = newCash.balanceAFN - oldPayment.amountAFN + updatedPayment.amountAFN;
+      newCash.balanceUSD = newCash.balanceUSD - oldPayment.amountUSD + updatedPayment.amountUSD;
+
+      // Reverse old debt, apply new debt
+      if (updatedPayment.partnerType === 'Customer') {
+        const idx = newCustomers.findIndex(c => c.id === updatedPayment.partnerId);
+        if (idx !== -1) {
+          newCustomers[idx] = { 
+            ...newCustomers[idx], 
+            debtAFN: newCustomers[idx].debtAFN + oldPayment.amountAFN - updatedPayment.amountAFN,
+            debtUSD: newCustomers[idx].debtUSD + oldPayment.amountUSD - updatedPayment.amountUSD
+          };
+        }
+      } else {
+        const idx = newSuppliers.findIndex(s => s.id === updatedPayment.partnerId);
+        if (idx !== -1) {
+          newSuppliers[idx] = { 
+            ...newSuppliers[idx], 
+            debtAFN: newSuppliers[idx].debtAFN + oldPayment.amountAFN - updatedPayment.amountAFN,
+            debtUSD: newSuppliers[idx].debtUSD + oldPayment.amountUSD - updatedPayment.amountUSD
+          };
+        }
+      }
+
+      return {
+        ...prev,
+        payments: prev.payments.map(p => p.id === updatedPayment.id ? updatedPayment : p),
+        customers: newCustomers,
+        suppliers: newSuppliers,
+        cashRegister: newCash
+      };
+    });
+  };
+
+  const updateCustomerDebt = (id: string, amountAFN: number, amountUSD: number) => {
+    setState(prev => ({
+      ...prev,
+      customers: prev.customers.map(c => c.id === id ? { ...c, debtAFN: amountAFN, debtUSD: amountUSD } : c)
+    }));
+  };
+
+  const updateSupplierDebt = (id: string, amountAFN: number, amountUSD: number) => {
+    setState(prev => ({
+      ...prev,
+      suppliers: prev.suppliers.map(s => s.id === id ? { ...s, debtAFN: amountAFN, debtUSD: amountUSD } : s)
+    }));
+  };
+
+  const deleteChatSession = (sessionId: string) => {
+    setState(prev => ({
+      ...prev,
+      chatSessions: (prev.chatSessions || []).filter(s => s.id !== sessionId)
+    }));
+  };
+
   const editSale = (updatedSale: Sale) => {
     setState((prev) => {
       const oldSale = prev.sales.find(s => s.id === updatedSale.id);
@@ -654,7 +778,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateChatStatus,
       markChatReadByAdmin,
       markChatReadByCustomer,
-      resetState
+      deleteChatSession,
+      resetState,
+      cart,
+      setCart,
+      isCartOpen,
+      setIsCartOpen
     }}>
       {children}
     </AppContext.Provider>

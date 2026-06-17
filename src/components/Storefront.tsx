@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
@@ -8,16 +8,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export const Storefront: React.FC = () => {
-  const { state, addSale, addCustomer } = useAppState();
+  const { state, addSale, addCustomer, cart, setCart, isCartOpen, setIsCartOpen } = useAppState();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Shopping Cart State
-  const [cart, setCart] = useState<Array<{ product: Product, quantity: number, type: 'Retail' | 'Wholesale' }>>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Checkout Form State

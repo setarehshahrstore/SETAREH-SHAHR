@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useAppState } from '../AppContext';
 import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency } from '../utils';
-import { Users, Building2, CreditCard, X } from 'lucide-react';
+import { Users, Building2, CreditCard, X, Edit, Trash2, Plus, FileText } from 'lucide-react';
+import { AdminPasswordPrompt } from './AdminPasswordPrompt';
+import { DebtPayment } from '../types';
 
 export const Debts: React.FC = () => {
   const { state, addPayment } = useAppState();
@@ -15,14 +17,26 @@ export const Debts: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'Customers' | 'Suppliers'>('Customers');
   
+  // Admin Security Modal
+  const [adminPrompt, setAdminPrompt] = useState<{isOpen: boolean; action: () => void; title: string}>({
+    isOpen: false, action: () => {}, title: ''
+  });
+
+  // Add/Edit Debt Modal
+  const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
+  const [debtForm, setDebtForm] = useState({ afn: '', usd: '' });
+
   // Payment Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<DebtPayment | null>(null);
   const [selectedPartner, setSelectedPartner] = useState<any>(null);
   const [paymentForm, setPaymentForm] = useState({
     amountAFN: '',
     amountUSD: '',
     notes: ''
   });
+
+  const { updateCustomerDebt, updateSupplierDebt, deletePayment, editPayment } = useAppState();
 
   const customersWithDebt = state.customers.filter(c => c.debtAFN > 0 || c.debtUSD > 0);
   const suppliersWithDebt = state.suppliers.filter(s => s.debtAFN > 0 || s.debtUSD > 0);
@@ -32,14 +46,54 @@ export const Debts: React.FC = () => {
     return pDate >= dateRange.from && pDate <= dateRange.to && p.partnerType === (activeTab === 'Customers' ? 'Customer' : 'Supplier');
   });
 
-  const handleOpenPayment = (partner: any) => {
+  const handleOpenPayment = (partner: any, paymentToEdit?: DebtPayment) => {
     setSelectedPartner(partner);
-    setPaymentForm({
-      amountAFN: '',
-      amountUSD: '',
-      notes: ''
-    });
+    if (paymentToEdit) {
+      setEditingPayment(paymentToEdit);
+      setPaymentForm({
+        amountAFN: paymentToEdit.amountAFN.toString(),
+        amountUSD: paymentToEdit.amountUSD.toString(),
+        notes: paymentToEdit.notes || ''
+      });
+    } else {
+      setEditingPayment(null);
+      setPaymentForm({
+        amountAFN: '',
+        amountUSD: '',
+        notes: ''
+      });
+    }
     setIsModalOpen(true);
+  };
+
+  const handleOpenDebt = (partner: any) => {
+    setSelectedPartner(partner);
+    setDebtForm({ afn: partner.debtAFN.toString(), usd: partner.debtUSD.toString() });
+    setIsDebtModalOpen(true);
+  };
+
+  const handleDeletePayment = (id: string) => {
+    setAdminPrompt({
+      isOpen: true,
+      title: 'حذف تراکنش',
+      action: () => deletePayment(id)
+    });
+  };
+
+  const handleSubmitDebt = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPartner) return;
+    setAdminPrompt({
+      isOpen: true,
+      title: 'تغییر میزان قرضه',
+      action: () => {
+        const afn = parseFloat(debtForm.afn) || 0;
+        const usd = parseFloat(debtForm.usd) || 0;
+        if (activeTab === 'Customers') updateCustomerDebt(selectedPartner.id, afn, usd);
+        else updateSupplierDebt(selectedPartner.id, afn, usd);
+        setIsDebtModalOpen(false);
+      }
+    });
   };
 
   const handleSubmitPayment = (e: React.FormEvent) => {
@@ -50,23 +104,39 @@ export const Debts: React.FC = () => {
     const usd = parseFloat(paymentForm.amountUSD) || 0;
     
     if (afn <= 0 && usd <= 0) {
-      alert('مبلغ پرداختی را وارد کنید.');
+      alert('مبلغ پرداخت نباید صفر باشد.');
       return;
     }
 
-    addPayment({
-      id: Date.now().toString(),
-      partnerId: selectedPartner.id,
-      partnerType: activeTab === 'Customers' ? 'Customer' : 'Supplier',
-      partnerName: selectedPartner.name,
-      amountUSD: usd,
-      amountAFN: afn,
-      exchangeRate: state.exchangeRate,
-      date: new Date().toISOString(),
-      notes: paymentForm.notes || 'تسویه حساب قرضه'
-    });
-
-    setIsModalOpen(false);
+    if (editingPayment) {
+      setAdminPrompt({
+        isOpen: true,
+        title: 'ویرایش تراکنش پرداخت / تقسیط',
+        action: () => {
+          editPayment({
+            ...editingPayment,
+            amountAFN: afn,
+            amountUSD: usd,
+            notes: paymentForm.notes
+          });
+          setIsModalOpen(false);
+          setEditingPayment(null);
+        }
+      });
+    } else {
+      addPayment({
+        id: Date.now().toString(),
+        partnerId: selectedPartner.id,
+        partnerType: activeTab === 'Customers' ? 'Customer' : 'Supplier',
+        partnerName: selectedPartner.name,
+        amountUSD: usd,
+        amountAFN: afn,
+        exchangeRate: state.exchangeRate,
+        date: new Date().toISOString(),
+        notes: paymentForm.notes || 'پرداخت بابت حساب'
+      });
+      setIsModalOpen(false);
+    }
   };
 
   return (
@@ -123,12 +193,21 @@ export const Debts: React.FC = () => {
                     <td className="px-4 py-3 font-mono font-bold text-rose-600">{formatCurrency(person.debtAFN, 'AFN')}</td>
                     <td className="px-4 py-3 font-mono font-bold text-rose-600">${person.debtUSD.toFixed(2)}</td>
                     <td className="px-4 py-3">
-                      <button 
-                        onClick={() => handleOpenPayment(person)}
-                        className="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-indigo-100"
-                      >
-                        <CreditCard className="w-3 h-3" /> ثبت پرداخت
-                      </button>
+                      <div className="flex items-center gap-2 justify-end">
+                        <button 
+                          onClick={() => handleOpenDebt(person)}
+                          className="text-xs font-bold bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-amber-100"
+                          title="ویرایش/ثبت قرضه جدید"
+                        >
+                          <Edit className="w-3 h-3" /> ثبت/ویرایش
+                        </button>
+                        <button 
+                          onClick={() => handleOpenPayment(person)}
+                          className="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-indigo-100"
+                        >
+                          <CreditCard className="w-3 h-3" /> پرداخت
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -152,6 +231,7 @@ export const Debts: React.FC = () => {
                   <th className="px-4 py-3 font-bold">نام</th>
                   <th className="px-4 py-3 font-bold">مبلغ پرداخت</th>
                   <th className="px-4 py-3 font-bold">توضیحات</th>
+                  <th className="px-4 py-3 font-bold text-center">عملیات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -163,6 +243,27 @@ export const Debts: React.FC = () => {
                       {payment.amountAFN > 0 ? formatCurrency(payment.amountAFN, 'AFN') : `$${payment.amountUSD.toFixed(2)}`}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">{payment.notes || '-'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => {
+                            const partner = (activeTab === 'Customers' ? state.customers : state.suppliers).find(p => p.id === payment.partnerId);
+                            if (partner) handleOpenPayment(partner, payment);
+                          }}
+                          className="p-1.5 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="ویرایش قسط / پرداخت"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePayment(payment.id)}
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="حذف کامل تراکنش"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {filteredPayments.length === 0 && (
@@ -179,7 +280,7 @@ export const Debts: React.FC = () => {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
             <div className="p-6 bg-[#0B1F3A] text-white flex justify-between items-center">
-              <h2 className="text-xl font-black">ثبت پرداخت برای: {selectedPartner.name}</h2>
+              <h2 className="text-xl font-black">{editingPayment ? 'ویرایش تراکنش قسط' : 'ثبت پرداخت جدید'}: {selectedPartner.name}</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
                 <X className="w-6 h-6" />
               </button>
@@ -230,12 +331,68 @@ export const Debts: React.FC = () => {
               </div>
 
               <button type="submit" className="w-full bg-[#0B1F3A] text-[#D4AF37] hover:bg-[#123B66] py-4 rounded-xl font-black text-lg transition-all shadow-xl mt-4">
-                ثبت پرداخت در سیستم
+                {editingPayment ? 'تأیید و ذخیره تغییرات' : 'ثبت پرداخت در سیستم'}
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {isDebtModalOpen && selectedPartner && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-6 bg-amber-500 text-white flex justify-between items-center">
+              <h2 className="text-xl font-black">ثبت/تغییر میزان قرضه: {selectedPartner.name}</h2>
+              <button onClick={() => setIsDebtModalOpen(false)} className="text-white/80 hover:text-white transition-colors">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmitDebt} className="p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">کل قرضه (افغانی)</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="any" 
+                    dir="ltr" 
+                    value={debtForm.afn} 
+                    onChange={e => setDebtForm({...debtForm, afn: e.target.value})} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-right font-mono" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">کل قرضه (دالر)</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    step="any" 
+                    dir="ltr" 
+                    value={debtForm.usd} 
+                    onChange={e => setDebtForm({...debtForm, usd: e.target.value})} 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 text-right font-mono" 
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="w-full bg-amber-500 text-white hover:bg-amber-600 py-4 rounded-xl font-black text-lg transition-all shadow-xl mt-4">
+                ذخیره میزان قرضه
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <AdminPasswordPrompt 
+        isOpen={adminPrompt.isOpen} 
+        onClose={() => setAdminPrompt({ ...adminPrompt, isOpen: false })} 
+        onSuccess={() => {
+          adminPrompt.action();
+          setAdminPrompt({ ...adminPrompt, isOpen: false });
+        }}
+        title={adminPrompt.title}
+      />
     </div>
   );
 };

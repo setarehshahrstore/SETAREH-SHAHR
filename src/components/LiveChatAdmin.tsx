@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../AppContext';
 import { useAuth } from '../AuthContext';
-import { MessageCircle, Search, Send, User as UserIcon, Clock, CheckCircle } from 'lucide-react';
+import { MessageCircle, Search, Send, User as UserIcon, Clock, CheckCircle, Trash2 } from 'lucide-react';
+import { AdminPasswordPrompt } from './AdminPasswordPrompt';
 
 export const LiveChatAdmin: React.FC = () => {
-  const { state, addChatMessage, updateChatStatus, markChatReadByAdmin } = useAppState();
+  const { state, addChatMessage, updateChatStatus, markChatReadByAdmin, deleteChatSession } = useAppState();
   const { user } = useAuth();
   
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const [adminPrompt, setAdminPrompt] = useState<{isOpen: boolean; action: () => void; title: string}>({
+    isOpen: false, action: () => {}, title: ''
+  });
 
   const sessions = state.chatSessions || [];
   
@@ -51,6 +56,20 @@ export const LiveChatAdmin: React.FC = () => {
     });
 
     setMessageText('');
+  };
+
+  const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation(); // prevent selecting the chat
+    setAdminPrompt({
+      isOpen: true,
+      title: 'حذف گفتگو',
+      action: () => {
+        deleteChatSession(sessionId);
+        if (activeSessionId === sessionId) {
+          setActiveSessionId(null);
+        }
+      }
+    });
   };
 
   return (
@@ -102,11 +121,20 @@ export const LiveChatAdmin: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
                       <h4 className="font-bold text-sm truncate">{session.customerName}</h4>
-                      {lastMsg && (
-                        <span className={`text-[10px] ${isActive ? 'text-slate-300' : 'text-slate-400'}`}>
-                          {new Date(lastMsg.timestamp).toLocaleTimeString('fa-AF', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {lastMsg && (
+                          <span className={`text-[10px] ${isActive ? 'text-slate-300' : 'text-slate-400'}`}>
+                            {new Date(lastMsg.timestamp).toLocaleTimeString('fa-AF', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                        <button 
+                          onClick={(e) => handleDeleteSession(e, session.id)}
+                          className={`p-1 rounded-md transition-colors ${isActive ? 'text-rose-300 hover:bg-rose-900/30' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'}`}
+                          title="حذف گفتگو"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                     {lastMsg && (
                       <p className={`text-xs truncate ${isActive ? 'text-slate-300' : 'text-slate-500'} ${session.unreadByAdmin > 0 ? 'font-bold text-slate-800' : ''}`}>
@@ -206,6 +234,16 @@ export const LiveChatAdmin: React.FC = () => {
           </div>
         )}
       </div>
+      
+      <AdminPasswordPrompt 
+        isOpen={adminPrompt.isOpen} 
+        onClose={() => setAdminPrompt({ ...adminPrompt, isOpen: false })} 
+        onSuccess={() => {
+          adminPrompt.action();
+          setAdminPrompt({ ...adminPrompt, isOpen: false });
+        }}
+        title={adminPrompt.title}
+      />
     </div>
   );
 };
