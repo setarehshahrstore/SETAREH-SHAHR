@@ -246,8 +246,59 @@ export const CustomerAccount: React.FC = () => {
                 </button>
               )}
             </div>
+
+            {isEditingProfile ? (
+              <form onSubmit={handleSaveProfile} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">شماره تماس</label>
+                  <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" dir="ltr" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">شهر</label>
+                  <input type="text" value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">آدرس کامل</label>
+                  <textarea value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows={3}></textarea>
+                </div>
+                <div className="pt-4 border-t border-slate-100 mt-4">
+                  <label className="block text-sm font-bold text-slate-700 mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> تغییر رمز عبور (اختیاری)</label>
+                  <input type="password" placeholder="اگر می‌خواهید رمز عوض شود، اینجا بنویسید" value={profileForm.password} onChange={e => setProfileForm({...profileForm, password: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" dir="ltr" />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button type="submit" className="bg-[#0B1F3A] text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-[#123B66]">
+                    <Save className="w-4 h-4" /> ذخیره تغییرات
+                  </button>
+                  <button type="button" onClick={() => setIsEditingProfile(false)} className="bg-slate-100 text-slate-600 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-200">
+                    انصراف
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-100 pb-4">
+                  <div className="text-sm font-bold text-slate-500">نام کامل</div>
+                  <div className="col-span-2 font-bold text-slate-800">{customer.name} {customer.lastName}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-100 pb-4">
+                  <div className="text-sm font-bold text-slate-500">نام کاربری</div>
+                  <div className="col-span-2 font-bold text-slate-800" dir="ltr">{customer.username || '---'}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-100 pb-4">
+                  <div className="text-sm font-bold text-slate-500">شماره تماس</div>
+                  <div className="col-span-2 font-mono text-slate-800" dir="ltr">{customer.phone}</div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 pb-4">
+                  <div className="text-sm font-bold text-slate-500">موقعیت مکانی</div>
+                  <div className="col-span-2 text-slate-800">
+                    <MapPin className="w-4 h-4 inline-block ml-1 text-slate-400" />
+                    {customer.city}، {customer.address || 'آدرس ثبت نشده'}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
