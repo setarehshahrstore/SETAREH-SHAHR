@@ -40,17 +40,18 @@ export const Dashboard: React.FC = () => {
   const todaySales = state.sales.filter(s => s.date.startsWith(today));
   const monthSales = state.sales.filter(s => s.date.startsWith(thisMonth));
 
-  const totalSalesTodayUSD = todaySales.reduce((sum, s) => sum + s.finalUSD, 0);
-  const totalSalesTodayAFN = todaySales.reduce((sum, s) => sum + s.finalAFN, 0);
+  const totalSalesTodayUSD = todaySales.reduce((sum, s) => sum + (s.finalUSD || 0), 0);
+  const totalSalesTodayAFN = todaySales.reduce((sum, s) => sum + (s.finalAFN || 0), 0);
   
-  const totalSalesMonthUSD = monthSales.reduce((sum, s) => sum + s.finalUSD, 0);
-  const totalSalesMonthAFN = monthSales.reduce((sum, s) => sum + s.finalAFN, 0);
+  const totalSalesMonthUSD = monthSales.reduce((sum, s) => sum + (s.finalUSD || 0), 0);
+  const totalSalesMonthAFN = monthSales.reduce((sum, s) => sum + (s.finalAFN || 0), 0);
 
   const getCost = (salesList: any[]) => salesList.reduce((sum, s) => {
+    if (!s.items || !Array.isArray(s.items)) return sum;
     return sum + s.items.reduce((itemSum: number, item: any) => {
       const prod = state.products.find(p => p.id === item.productId);
-      const costPerBase = prod ? prod.costPriceUSD : 0;
-      return itemSum + (item.quantity * item.multiplier * costPerBase);
+      const costPerBase = prod ? (prod.costPriceUSD || 0) : 0;
+      return itemSum + ((item.quantity || 0) * (item.multiplier || 1) * costPerBase);
     }, 0);
   }, 0);
 
