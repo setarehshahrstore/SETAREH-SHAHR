@@ -309,7 +309,7 @@ export const Orders: React.FC = () => {
                             >
                               <option value="">-- یک محصول را انتخاب کنید --</option>
                               {state.products.filter(p => p.stockInBaseUnits > 0).map(p => (
-                                <option key={p.id} value={p.id}>{p.name} ({formatCurrency(p.priceAFN, 'AFN')} - موجودی: {p.stockInBaseUnits})</option>
+                                <option key={p.id} value={p.id}>{p.name} ({formatCurrency(p.retailPriceAFN, 'AFN')} - موجودی: {p.stockInBaseUnits})</option>
                               ))}
                             </select>
                             <button 

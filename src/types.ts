@@ -42,6 +42,7 @@ export interface Product {
   stockInBaseUnits: number;
   minStockInBaseUnits: number; // Low stock threshold
   location?: string; // Warehouse bin/location
+  imageUrl?: string; // Image for storefront
 }
 
 export interface Customer {

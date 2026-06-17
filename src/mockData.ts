@@ -483,10 +483,9 @@ export const INITIAL_APP_STATE: AppState = {
   sales: INITIAL_SALES,
   purchases: INITIAL_PURCHASES,
   payments: INITIAL_PAYMENTS,
-  cashRegister: {
-    balanceUSD: 2450.00,
-    balanceAFN: 185000.00
-  },
-  exchangeRate: INITIAL_EXCHANGE_RATE,
-  inquiries: []
+  cashRegister: { balanceUSD: 1500, balanceAFN: 105000 },
+  exchangeRate: 71.5,
+  inquiries: [],
+  categories: [],
+  expenses: []
 };

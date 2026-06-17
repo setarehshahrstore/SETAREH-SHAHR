@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
-import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock } from 'lucide-react';
+import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus } from 'lucide-react';
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -60,7 +60,7 @@ export const Storefront: React.FC = () => {
   };
 
   const cartTotalAFN = cart.reduce((sum, item) => {
-    const price = item.type === 'Retail' ? item.product.priceAFN : (item.product.wholesalePriceAFN || item.product.priceAFN);
+    const price = item.type === 'Retail' ? item.product.retailPriceAFN : (item.product.wholesalePriceAFN || item.product.retailPriceAFN);
     return sum + (price * item.quantity);
   }, 0);
 
@@ -87,8 +87,8 @@ export const Storefront: React.FC = () => {
     // 2. Map cart to SaleItems
     const saleItems: SaleItem[] = cart.map(item => {
       const isWholesale = item.type === 'Wholesale';
-      const unitPriceAFN = isWholesale ? (item.product.wholesalePriceAFN || item.product.priceAFN) : item.product.priceAFN;
-      const unitPriceUSD = isWholesale ? (item.product.wholesalePriceUSD || item.product.priceUSD) : item.product.priceUSD;
+      const unitPriceAFN = isWholesale ? (item.product.wholesalePriceAFN || item.product.retailPriceAFN) : item.product.retailPriceAFN;
+      const unitPriceUSD = isWholesale ? (item.product.wholesalePriceUSD || item.product.retailPriceUSD) : item.product.retailPriceUSD;
       
       return {
         productId: item.product.id,
@@ -245,7 +245,7 @@ export const Storefront: React.FC = () => {
                       <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
                         <span className="text-[10px] font-bold text-slate-500">قیمت پرچون</span>
                         <div className="flex items-center gap-2">
-                          <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.priceAFN, 'AFN')}</span>
+                          <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
                           <button 
                             disabled={product.stockInBaseUnits <= 0}
                             onClick={() => addToCart(product, 'Retail')}
@@ -316,7 +316,7 @@ export const Storefront: React.FC = () => {
                   </div>
                 ) : (
                   cart.map((item, idx) => {
-                    const price = item.type === 'Retail' ? item.product.priceAFN : (item.product.wholesalePriceAFN || item.product.priceAFN);
+                    const price = item.type === 'Retail' ? item.product.retailPriceAFN : (item.product.wholesalePriceAFN || item.product.retailPriceAFN);
                     return (
                       <div key={idx} className="flex gap-3 bg-white border border-slate-100 p-3 rounded-2xl shadow-sm relative">
                         <button onClick={() => removeFromCart(idx)} className="absolute top-2 left-2 p-1 text-slate-300 hover:text-rose-500 bg-white rounded-full">
