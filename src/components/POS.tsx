@@ -267,7 +267,6 @@ export const POS: React.FC = () => {
       city: 'نامشخص',
       debtAFN: 0,
       debtUSD: 0,
-      creditLimitAFN: 0,
       creditLimitUSD: 0
     });
     setCustomerId(newId);

@@ -137,7 +137,8 @@ export const Debts: React.FC = () => {
               companyName: newDebtForm.company,
               city: 'نامشخص',
               debtAFN: afn,
-              debtUSD: usd
+              debtUSD: usd,
+              creditLimitUSD: 0
             });
           } else {
             addSupplier({
