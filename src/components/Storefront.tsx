@@ -69,22 +69,41 @@ export const Storefront: React.FC = () => {
 
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault();
-    if (cart.length === 0 || !checkoutForm.name || !checkoutForm.phone) return;
+    if (cart.length === 0) return;
 
-    // 1. Find or create customer
-    let customer = state.customers.find(c => c.phone === checkoutForm.phone);
-    const customerId = customer ? customer.id : Date.now().toString();
-    if (!customer) {
-      customer = {
-        id: customerId,
-        name: checkoutForm.name,
-        phone: checkoutForm.phone,
-        city: 'کابل',
-        debtUSD: 0,
-        debtAFN: 0,
-        creditLimitUSD: 0
-      };
-      addCustomer(customer);
+    // 1. Determine customer
+    let customerId = '';
+    let customerName = '';
+    let customerPhone = '';
+    let customerAddress = '';
+
+    const loggedInCustomer = user?.role === 'Customer' ? state.customers.find(c => c.name === user.fullName) : null;
+
+    if (loggedInCustomer) {
+      customerId = loggedInCustomer.id;
+      customerName = loggedInCustomer.name;
+      customerPhone = loggedInCustomer.phone;
+      customerAddress = loggedInCustomer.address || '';
+    } else {
+      if (!checkoutForm.name || !checkoutForm.phone) return;
+      
+      let existingCustomer = state.customers.find(c => c.phone === checkoutForm.phone);
+      customerId = existingCustomer ? existingCustomer.id : Date.now().toString();
+      customerName = checkoutForm.name;
+      customerPhone = checkoutForm.phone;
+      customerAddress = checkoutForm.address;
+
+      if (!existingCustomer) {
+        addCustomer({
+          id: customerId,
+          name: customerName,
+          phone: customerPhone,
+          city: 'کابل',
+          debtUSD: 0,
+          debtAFN: 0,
+          creditLimitUSD: 0
+        });
+      }
     }
 
     // 2. Map cart to SaleItems
@@ -116,7 +135,7 @@ export const Storefront: React.FC = () => {
       date: new Date().toISOString(),
       customerType: cart.some(c => c.type === 'Wholesale') ? 'Wholesale' : 'Retail',
       customerId: customerId,
-      customerName: checkoutForm.name,
+      customerName: customerName,
       items: saleItems,
       totalUSD: saleItems.reduce((sum, i) => sum + i.totalUSD, 0),
       totalAFN: saleItems.reduce((sum, i) => sum + i.totalAFN, 0),
@@ -129,7 +148,7 @@ export const Storefront: React.FC = () => {
       paymentMethod: 'Cash',
       exchangeRate: state.exchangeRate,
       status: 'Pending Delivery',
-      deliveryAddress: checkoutForm.address,
+      deliveryAddress: customerAddress,
       deliveryCity: 'کابل'
     };
 
@@ -672,22 +691,31 @@ export const Storefront: React.FC = () => {
                 </div>
                 
                 <form onSubmit={handleCheckout} className="p-6 space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">نام کامل <span className="text-rose-500">*</span></label>
-                    <input 
-                      required type="text" 
-                      value={checkoutForm.name} onChange={e => setCheckoutForm({...checkoutForm, name: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس <span className="text-rose-500">*</span></label>
-                    <input 
-                      required type="tel" dir="ltr"
-                      value={checkoutForm.phone} onChange={e => setCheckoutForm({...checkoutForm, phone: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none text-right"
-                    />
-                  </div>
+                  {user?.role === 'Customer' ? (
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                      <p className="text-sm font-bold text-slate-800 mb-1">سفارش با حساب کاربری:</p>
+                      <p className="text-slate-600 text-sm font-mono">{user.fullName}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">نام کامل <span className="text-rose-500">*</span></label>
+                        <input 
+                          required type="text" 
+                          value={checkoutForm.name} onChange={e => setCheckoutForm({...checkoutForm, name: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس <span className="text-rose-500">*</span></label>
+                        <input 
+                          required type="tel" dir="ltr"
+                          value={checkoutForm.phone} onChange={e => setCheckoutForm({...checkoutForm, phone: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none text-right"
+                        />
+                      </div>
+                    </>
+                  )}
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1">آدرس دقیق تحویل</label>
                     <textarea 

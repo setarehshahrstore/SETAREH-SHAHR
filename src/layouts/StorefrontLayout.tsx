@@ -94,10 +94,16 @@ export const StorefrontLayout: React.FC = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            {user && user.role !== 'Customer' ? (
-              <Link to="/admin/dashboard" className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-blue px-6 py-2.5 rounded-xl font-bold hover:bg-brand-lightgold transition-all shadow-md hover:shadow-brand-gold/30 hover:-translate-y-0.5">
-                پنل مدیریت
-              </Link>
+            {user ? (
+              user.role !== 'Customer' ? (
+                <Link to="/admin/dashboard" className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-blue px-6 py-2.5 rounded-xl font-bold hover:bg-brand-lightgold transition-all shadow-md hover:shadow-brand-gold/30 hover:-translate-y-0.5">
+                  پنل مدیریت
+                </Link>
+              ) : (
+                <Link to="/account" className="hidden sm:flex items-center gap-2 bg-brand-navy/10 text-brand-lightgold border border-brand-gold/30 px-6 py-2.5 rounded-xl font-bold hover:bg-brand-navy/20 transition-all shadow-md hover:-translate-y-0.5">
+                  حساب: {user.fullName}
+                </Link>
+              )
             ) : (
               <Link to="/account" className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-blue px-6 py-2.5 rounded-xl font-bold hover:bg-brand-lightgold transition-all shadow-md hover:shadow-brand-gold/30 hover:-translate-y-0.5">
                 ورود
@@ -147,8 +153,12 @@ export const StorefrontLayout: React.FC = () => {
               <Link to="/tracking" onClick={() => setIsMobileMenuOpen(false)} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4 text-brand-lightgold font-bold">پیگیری سفارش</Link>
               <button onClick={() => handleNav('about')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">درباره ما</button>
               <button onClick={() => handleNav('contact')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">تماس با ما</button>
-              {user && user.role !== 'Customer' ? (
-                <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">پنل مدیریت</Link>
+              {user ? (
+                user.role !== 'Customer' ? (
+                  <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">پنل مدیریت</Link>
+                ) : (
+                  <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">حساب من: {user.fullName}</Link>
+                )
               ) : (
                 <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-right text-brand-gold border-b border-brand-navy pb-4">حساب من / ورود</Link>
               )}
