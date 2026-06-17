@@ -144,7 +144,7 @@ export const Storefront: React.FC = () => {
     state.sales.forEach(sale => {
       if (new Date(sale.date) >= thirtyDaysAgo) {
         sale.items.forEach(item => {
-          productSalesCount[item.product.id] = (productSalesCount[item.product.id] || 0) + item.quantity;
+          productSalesCount[item.productId] = (productSalesCount[item.productId] || 0) + item.quantity;
         });
       }
     });
@@ -156,7 +156,7 @@ export const Storefront: React.FC = () => {
 
     return state.products.map(p => {
       const isTopSeller = topProductIds.has(p.id) || p.isBestSeller;
-      let pModified = { ...p, isBestSeller: isTopSeller };
+      let pModified: any = { ...p, isBestSeller: isTopSeller };
 
       if (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date()) {
         const factor = 1 - p.discountPercentage / 100;
