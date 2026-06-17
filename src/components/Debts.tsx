@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppState } from '../AppContext';
 import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency } from '../utils';
-import { Users, Building2, CreditCard, X, Edit, Trash2, Plus, FileText } from 'lucide-react';
+import { Users, Building2, CreditCard, X, Edit, Trash2, Plus, FileText, Search } from 'lucide-react';
 import { AdminPasswordPrompt } from './AdminPasswordPrompt';
 import { DebtPayment } from '../types';
 
@@ -16,6 +16,7 @@ export const Debts: React.FC = () => {
   });
 
   const [activeTab, setActiveTab] = useState<'Customers' | 'Suppliers'>('Customers');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Admin Security Modal
   const [adminPrompt, setAdminPrompt] = useState<{isOpen: boolean; action: () => void; title: string}>({
@@ -48,8 +49,13 @@ export const Debts: React.FC = () => {
     notes: ''
   });
 
-  const customersWithDebt = state.customers.filter(c => c.debtAFN > 0 || c.debtUSD > 0);
-  const suppliersWithDebt = state.suppliers.filter(s => s.debtAFN > 0 || s.debtUSD > 0);
+  const searchQ = searchQuery.toLowerCase();
+  const customersWithDebt = state.customers.filter(c => 
+    searchQ ? (c.name.toLowerCase().includes(searchQ) || c.phone.includes(searchQ) || (c.companyName && c.companyName.toLowerCase().includes(searchQ))) : true
+  );
+  const suppliersWithDebt = state.suppliers.filter(s => 
+    searchQ ? (s.name.toLowerCase().includes(searchQ) || s.phone.includes(searchQ) || (s.companyName && s.companyName.toLowerCase().includes(searchQ))) : true
+  );
 
   const filteredPayments = state.payments.filter(p => {
     const pDate = p.date.split('T')[0];
@@ -234,6 +240,18 @@ export const Debts: React.FC = () => {
         >
           <Building2 className="w-4 h-4" /> طلب فروشندگان
         </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+        <Search className="w-5 h-5 text-slate-400" />
+        <input 
+          type="text" 
+          placeholder="جستجوی شخص با نام، شماره تماس، یا شرکت..." 
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none text-sm text-slate-800"
+        />
+        {searchQuery && <button onClick={() => setSearchQuery('')} className="p-1 hover:bg-slate-100 rounded-lg"><X className="w-4 h-4 text-slate-400" /></button>}
       </div>
 
       <DateFilter 

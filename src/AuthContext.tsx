@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('AFG_CURRENT_USER');
+    const saved = sessionStorage.getItem('AFG_CURRENT_USER');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -28,9 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('AFG_CURRENT_USER', JSON.stringify(user));
+      sessionStorage.setItem('AFG_CURRENT_USER', JSON.stringify(user));
     } else {
-      localStorage.removeItem('AFG_CURRENT_USER');
+      sessionStorage.removeItem('AFG_CURRENT_USER');
     }
   }, [user]);
 

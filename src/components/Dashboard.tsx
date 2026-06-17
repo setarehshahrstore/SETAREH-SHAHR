@@ -365,7 +365,7 @@ export const Dashboard: React.FC = () => {
         <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-black text-slate-800 flex items-center gap-2"><Users className="w-4 h-4 text-slate-400" /> مشتریان قرضه‌دار</h3>
-            <Link to="/admin/customers" className="text-xs font-bold text-indigo-600 hover:text-indigo-800">مدیریت حساب‌ها</Link>
+            <Link to="/admin/debts" className="text-xs font-bold text-indigo-600 hover:text-indigo-800">مدیریت حساب‌ها</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-right">

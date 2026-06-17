@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
-import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box } from 'lucide-react';
+import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box, Printer, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -23,7 +23,7 @@ export const Storefront: React.FC = () => {
     phone: '',
     address: ''
   });
-  const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
+  const [successfulOrder, setSuccessfulOrder] = useState<any | null>(null);
 
   const categories = ['All', ...Array.from(new Set(state.products.map(p => p.category)))];
 
@@ -136,7 +136,7 @@ export const Storefront: React.FC = () => {
     addSale(newSale);
     setCart([]);
     setIsCheckoutOpen(false);
-    setOrderSuccessId(invoiceNo);
+    setSuccessfulOrder(newSale);
   };
 
   return (
@@ -469,8 +469,8 @@ export const Storefront: React.FC = () => {
               {filteredProducts.map(product => (
                 <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group flex flex-col">
                   <div className="aspect-square bg-slate-50 relative overflow-hidden">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
                         <Package className="w-12 h-12" />
@@ -563,13 +563,13 @@ export const Storefront: React.FC = () => {
                   cart.map((item, idx) => {
                     const price = item.type === 'Retail' ? item.product.retailPriceAFN : (item.product.wholesalePriceAFN || item.product.retailPriceAFN);
                     return (
-                      <div key={idx} className="flex gap-3 bg-white border border-slate-100 p-3 rounded-2xl shadow-sm relative">
-                        <button onClick={() => removeFromCart(idx)} className="absolute top-2 left-2 p-1 text-slate-300 hover:text-rose-500 bg-white rounded-full">
-                          <X className="w-4 h-4" />
-                        </button>
-                        <div className="w-16 h-16 bg-slate-50 rounded-xl overflow-hidden shrink-0">
-                          {item.product.imageUrl ? (
-                            <img src={item.product.imageUrl} className="w-full h-full object-cover" />
+                        <div key={idx} className="flex gap-3 bg-white border border-slate-100 p-3 rounded-2xl shadow-sm relative">
+                          <button onClick={() => removeFromCart(idx)} className="absolute top-2 left-2 p-1.5 text-rose-500 hover:bg-rose-100 bg-rose-50 rounded-lg transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <div className="w-16 h-16 bg-slate-50 rounded-xl overflow-hidden shrink-0">
+                          {item.product.image ? (
+                            <img src={item.product.image} className="w-full h-full object-cover" />
                           ) : (
                             <Package className="w-full h-full p-4 text-slate-300" />
                           )}

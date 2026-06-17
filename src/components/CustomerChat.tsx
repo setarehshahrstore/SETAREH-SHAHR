@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChatSession, ChatMessage } from '../types';
 
 export const CustomerChat: React.FC = () => {
-  const { state, addChatSession, addChatMessage, markChatReadByCustomer } = useAppState();
+  const { state, addChatSession, addChatMessage, markChatReadByCustomer, updateChatStatus } = useAppState();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messageText, setMessageText] = useState('');
@@ -70,14 +70,58 @@ export const CustomerChat: React.FC = () => {
     e.preventDefault();
     if (!messageText.trim() || !sessionId) return;
 
+    const userMsg = messageText.trim();
+
     addChatMessage(sessionId, {
       id: Date.now().toString(),
       sender: 'Customer',
-      text: messageText.trim(),
+      text: userMsg,
       timestamp: new Date().toISOString()
     });
 
     setMessageText('');
+
+    // --- AI BOT LOGIC ---
+    const hasAdminReplied = currentSession?.messages.some(m => m.sender === 'Admin');
+    if (hasAdminReplied) return; // Stop bot if human took over
+
+    setTimeout(() => {
+      const lowerMsg = userMsg.toLowerCase();
+      let aiResponse = '';
+      let escalate = false;
+
+      const lastAiMsg = currentSession?.messages.filter(m => m.sender === 'AI').pop();
+
+      if (lowerMsg.includes('مدیر') || lowerMsg.includes('ادمین') || lowerMsg.includes('پشتیبانی') || lowerMsg.includes('انسان') || lowerMsg.includes('مشکل') || lowerMsg.includes('admin') || lowerMsg.includes('support')) {
+        aiResponse = 'لطفاً نام، شماره تماس و دلیل دقیق ارتباط خود را بنویسید تا به مدیریت هشدار دهم و شما را مستقیماً به ایشان وصل کنم.';
+      } 
+      else if (lastAiMsg?.text.includes('لطفاً نام، شماره تماس')) {
+        aiResponse = 'مشخصات و درخواست شما ثبت شد! هشدار برای مدیریت ارسال گردید. لطفاً همینجا منتظر بمانید تا پاسخ دهند.';
+        escalate = true;
+      }
+      else if (lowerMsg.includes('سلام') || lowerMsg.includes('درود')) {
+        aiResponse = 'سلام! چطور می‌توانم در خرید از فروشگاه ستاره شهر به شما کمک کنم؟ برای ارتباط با پشتیبانی کلمه "ادمین" را ارسال کنید.';
+      }
+      else if (lowerMsg.includes('سفارش') || lowerMsg.includes('پیگیری') || lowerMsg.includes('رسید')) {
+        aiResponse = 'برای پیگیری سفارش خود می‌توانید روی دکمه «پیگیری سفارش» در بالای سایت کلیک کنید. اگر مشکل خاصی هست، کلمه "پشتیبانی" را بفرستید.';
+      }
+      else {
+        aiResponse = 'من ربات هوشمند فروشگاه هستم. برای راهنمایی در خدمتم. اگر نیاز به گفتگو با انسان دارید، لطفاً کلمه «ادمین» یا «پشتیبانی» را بفرستید.';
+      }
+
+      addChatMessage(sessionId, {
+        id: Date.now().toString() + '-ai',
+        sender: 'AI',
+        text: aiResponse,
+        timestamp: new Date().toISOString()
+      });
+
+      if (escalate || aiResponse.includes('هشدار برای مدیریت')) {
+        setTimeout(() => {
+          updateChatStatus(sessionId, 'Waiting');
+        }, 100);
+      }
+    }, 1000);
   };
 
   const unreadCount = state.chatSessions?.find(s => 

@@ -15,7 +15,9 @@ import {
   Search,
   MapPin,
   Barcode,
-  Printer
+  Printer,
+  Package,
+  X
 } from 'lucide-react';
 import { Product, Purchase, PurchaseItem } from '../types';
 
@@ -39,7 +41,7 @@ export const Inventory: React.FC = () => {
   
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isRestocking, setIsRestocking] = useState(false);
 
   // Editing Product states
@@ -196,34 +198,69 @@ export const Inventory: React.FC = () => {
     return ['مواد بهداشتی و آرایشی', 'نوشیدنی‌ها', 'میوه خشک و خسته‌باب', 'خوارباره و مواد غذایی', 'حبوبات و غلات افغانی'];
   });
 
-  const [showCatInput, setShowCatInput] = useState(false);
-  const [newCatText, setNewCatText] = useState('');
+  const [customCategoryMode, setCustomCategoryMode] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
-  // New Product Form States
-  const [newProdName, setNewProdName] = useState('');
-  const [newProdSku, setNewProdSku] = useState('');
-  const [newProdCat, setNewProdCat] = useState('خوارباره و مواد غذایی');
-  const [newProdBaseUnit, setNewProdBaseUnit] = useState('دانه');
-  const [newProdImage, setNewProdImage] = useState(IMAGE_PRESETS[0].url);
-  const [newProdLocation, setNewProdLocation] = useState('بخش مرکزی گدام');
-  
-  // Custom unit multiplier structures
-  const [hasPack, setHasPack] = useState(true);
-  const [packName, setPackName] = useState('بسته');
-  const [packQty, setPackQty] = useState('10');
+  const [formData, setFormData] = useState({
+    name: '', sku: '', category: 'خواربار و مواد غذایی', baseUnit: 'دانه',
+    image: IMAGE_PRESETS[0].url, location: '',
+    wholesalePriceUSD: '1.00', retailPriceUSD: '1.50', costPriceUSD: '0.80', 
+    costPriceCarton: '800.00', stockPieces: '0', stockCartons: '0', minStock: '100',
+    hasPack: true, packName: 'بسته', packQty: '10',
+    hasBox: true, boxName: 'قوطی', boxQty: '100',
+    hasCarton: true, cartonName: 'کارتن', cartonQty: '1000'
+  });
 
-  const [hasBox, setHasBox] = useState(true);
-  const [boxName, setBoxName] = useState('قوطی');
-  const [boxQty, setBoxQty] = useState('100');
+  const handlePieceCostChange = (val: string) => {
+    const pieceCost = parseFloat(val) || 0;
+    const multiplier = parseInt(formData.cartonQty) || 1;
+    setFormData(prev => ({
+      ...prev,
+      costPriceUSD: val,
+      costPriceCarton: (pieceCost * multiplier).toFixed(2)
+    }));
+  };
 
-  const [hasCarton, setHasCarton] = useState(true);
-  const [cartonName, setCartonName] = useState('کارتن');
-  const [cartonQty, setNewCartonQty] = useState('1000');
+  const handleCartonCostChange = (val: string) => {
+    const cartonCost = parseFloat(val) || 0;
+    const multiplier = parseInt(formData.cartonQty) || 1;
+    setFormData(prev => ({
+      ...prev,
+      costPriceCarton: val,
+      costPriceUSD: (cartonCost / multiplier).toFixed(2)
+    }));
+  };
 
-  const [newProdWholesaleUSD, setNewProdWholesaleUSD] = useState('1.00');
-  const [newProdRetailUSD, setNewProdRetailUSD] = useState('1.50');
-  const [newProdCostUSD, setNewProdCostUSD] = useState('0.80');
-  const [newProdMinStock, setNewProdMinStock] = useState('100');
+  const handlePieceStockChange = (val: string) => {
+    const pieces = parseInt(val) || 0;
+    const multiplier = parseInt(formData.cartonQty) || 1;
+    setFormData(prev => ({
+      ...prev,
+      stockPieces: val,
+      stockCartons: (pieces / multiplier).toFixed(1)
+    }));
+  };
+
+  const handleCartonStockChange = (val: string) => {
+    const cartons = parseFloat(val) || 0;
+    const multiplier = parseInt(formData.cartonQty) || 1;
+    setFormData(prev => ({
+      ...prev,
+      stockCartons: val,
+      stockPieces: Math.round(cartons * multiplier).toString()
+    }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Restock form states
   const [restockSupplierId, setRestockSupplierId] = useState('');
@@ -238,71 +275,65 @@ export const Inventory: React.FC = () => {
     ...state.products.map(p => p.category)
   ]))];
 
-  const handleAddCategory = () => {
-    if (newCatText.trim() && !customCategories.includes(newCatText.trim())) {
-      const updated = [...customCategories, newCatText.trim()];
+  const handleSaveProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalCategory = customCategoryMode && newCategoryName.trim() ? newCategoryName.trim() : formData.category;
+    if (customCategoryMode && finalCategory && !customCategories.includes(finalCategory)) {
+      const updated = [...customCategories, finalCategory];
       setCustomCategories(updated);
       localStorage.setItem('AFG_CUSTOM_CATEGORIES', JSON.stringify(updated));
-      setNewProdCat(newCatText.trim());
-      setNewCatText('');
-      setShowCatInput(false);
-      alert('صنف کالای تجاری جدید با موفقیت درج گردید.');
-    }
-  };
-
-  const handleCreateProduct = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newProdName || !newProdSku) return;
-
-    if (state.products.some(p => p.sku === newProdSku)) {
-      alert('خطا! محصولی با این بارکد/SKU قبلاً در سیستم ثبت شده است.');
-      return;
-    }
-
-    const wholesaleAFN = parseFloat(newProdWholesaleUSD) * state.exchangeRate;
-    const retailAFN = parseFloat(newProdRetailUSD) * state.exchangeRate;
-    const costAFN = parseFloat(newProdCostUSD) * state.exchangeRate;
-
-    const unitsObj: any = {
-      piece: newProdBaseUnit
-    };
-
-    if (hasPack && packName) {
-      unitsObj.pack = { name: packName, multiplier: parseInt(packQty) || 10 };
-    }
-    if (hasBox && boxName) {
-      unitsObj.box = { name: boxName, multiplier: parseInt(boxQty) || 100 };
-    }
-    if (hasCarton && cartonName) {
-      unitsObj.carton = { name: cartonName, multiplier: parseInt(cartonQty) || 1000 };
     }
 
     const newProduct: Product = {
-      id: `prod-${Date.now()}`,
-      name: newProdName,
-      sku: newProdSku,
-      category: newProdCat,
-      image: newProdImage || IMAGE_PRESETS[0].url,
-      baseUnit: newProdBaseUnit,
-      units: unitsObj,
-      wholesalePriceUSD: parseFloat(newProdWholesaleUSD) || 1.00,
-      wholesalePriceAFN: wholesaleAFN,
-      retailPriceUSD: parseFloat(newProdRetailUSD) || 1.50,
-      retailPriceAFN: retailAFN,
-      costPriceUSD: parseFloat(newProdCostUSD) || 0.80,
-      costPriceAFN: costAFN,
-      stockInBaseUnits: 0,
-      minStockInBaseUnits: parseInt(newProdMinStock) || 50,
-      location: newProdLocation || 'بخش مرکزی گدام'
+      id: editingProduct ? editingProduct.id : `PROD-${Date.now()}`,
+      name: formData.name,
+      sku: formData.sku,
+      category: finalCategory,
+      image: formData.image,
+      baseUnit: formData.baseUnit,
+      wholesalePriceUSD: parseFloat(formData.wholesalePriceUSD) || 0,
+      wholesalePriceAFN: (parseFloat(formData.wholesalePriceUSD) || 0) * state.exchangeRate,
+      retailPriceUSD: parseFloat(formData.retailPriceUSD) || 0,
+      retailPriceAFN: (parseFloat(formData.retailPriceUSD) || 0) * state.exchangeRate,
+      costPriceUSD: parseFloat(formData.costPriceUSD) || 0,
+      costPriceAFN: (parseFloat(formData.costPriceUSD) || 0) * state.exchangeRate,
+      stockInBaseUnits: editingProduct ? editingProduct.stockInBaseUnits : (parseInt(formData.stockPieces) || 0),
+      minStockInBaseUnits: parseInt(formData.minStock) || 0,
+      location: formData.location,
+      units: {
+        piece: formData.baseUnit,
+        ...(formData.hasPack && { pack: { name: formData.packName, multiplier: parseInt(formData.packQty) || 1 } }),
+        ...(formData.hasBox && { box: { name: formData.boxName, multiplier: parseInt(formData.boxQty) || 1 } }),
+        ...(formData.hasCarton && { carton: { name: formData.cartonName, multiplier: parseInt(formData.cartonQty) || 1 } })
+      }
     };
 
-    addProduct(newProduct);
-    setIsAddingProduct(false);
-    
-    // Clear fields
-    setNewProdName('');
-    setNewProdSku('');
-    alert('محصول جدید با موفقیت در انبار ثبت گردید. جهت افزودن موجودی برگ فرمایش خرید مجدد را کلیک کنید.');
+    if (editingProduct) {
+      editProduct(newProduct);
+    } else {
+      addProduct(newProduct);
+    }
+    setIsAddModalOpen(false);
+    setEditingProduct(null);
+  };
+
+  const openEdit = (p: Product) => {
+    setFormData({
+      name: p.name, sku: p.sku, category: p.category, baseUnit: p.baseUnit,
+      image: p.image, location: p.location || '',
+      wholesalePriceUSD: p.wholesalePriceUSD.toString(),
+      retailPriceUSD: p.retailPriceUSD.toString(),
+      costPriceUSD: p.costPriceUSD.toString(),
+      costPriceCarton: (p.costPriceUSD * (p.units.carton?.multiplier || 1)).toFixed(2),
+      stockPieces: p.stockInBaseUnits.toString(),
+      stockCartons: (p.stockInBaseUnits / (p.units.carton?.multiplier || 1)).toFixed(1),
+      minStock: p.minStockInBaseUnits.toString(),
+      hasPack: !!p.units.pack, packName: p.units.pack?.name || 'بسته', packQty: (p.units.pack?.multiplier || 10).toString(),
+      hasBox: !!p.units.box, boxName: p.units.box?.name || 'قوطی', boxQty: (p.units.box?.multiplier || 100).toString(),
+      hasCarton: !!p.units.carton, cartonName: p.units.carton?.name || 'کارتن', cartonQty: (p.units.carton?.multiplier || 1000).toString()
+    });
+    setEditingProduct(p);
+    setIsAddModalOpen(true);
   };
 
   const handleRestockSubmit = (e: React.FormEvent) => {
@@ -355,25 +386,7 @@ export const Inventory: React.FC = () => {
     alert("سند خرید و چارج مجدد گدام با موفقیت ثبت گردید. موجودی گدام به‌روز شد و حساب سوداگر تصفیه متوازن گردید.");
   };
 
-  const handleSaveChanges = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProduct) return;
 
-    const wholesalePriceAFN = editingProduct.wholesalePriceUSD * state.exchangeRate;
-    const retailPriceAFN = editingProduct.retailPriceUSD * state.exchangeRate;
-    const costPriceAFN = editingProduct.costPriceUSD * state.exchangeRate;
-
-    const updatedProduct: Product = {
-      ...editingProduct,
-      wholesalePriceAFN,
-      retailPriceAFN,
-      costPriceAFN
-    };
-
-    editProduct(updatedProduct);
-    setEditingProduct(null);
-    alert('تغییرات کالا با موفقیت ذخیره گردید.');
-  };
 
   const handleDeleteProductClick = (id: string, name: string) => {
     setProductToDelete({ id, name });
@@ -449,7 +462,7 @@ export const Inventory: React.FC = () => {
               ثبت فرمایش خرید (واردات به گدام)
             </button>
             <button
-              onClick={() => setIsAddingProduct(!isAddingProduct)}
+              onClick={() => { setEditingProduct(null); setIsAddModalOpen(true); }}
               className="flex-1 sm:flex-initial bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
@@ -595,481 +608,182 @@ export const Inventory: React.FC = () => {
         </div>
       )}
 
-      {/* Add Product form overlay simulation */}
-      {isAddingProduct && (
-        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 max-w-xl text-right">
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2 uppercase pb-2 border-b border-slate-200">
-            <Layers className="text-slate-700 w-5 h-5" />
-            تعریف و فرمول‌بندی محصول تجاری جدید در سیستم ستاره شهر
-          </h3>
-
-          <form onSubmit={handleCreateProduct} className="space-y-4 text-xs text-slate-600">
+      {/* Add/Edit Product Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto pt-10 pb-20">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden relative">
+            <div className="p-4 bg-[#0B1F3A] flex justify-between items-center text-white sticky top-0 z-10">
+              <h3 className="font-bold flex items-center gap-2">
+                <Package className="w-5 h-5" /> 
+                {editingProduct ? 'ویرایش کالا' : 'ثبت کالای جدید'}
+              </h3>
+              <button onClick={() => { setIsAddModalOpen(false); setEditingProduct(null); }} className="hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase">نام مکمل کالا (فارسی/دری):</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="مثال: شامپو سدر صحت ۲۵۰ میلی"
-                  value={newProdName}
-                  onChange={(e) => setNewProdName(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase">کد بارکد محصول (کد اختصاصی یا بارکد خوان SKU):</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="مثال: 6291100112233"
-                  value={newProdSku}
-                  onChange={(e) => setNewProdSku(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 font-mono text-left focus:outline-hidden"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">دسته‌بندی (صنف کالا):</label>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowCatInput(!showCatInput)} 
-                    className="text-[10px] font-bold text-emerald-600 hover:underline cursor-pointer"
-                  >
-                    {showCatInput ? 'انصراف' : '➕ صنف نو'}
-                  </button>
-                </div>
-
-                {showCatInput ? (
-                  <div className="flex gap-1.5">
-                    <input 
-                      type="text" 
-                      placeholder="صنف جدید..."
-                      value={newCatText}
-                      onChange={(e) => setNewCatText(e.target.value)}
-                      className="flex-1 text-xs bg-white border border-slate-300 rounded p-1"
-                    />
-                    <button 
-                      type="button" 
-                      onClick={handleAddCategory}
-                      className="bg-emerald-600 text-white rounded p-1 text-[11px] font-bold hover:bg-emerald-700 cursor-pointer"
-                    >
-                      ذخیره
-                    </button>
+            <form onSubmit={handleSaveProduct} className="p-6 space-y-6">
+              {/* Basic Info */}
+              <div className="space-y-4">
+                <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2">اطلاعات اولیه و تصویر</h4>
+                
+                <div className="flex gap-4 items-start">
+                  <div className="w-24 h-24 shrink-0 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center overflow-hidden bg-slate-50 relative group cursor-pointer">
+                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ImageIcon className="text-white w-6 h-6" />
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                   </div>
-                ) : (
-                  <select
-                    value={newProdCat}
-                    onChange={(e) => setNewProdCat(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-right focus:outline-hidden"
-                  >
-                    {customCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase font-semibold">واحد اندازه گیری پایه (مثل دانه):</label>
-                <input
-                  type="text"
-                  required
-                  value={newProdBaseUnit}
-                  onChange={(e) => setNewProdBaseUnit(e.target.value)}
-                  placeholder="مثال: دانه"
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase font-semibold">موقعیت قفسه / گدام انبار:</label>
-                <input
-                  type="text"
-                  value={newProdLocation}
-                  onChange={(e) => setNewProdLocation(e.target.value)}
-                  placeholder="مثال: گدام شماره ۳ بخش بهداشتی"
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 focus:outline-hidden"
-                />
-              </div>
-            </div>
-
-            {/* Premium product presets illustration image */}
-            <div className="bg-slate-100 p-2.5 rounded-lg border border-slate-200">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-emerald-600" />
-                تصویر کالا (انتخاب از تصاویر پیشنهادی):
-              </label>
-
-              <div className="grid grid-cols-4 gap-1.5 mt-1">
-                {IMAGE_PRESETS.map((pSet, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setNewProdImage(pSet.url)}
-                    className={`p-1 bg-white rounded-md border text-[9.5px] truncate text-center ${
-                      newProdImage === pSet.url ? 'border-emerald-600 ring-1 ring-emerald-505 font-bold text-emerald-800' : 'border-slate-200'
-                    }`}
-                  >
-                    {pSet.name.split(' ')[0]} {pSet.name.split(' ')[1]}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex flex-col gap-2 mt-2 bg-white p-2.5 rounded-lg border border-slate-150">
-                <div className="flex gap-3 items-center">
-                  <img 
-                    src={newProdImage} 
-                    alt="Live Preview" 
-                    className="w-11 h-11 rounded-lg object-cover border border-slate-200 shrink-0" 
-                    referrerPolicy="no-referrer" 
-                  />
-                  <div className="flex-1 space-y-1 text-right">
-                    <span className="block text-[10px] font-bold text-slate-400">آپلود عکس نو از حافظه آیفون / اندروید / کامپیوتر:</span>
-                    <input 
-                      type="file"
-                      id="upload-new-prod-pic"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            if (typeof reader.result === 'string') {
-                              setNewProdImage(reader.result);
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="w-full text-[10px] text-slate-500 file:ml-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                    />
+                  
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">نام محصول</label>
+                      <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37]" placeholder="مثال: شامپو صحت" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">بارکد (SKU)</label>
+                      <input type="text" required value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37] font-mono text-left" dir="ltr" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="block text-xs font-bold text-slate-600">دسته‌بندی</label>
+                        <button type="button" onClick={() => setCustomCategoryMode(!customCategoryMode)} className="text-[10px] text-blue-600 font-bold hover:underline">
+                          {customCategoryMode ? 'انتخاب از لیست' : 'افزودن دسته‌بندی جدید'}
+                        </button>
+                      </div>
+                      {customCategoryMode ? (
+                        <input type="text" required placeholder="نام دسته‌بندی جدید..." value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37]" />
+                      ) : (
+                        <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37]">
+                          {categoriesList.filter(c=>c!=='All').map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">موقعیت گدام</label>
+                      <input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37]" placeholder="مثال: قفسه A-12" />
+                    </div>
                   </div>
                 </div>
-                <div className="border-t border-slate-100 pt-1.5">
-                  <span className="block text-[9px] text-slate-400 mb-0.5">یا آدرس مستقیم تصویر آنلاین (اختیاری):</span>
-                  <input 
-                    type="text"
-                    value={newProdImage}
-                    onChange={(e) => setNewProdImage(e.target.value)}
-                    placeholder="https://example.com/item.jpg"
-                    className="w-full bg-slate-50 p-1 rounded font-mono text-[10px] text-left focus:outline-hidden border border-slate-100"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Custom multipliers structures (Carton -> Box -> Pack -> Piece) */}
-            <div className="p-3.5 bg-white border border-slate-200 rounded-lg space-y-2.5">
-              <span className="block text-[11px] font-bold text-slate-800">تعیین موازنه تبدیل کارتن / بسته به دانه (واحد پایه):</span>
-              
-              <div className="space-y-2 text-slate-700">
-                {/* Pack Multiplier */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={hasPack}
-                    onChange={(e) => setHasPack(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <span className="text-[11px] font-semibold w-12 text-slate-500">پاکت/بسته:</span>
-                  <input
-                    disabled={!hasPack}
-                    type="text"
-                    value={packName}
-                    onChange={(e) => setPackName(e.target.value)}
-                    placeholder="نام واحد اول"
-                    className="flex-1 p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]"
-                  />
-                  <span className="text-[11px] text-slate-400 font-bold">=</span>
-                  <input
-                    disabled={!hasPack}
-                    type="number"
-                    value={packQty}
-                    onChange={(e) => setPackQty(e.target.value)}
-                    placeholder="ضریب"
-                    className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono text-center"
-                  />
-                  <span className="text-[11px] text-slate-400">{newProdBaseUnit}</span>
-                </div>
-
-                {/* Box Multiplier */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={hasBox}
-                    onChange={(e) => setHasBox(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <span className="text-[11px] font-semibold w-12 text-slate-500">جعبه/قوطی:</span>
-                  <input
-                    disabled={!hasBox}
-                    type="text"
-                    value={boxName}
-                    onChange={(e) => setBoxName(e.target.value)}
-                    placeholder="نام واحد دوم"
-                    className="flex-1 p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]"
-                  />
-                  <span className="text-[11px] text-slate-400 font-bold">=</span>
-                  <input
-                    disabled={!hasBox}
-                    type="number"
-                    value={boxQty}
-                    onChange={(e) => setBoxQty(e.target.value)}
-                    placeholder="ضریب"
-                    className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono text-center"
-                  />
-                  <span className="text-[11px] text-slate-400">{newProdBaseUnit}</span>
-                </div>
-
-                {/* Carton Multiplier */}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={hasCarton}
-                    onChange={(e) => setHasCarton(e.target.checked)}
-                    className="rounded text-emerald-600 focus:ring-emerald-500"
-                  />
-                  <span className="text-[11px] font-semibold w-12 text-slate-500">کارتن کلان:</span>
-                  <input
-                    disabled={!hasCarton}
-                    type="text"
-                    value={cartonName}
-                    onChange={(e) => setCartonName(e.target.value)}
-                    placeholder="نام واحد سوم"
-                    className="flex-1 p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]"
-                  />
-                  <span className="text-[11px] text-slate-400 font-bold">=</span>
-                  <input
-                    disabled={!hasCarton}
-                    type="number"
-                    value={cartonQty}
-                    onChange={(e) => setNewCartonQty(e.target.value)}
-                    placeholder="ضریب"
-                    className="w-16 p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px] font-mono text-center"
-                  />
-                  <span className="text-[11px] text-slate-400">{newProdBaseUnit}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Basic selling prices set */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase">هزینه خرید به دالر ($):</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newProdCostUSD}
-                  onChange={(e) => setNewProdCostUSD(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 font-mono text-left focus:outline-hidden"
-                />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400">قیمت فروش عمده ($):</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newProdWholesaleUSD}
-                  onChange={(e) => setNewProdWholesaleUSD(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 font-mono text-left focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400">قیمت فروش پرچون ($):</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newProdRetailUSD}
-                  onChange={(e) => setNewProdRetailUSD(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 font-mono text-left focus:outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400">حد هشدار کمبود موجودی:</label>
-                <input
-                  type="number"
-                  required
-                  value={newProdMinStock}
-                  onChange={(e) => setNewProdMinStock(e.target.value)}
-                  className="w-full text-xs bg-white border border-slate-300 rounded p-1.5 font-mono text-left focus:outline-hidden"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end gap-2 text-xs font-bold border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsAddingProduct(false)}
-                className="bg-slate-200 hover:bg-slate-300 px-3.5 py-1.5 rounded-lg cursor-pointer"
-              >
-                انصراف دفتری
-              </button>
-              <button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-1.5 rounded-lg cursor-pointer">
-                ایجاد نهایی کالا
-              </button>
-            </div>
-
-          </form>
-        </div>
-      )}
-
-      {/* Editing product modal overlay segment */}
-      {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" dir="rtl">
-          <div className="bg-white p-6 rounded-2xl border-2 border-emerald-500 shadow-2xl space-y-4 max-w-xl w-full text-right max-h-[90vh] overflow-y-auto animate-fade-in">
-            <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b pb-2">
-              <Edit className="w-5 h-5 text-emerald-600 animate-pulse" />
-              ویرایش و اصلاح اطلاعات کالا دفتری: {editingProduct.name}
-            </h3>
-
-            <form onSubmit={handleSaveChanges} className="space-y-3.5 text-xs text-slate-600">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">نام کامل کالا:</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.name} 
-                    required
-                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-hidden" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">صنف / طبقه‌بندی کالا:</label>
-                  <select
-                    value={editingProduct.category}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg text-xs focus:outline-hidden"
-                  >
-                    {customCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">هزینه خرید به دالر ($):</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    value={editingProduct.costPriceUSD} 
-                    onChange={(e) => setEditingProduct({ ...editingProduct, costPriceUSD: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg font-mono text-left focus:outline-hidden" 
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">قیمت عمده فروشی ($):</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    value={editingProduct.wholesalePriceUSD} 
-                    onChange={(e) => setEditingProduct({ ...editingProduct, wholesalePriceUSD: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg font-mono text-left focus:outline-hidden" 
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">قیمت پرچون فروشی ($):</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    value={editingProduct.retailPriceUSD} 
-                    onChange={(e) => setEditingProduct({ ...editingProduct, retailPriceUSD: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg font-mono text-left focus:outline-hidden" 
-                  />
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <label className="block text-[10px] font-bold text-slate-500 mb-1 flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
-                  ویرایش و آپلود عکس محصول:
-                </label>
-                <div className="flex gap-3 items-center">
-                  <img 
-                    src={editingProduct.image || IMAGE_PRESETS[0].url} 
-                    alt="Live Preview" 
-                    className="w-10 h-10 rounded-lg object-cover border border-slate-200" 
-                    referrerPolicy="no-referrer" 
-                  />
-                  <div className="flex-1 space-y-1">
-                    <input 
-                      type="file"
-                      id="edit-prod-pic"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            if (typeof reader.result === 'string') {
-                              setEditingProduct({ ...editingProduct, image: reader.result });
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="w-full text-[10px] text-slate-500 file:ml-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
-                    />
+              {/* Pricing */}
+              <div className="space-y-4">
+                <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2 flex justify-between items-center">
+                  <span>قیمت‌گذاری ارزی (USD)</span>
+                  <span className="text-[10px] text-slate-400 font-normal">تبدیل خودکار قیمت کارتن و دانه فعال است</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+                    <label className="block text-xs font-bold text-emerald-800 mb-1">قیمت خرید (فی دانه)</label>
+                    <input type="number" step="0.01" required value={formData.costPriceUSD} onChange={e => handlePieceCostChange(e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                  </div>
+                  <div className="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+                    <label className="block text-xs font-bold text-emerald-800 mb-1">قیمت خرید (کارتن)</label>
+                    <input type="number" step="0.01" required value={formData.costPriceCarton} onChange={e => handleCartonCostChange(e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                  </div>
+                  <div className="pt-2">
+                    <label className="block text-xs font-bold text-slate-600 mb-1">نرخ فروش عمده</label>
+                    <input type="number" step="0.01" required value={formData.wholesalePriceUSD} onChange={e => setFormData({...formData, wholesalePriceUSD: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" />
+                  </div>
+                  <div className="pt-2">
+                    <label className="block text-xs font-bold text-slate-600 mb-1">نرخ فروش پرچون</label>
+                    <input type="number" step="0.01" required value={formData.retailPriceUSD} onChange={e => setFormData({...formData, retailPriceUSD: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" />
                   </div>
                 </div>
-                <input 
-                  type="text"
-                  value={editingProduct.image || ''}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
-                  placeholder="آدرس اینترنتی مستقیم عکس..."
-                  className="w-full mt-1.5 bg-white p-1 rounded font-mono text-[9px] text-left focus:outline-hidden border border-slate-150"
-                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">موقعیت استقرار در گدام:</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.location || ''} 
-                    onChange={(e) => setEditingProduct({ ...editingProduct, location: e.target.value })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg focus:outline-hidden" 
-                  />
+              {/* Initial Stock */}
+              {!editingProduct && (
+                <div className="space-y-4">
+                  <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2 flex justify-between items-center">
+                    <span>موجودی اولیه در انبار</span>
+                    <span className="text-[10px] text-slate-400 font-normal">تبدیل خودکار کارتن و دانه بر اساس تعداد کارتن فعال است</span>
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                      <label className="block text-xs font-bold text-blue-800 mb-1">موجودی اولیه (تعداد کارتن)</label>
+                      <input type="number" step="0.1" value={formData.stockCartons} onChange={e => handleCartonStockChange(e.target.value)} className="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white font-mono text-left focus:border-blue-500" dir="ltr" />
+                    </div>
+                    <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
+                      <label className="block text-xs font-bold text-blue-800 mb-1">موجودی اولیه (مجموع دانه‌ها)</label>
+                      <input type="number" value={formData.stockPieces} onChange={e => handlePieceStockChange(e.target.value)} className="w-full p-2 border border-blue-200 rounded-lg text-sm bg-white font-mono text-left focus:border-blue-500" dir="ltr" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold mb-1">حد هشدار کمبود موجودی دانه:</label>
-                  <input 
-                    type="number" 
-                    value={editingProduct.minStockInBaseUnits} 
-                    onChange={(e) => setEditingProduct({ ...editingProduct, minStockInBaseUnits: parseInt(e.target.value) || 10 })}
-                    className="w-full bg-slate-50 border p-1.5 rounded-lg text-left font-mono focus:outline-hidden" 
-                  />
+              )}
+
+              {/* Units */}
+              <div className="space-y-4">
+                <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2">واحدهای شمارش و بسته‌بندی</h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="col-span-1">
+                    <label className="block text-xs font-bold text-slate-600 mb-1">واحد پایه (تک)</label>
+                    <input type="text" required value={formData.baseUnit} onChange={e => setFormData({...formData, baseUnit: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37]" placeholder="دانه" />
+                  </div>
+                  <div className="col-span-1 md:col-span-3 flex flex-wrap gap-4 pt-4 md:pt-0 border-t border-slate-100 md:border-t-0 mt-4 md:mt-0">
+                    <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex-1">
+                      <label className="flex items-center gap-2 text-sm font-bold text-[#0B1F3A] cursor-pointer">
+                        <input type="checkbox" checked={formData.hasPack} onChange={e => setFormData({...formData, hasPack: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4" />
+                        بسته کوچک
+                      </label>
+                      {formData.hasPack && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input type="text" value={formData.packName} onChange={e => setFormData({...formData, packName: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="نام" />
+                          <span className="text-xs text-slate-500">=</span>
+                          <input type="number" min="1" value={formData.packQty} onChange={e => setFormData({...formData, packQty: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="تعداد" />
+                          <span className="text-[10px] text-slate-400">{formData.baseUnit}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex-1">
+                      <label className="flex items-center gap-2 text-sm font-bold text-[#0B1F3A] cursor-pointer">
+                        <input type="checkbox" checked={formData.hasBox} onChange={e => setFormData({...formData, hasBox: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4" />
+                        جعبه / قوطی
+                      </label>
+                      {formData.hasBox && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input type="text" value={formData.boxName} onChange={e => setFormData({...formData, boxName: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="نام" />
+                          <span className="text-xs text-slate-500">=</span>
+                          <input type="number" min="1" value={formData.boxQty} onChange={e => setFormData({...formData, boxQty: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="تعداد" />
+                          <span className="text-[10px] text-slate-400">{formData.baseUnit}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex-1">
+                      <label className="flex items-center gap-2 text-sm font-bold text-[#0B1F3A] cursor-pointer">
+                        <input type="checkbox" checked={formData.hasCarton} onChange={e => setFormData({...formData, hasCarton: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4" />
+                        کارتن بزرگ
+                      </label>
+                      {formData.hasCarton && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input type="text" value={formData.cartonName} onChange={e => setFormData({...formData, cartonName: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="نام" />
+                          <span className="text-xs text-slate-500">=</span>
+                          <input type="number" min="1" value={formData.cartonQty} onChange={e => {
+                            const newQty = e.target.value;
+                            const multiplier = parseInt(newQty) || 1;
+                            const costPiece = parseFloat(formData.costPriceUSD) || 0;
+                            const stockCartons = parseFloat(formData.stockCartons) || 0;
+                            setFormData({
+                              ...formData, 
+                              cartonQty: newQty,
+                              costPriceCarton: (costPiece * multiplier).toFixed(2),
+                              stockPieces: Math.round(stockCartons * multiplier).toString()
+                            });
+                          }} className="w-16 p-1 text-xs border rounded" placeholder="تعداد" />
+                          <span className="text-[10px] text-slate-400">{formData.baseUnit}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-1.5 pt-3.5 border-t">
-                <button 
-                  type="button" 
-                  onClick={() => setEditingProduct(null)}
-                  className="bg-slate-200 px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-slate-300"
-                >
-                  انصراف
-                </button>
-                <button 
-                  type="submit" 
-                  className="bg-emerald-600 text-white px-5 py-2 rounded-lg font-bold cursor-pointer hover:bg-emerald-700 shadow-sm"
-                >
-                  ذخیره تغییرات اصلاحی
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                <button type="button" onClick={() => { setIsAddModalOpen(false); setEditingProduct(null); }} className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200">لغو</button>
+                <button type="submit" className="px-6 py-2.5 bg-[#0B1F3A] text-white rounded-xl font-bold hover:bg-[#123B66] shadow-lg flex items-center gap-2">
+                  <Package className="w-5 h-5" /> ذخیره کالا در سیستم
                 </button>
               </div>
             </form>
@@ -1196,7 +910,7 @@ export const Inventory: React.FC = () => {
                           <Barcode className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => setEditingProduct(p)}
+                          onClick={() => openEdit(p)}
                           className="p-1.5 text-slate-500 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 rounded-lg cursor-pointer transition-colors"
                           title="ویرایش مشخصات"
                         >

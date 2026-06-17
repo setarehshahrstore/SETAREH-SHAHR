@@ -88,6 +88,7 @@ export const StorefrontLayout: React.FC = () => {
             <button onClick={() => handleNav('categories')} className="hover:text-brand-gold transition-colors">دسته‌بندی‌ها</button>
             <button onClick={() => handleNav('products')} className="hover:text-brand-gold transition-colors">محصولات</button>
             <button onClick={() => handleNav('wholesale')} className="hover:text-brand-gold transition-colors">خرید عمده</button>
+            <Link to="/tracking" className="hover:text-brand-gold transition-colors text-brand-lightgold font-bold">پیگیری سفارش</Link>
             <button onClick={() => handleNav('about')} className="hover:text-brand-gold transition-colors">درباره ما</button>
             <button onClick={() => handleNav('contact')} className="hover:text-brand-gold transition-colors">تماس با ما</button>
           </nav>
@@ -143,6 +144,7 @@ export const StorefrontLayout: React.FC = () => {
               <button onClick={() => handleNav('categories')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">دسته‌بندی‌ها</button>
               <button onClick={() => handleNav('products')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">محصولات</button>
               <button onClick={() => handleNav('wholesale')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">خرید عمده</button>
+              <Link to="/tracking" onClick={() => setIsMobileMenuOpen(false)} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4 text-brand-lightgold font-bold">پیگیری سفارش</Link>
               <button onClick={() => handleNav('about')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">درباره ما</button>
               <button onClick={() => handleNav('contact')} className="text-right hover:text-brand-gold border-b border-brand-navy pb-4">تماس با ما</button>
               {user && user.role !== 'Customer' ? (
