@@ -9,6 +9,7 @@ import { AdminLayout } from './layouts/AdminLayout';
 
 import { Storefront } from './components/Storefront'; // Landing Page
 import { Dashboard } from './components/Dashboard';
+import { Products } from './components/Products';
 import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
 import { Partners } from './components/Partners';
@@ -90,7 +91,7 @@ export default function App() {
               
               <Route path="products" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="مدیریت محصولات" />
+                  <Products />
                 </ProtectedRoute>
               } />
               
