@@ -41,6 +41,7 @@ export const POS: React.FC = () => {
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [editingInvoice, setEditingInvoice] = useState<Sale | null>(null);
   const [deletingSale, setDeletingSale] = useState<Sale | null>(null);
+  const [changeConfirmData, setChangeConfirmData] = useState<{ changeAFN: number, method: 'Cash' | 'Credit' } | null>(null);
 
   // Scanned checkout items state
   const [posItems, setPosItems] = useState<Array<{
@@ -361,8 +362,13 @@ export const POS: React.FC = () => {
   const changeDueInAFN = totalAmountPaidInAFN - finalAFN;
   const changeDueInUSD = changeDueInAFN / state.exchangeRate;
 
-  const handlePOSCheckout = (paymentMethod: 'Cash' | 'Credit') => {
+  const handlePOSCheckout = (paymentMethod: 'Cash' | 'Credit', skipChangeCheck = false) => {
     if (posItems.length === 0) return;
+
+    if (paymentMethod === 'Cash' && !skipChangeCheck && changeDueInAFN > 0) {
+      setChangeConfirmData({ changeAFN: changeDueInAFN, method: paymentMethod });
+      return;
+    }
 
     const invoiceNo = `POS-INV-${Math.floor(100000 + Math.random() * 900000)}`;
     const custObj = state.customers.find(c => c.id === customerId);
@@ -399,6 +405,8 @@ export const POS: React.FC = () => {
       finalAFN: finalAFN,
       paidUSD: isCredit ? 0 : finalUSD,
       paidAFN: isCredit ? 0 : finalAFN,
+      tenderedAFN: totalAmountPaidInAFN,
+      changeAFN: changeDueInAFN > 0 ? changeDueInAFN : 0,
       paymentMethod: isCredit ? 'Credit' : 'Cash',
       exchangeRate: state.exchangeRate,
       status: 'Completed'
@@ -1109,6 +1117,41 @@ export const POS: React.FC = () => {
                 بله، فاکتورها حذف شوند
               </button>
             </div>
+        </div>
+      )}
+
+      {/* Change Return Confirmation Modal */}
+      {changeConfirmData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 text-right" dir="rtl">
+          <div className="bg-white dark:bg-slate-900 border-2 border-emerald-500 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-fade-in space-y-4">
+            <h3 className="font-extrabold text-emerald-600 dark:text-emerald-455 text-sm border-b pb-2 flex items-center gap-1.5">
+              <DollarSign className="w-5 h-5 text-emerald-600 animate-pulse" />
+              هشدار بازگشت باقی‌مانده پول
+            </h3>
+            
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed text-center py-4 font-bold">
+              مبلغ پرداختی مشتری بیشتر از مبلغ فاکتور است. لطفاً مبلغ <span className="text-rose-600 text-lg mx-1">{formatCurrency(changeConfirmData.changeAFN, 'AFN')}</span> را به مشتری بازگردانید.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <button
+                type="button"
+                onClick={() => setChangeConfirmData(null)}
+                className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg cursor-pointer font-bold"
+              >
+                اصلاح مبالغ (بازگشت)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handlePOSCheckout(changeConfirmData.method, true);
+                  setChangeConfirmData(null);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-bold cursor-pointer flex items-center gap-1"
+              >
+                تایید بازگشت وجه و صدور فاکتور
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1618,11 +1661,24 @@ export const POS: React.FC = () => {
               )}
 
               <div className="flex justify-between text-sm font-black text-slate-900 pt-1 border-t border-slate-100">
-                <span>مبلغ نهایی قابل پرداخت:</span>
+                <span>مبلغ نهایی فاکتور:</span>
                 <span className="font-mono text-emerald-800">{formatCurrency(completedSaleForInvoice.finalAFN, 'AFN')}</span>
               </div>
 
-              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+              {completedSaleForInvoice.tenderedAFN !== undefined && completedSaleForInvoice.tenderedAFN > completedSaleForInvoice.finalAFN && (
+                <>
+                  <div className="flex justify-between text-[11px] text-slate-700 font-bold border-t border-slate-100 pt-1.5 mt-1.5">
+                    <span>مبلغ پرداختی مشتری:</span>
+                    <span className="font-mono">{formatCurrency(completedSaleForInvoice.tenderedAFN, 'AFN')}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-rose-600 font-black">
+                    <span>باقی‌مانده (برگشتی به مشتری):</span>
+                    <span className="font-mono">{formatCurrency(completedSaleForInvoice.changeAFN || 0, 'AFN')}</span>
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-100">
                 <span>معادل ارز دالر ($):</span>
                 <span>${completedSaleForInvoice.finalUSD.toFixed(2)}</span>
               </div>

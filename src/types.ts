@@ -108,6 +108,8 @@ export interface Sale {
   finalAFN: number;
   paidUSD: number;
   paidAFN: number;
+  tenderedAFN?: number; // Added for cash change tracking
+  changeAFN?: number; // Added for cash change tracking
   paymentMethod: PaymentMethod;
   exchangeRate: number; // USD to AFN rate during sale
   status: 'Completed' | 'Pending Delivery' | 'Delivered' | 'Cancelled';

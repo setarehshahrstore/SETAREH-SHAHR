@@ -10,6 +10,14 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { Storefront } from './components/Storefront'; // Landing Page
 import { Dashboard } from './components/Dashboard';
 import { Products } from './components/Products';
+import { Categories } from './components/Categories';
+import { Purchases } from './components/Purchases';
+import { Orders } from './components/Orders';
+import { Debts } from './components/Debts';
+import { Expenses } from './components/Expenses';
+import { Reports } from './components/Reports';
+import { Employees } from './components/Employees';
+import { Settings } from './components/Settings';
 import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
 import { Partners } from './components/Partners';
@@ -97,7 +105,7 @@ export default function App() {
               
               <Route path="categories" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="مدیریت کتگوری‌ها" />
+                  <Categories />
                 </ProtectedRoute>
               } />
 
@@ -109,13 +117,13 @@ export default function App() {
 
               <Route path="purchases" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="ثبت خریدهای جدید" />
+                  <Purchases />
                 </ProtectedRoute>
               } />
 
               <Route path="orders" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Cashier']}>
-                  <Placeholder title="سفارشات مشتریان" />
+                  <Orders />
                 </ProtectedRoute>
               } />
 
@@ -139,37 +147,37 @@ export default function App() {
 
               <Route path="debts" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="مدیریت قرض‌ها" />
+                  <Debts />
                 </ProtectedRoute>
               } />
 
               <Route path="payments" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="پرداخت‌ها" />
+                  <Debts />
                 </ProtectedRoute>
               } />
 
               <Route path="expenses" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="مصارف روزانه" />
+                  <Expenses />
                 </ProtectedRoute>
               } />
 
               <Route path="reports" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Placeholder title="گزارشات کامل" />
+                  <Reports />
                 </ProtectedRoute>
               } />
 
               <Route path="employees" element={
                 <ProtectedRoute allowedRoles={['Owner']}>
-                  <Placeholder title="مدیریت کارمندان" />
+                  <Employees />
                 </ProtectedRoute>
               } />
 
               <Route path="settings" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <SettingsView />
+                  <Settings />
                 </ProtectedRoute>
               } />
 
