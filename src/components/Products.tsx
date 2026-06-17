@@ -24,6 +24,8 @@ export const Products: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   
+  const categoriesList = ['All', ...state.categories.map(c => c.name)];
+
   const [barcodeProduct, setBarcodeProduct] = useState<Product | null>(null);
   const [barcodeDisplayPrice, setBarcodeDisplayPrice] = useState<'Retail' | 'Wholesale' | 'Both' | 'None'>('Retail');
   const barcodeCanvasRef = useRef<HTMLCanvasElement | null>(null);
