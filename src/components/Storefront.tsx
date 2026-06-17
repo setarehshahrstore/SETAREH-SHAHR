@@ -412,20 +412,60 @@ export const Storefront: React.FC = () => {
       {/* Main Catalog */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         
-        {orderSuccessId && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-8 flex flex-col items-center justify-center text-center shadow-sm print:shadow-none print:border-black">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4">
+        {successfulOrder && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-8 flex flex-col items-center justify-center text-center shadow-sm print:shadow-none print:border-black print:bg-white print:p-0">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4 print:hidden">
               <CheckCircle className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-black text-slate-800 mb-2">سفارش شما با موفقیت ثبت شد!</h2>
-            <p className="text-slate-600 mb-4">همکاران ما به زودی با شما تماس خواهند گرفت.</p>
-            <div className="bg-white px-6 py-3 rounded-xl border border-slate-200 shadow-sm font-mono text-xl font-black text-indigo-600 tracking-widest" dir="ltr">
-              {orderSuccessId}
+            <h2 className="text-2xl font-black text-slate-800 mb-2 print:hidden">سفارش شما با موفقیت ثبت شد!</h2>
+            <p className="text-slate-600 mb-4 print:hidden">همکاران ما به زودی با شما تماس خواهند گرفت.</p>
+            
+            {/* The Printable Receipt */}
+            <div className="w-full max-w-2xl bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-right print:border-none print:shadow-none print:p-0">
+              <div className="flex justify-between items-start mb-8 border-b pb-4">
+                <div>
+                  <h3 className="text-xl font-black text-[#0B1F3A]">رسید سفارش (فروشگاه ستاره شهر)</h3>
+                  <p className="text-sm text-slate-500 mt-1">شماره سفارش: {successfulOrder.invoiceNo}</p>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm text-slate-500">تاریخ: {new Date().toLocaleDateString('fa-IR')}</p>
+                  <p className="text-sm text-slate-500">مشتری: {successfulOrder.customerName}</p>
+                  <p className="text-sm text-slate-500" dir="ltr">{successfulOrder.customerPhone || '---'}</p>
+                </div>
+              </div>
+              
+              <table className="w-full text-sm mb-6">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="py-2 px-4 text-right">محصول</th>
+                    <th className="py-2 px-4 text-center">تعداد</th>
+                    <th className="py-2 px-4 text-left">قیمت کل</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {successfulOrder.items.map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="py-3 px-4 text-right font-bold">{item.productName}</td>
+                      <td className="py-3 px-4 text-center font-mono">{item.quantity} {item.unitType === 'piece' ? 'دانه' : (item.unitType === 'pack' ? 'بسته' : (item.unitType === 'box' ? 'قطی' : 'کارتن'))}</td>
+                      <td className="py-3 px-4 text-left font-mono">{formatCurrency(item.totalAFN, 'AFN')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              <div className="flex justify-between items-center border-t pt-4">
+                <span className="font-bold text-slate-700">مبلغ کل:</span>
+                <span className="text-xl font-black text-indigo-600 font-mono">{formatCurrency(successfulOrder.totalAFN, 'AFN')}</span>
+              </div>
             </div>
-            <p className="text-xs text-slate-500 mt-4">لطفاً کد سفارش خود را برای پیگیری یادداشت کنید.</p>
-            <div className="mt-6 flex gap-4 print:hidden">
+
+            <p className="text-xs text-slate-500 mt-4 print:hidden">لطفاً شماره سفارش خود را برای پیگیری یادداشت کنید.</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-4 print:hidden">
+              <button onClick={() => window.print()} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2">
+                <Printer className="w-5 h-5" /> چاپ / ذخیره PDF
+              </button>
               <Link to="/tracking" className="bg-[#0B1F3A] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#123B66]">پیگیری وضعیت سفارش</Link>
-              <button onClick={() => setOrderSuccessId(null)} className="bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-300">ادامه خرید</button>
+              <button onClick={() => setSuccessfulOrder(null)} className="bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-300">ادامه خرید</button>
             </div>
           </div>
         )}
