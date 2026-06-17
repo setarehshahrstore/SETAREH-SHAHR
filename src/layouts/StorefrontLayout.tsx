@@ -8,6 +8,7 @@ import { CustomerChat } from '../components/CustomerChat';
 
 export const StorefrontLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isContactMenuOpen, setIsContactMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -25,17 +26,49 @@ export const StorefrontLayout: React.FC = () => {
   return (
     <div className="font-sans text-brand-darktext bg-brand-lightbg min-h-screen relative flex flex-col" dir="rtl">
       {/* Floating Contact Button */}
-      <a 
-        href="#contact"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-brand-green text-white px-5 py-3 rounded-full font-bold shadow-[0_4px_20px_rgba(46,125,91,0.4)] hover:bg-emerald-700 transition-all hover:-translate-y-1 group"
-      >
-        <span className="relative flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-lightgold opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-gold"></span>
-        </span>
-        <Phone className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-        تماس فوری
-      </a>
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+        <AnimatePresence>
+          {isContactMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden mb-2 flex flex-col w-48"
+            >
+              <a 
+                href="tel:+93796626004" 
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-brand-navy font-bold border-b border-slate-100"
+              >
+                <Phone className="w-5 h-5 text-emerald-500" />
+                تماس مستقیم
+              </a>
+              <a 
+                href="https://wa.me/93796626004" 
+                target="_blank" 
+                rel="noreferrer"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-brand-navy font-bold"
+              >
+                <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                  <span className="text-[10px] font-bold">W</span>
+                </div>
+                واتساپ
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <button 
+          onClick={() => setIsContactMenuOpen(!isContactMenuOpen)}
+          className="flex items-center gap-2 bg-brand-green text-white px-5 py-3 rounded-full font-bold shadow-[0_4px_20px_rgba(46,125,91,0.4)] hover:bg-emerald-700 transition-all group"
+        >
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-lightgold opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-gold"></span>
+          </span>
+          {isContactMenuOpen ? <X className="w-5 h-5" /> : <Phone className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
+          تماس فوری
+        </button>
+      </div>
 
       {/* Header */}
       <header className="bg-brand-blue text-white sticky top-0 z-40 shadow-lg border-b border-brand-navy">
