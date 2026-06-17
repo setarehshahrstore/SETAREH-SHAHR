@@ -481,10 +481,10 @@ export const Inventory: React.FC = () => {
     if (!query) return matchesCategory;
 
     return matchesCategory && (
-      p.name.toLowerCase().includes(query) ||
-      p.sku.toLowerCase().includes(query) ||
-      p.id.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query) ||
+      (p.name || '').toLowerCase().includes(query) ||
+      (p.sku || '').toLowerCase().includes(query) ||
+      (p.id || '').toLowerCase().includes(query) ||
+      (p.category || '').toLowerCase().includes(query) ||
       (p.location && p.location.toLowerCase().includes(query))
     );
   });

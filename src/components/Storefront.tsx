@@ -42,7 +42,19 @@ const ProductCard = ({ product, addToCart, className = '' }: { product: Product 
     </div>
     <div className="p-4 flex-1 flex flex-col">
       <p className="text-[10px] text-slate-400 font-bold mb-1">{product.category}</p>
-      <h3 className="font-bold text-slate-800 text-sm mb-4 leading-tight flex-1">{product.name}</h3>
+      <h3 className="font-bold text-slate-800 text-sm mb-2 leading-tight flex-1">{product.name}</h3>
+      
+      <div className="mb-3">
+        {product.stockInBaseUnits > 0 && product.stockInBaseUnits <= 10 ? (
+          <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md">
+            فقط {product.stockInBaseUnits} {product.baseUnit} باقی مانده
+          </span>
+        ) : product.stockInBaseUnits > 10 ? (
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+            موجود است
+          </span>
+        ) : null}
+      </div>
       
       <div className="space-y-2 mt-auto">
         <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
@@ -124,11 +136,32 @@ export const Storefront: React.FC = () => {
   }, [state.products]);
 
   const activeProducts = useMemo(() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const productSalesCount: Record<string, number> = {};
+    
+    state.sales.forEach(sale => {
+      if (new Date(sale.date) >= thirtyDaysAgo) {
+        sale.items.forEach(item => {
+          productSalesCount[item.product.id] = (productSalesCount[item.product.id] || 0) + item.quantity;
+        });
+      }
+    });
+
+    const topProductIds = new Set(Object.entries(productSalesCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(entry => entry[0]));
+
     return state.products.map(p => {
+      const isTopSeller = topProductIds.has(p.id) || p.isBestSeller;
+      let pModified = { ...p, isBestSeller: isTopSeller };
+
       if (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date()) {
         const factor = 1 - p.discountPercentage / 100;
-        return {
-          ...p,
+        pModified = {
+          ...pModified,
           originalRetailPriceAFN: p.retailPriceAFN,
           originalWholesalePriceAFN: p.wholesalePriceAFN,
           retailPriceAFN: p.retailPriceAFN * factor,
@@ -137,9 +170,9 @@ export const Storefront: React.FC = () => {
           wholesalePriceUSD: p.wholesalePriceUSD * factor,
         };
       }
-      return p;
+      return pModified;
     });
-  }, [state.products]);
+  }, [state.products, state.sales]);
 
   const categories = ['All', 'تخفیف‌های ویژه', 'پرفروش‌ترین‌ها', ...Array.from(new Set(activeProducts.map(p => p.category)))];
 
@@ -180,8 +213,15 @@ export const Storefront: React.FC = () => {
     setCart(prev => {
       const updated = [...prev];
       const item = updated[index];
+      const newQty = item.quantity + delta;
       const minQty = item.type === 'Wholesale' && item.product.minWholesaleQty ? item.product.minWholesaleQty : 1;
-      item.quantity = Math.max(minQty, item.quantity + delta);
+      
+      if (item.type === 'Wholesale' && newQty < minQty && delta < 0) {
+        alert(`حداقل خرید عمده برای این کالا ${minQty} ${item.product.baseUnit || 'دانه'} است.`);
+        return prev;
+      }
+      
+      item.quantity = Math.max(1, newQty);
       return updated;
     });
   };

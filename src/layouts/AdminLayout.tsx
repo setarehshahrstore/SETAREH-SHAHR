@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 const MENU_ITEMS = [
-  { path: '/admin/dashboard', name: 'داشبورد', icon: LayoutDashboard, roles: ['Owner', 'Manager'] },
+  { path: '/admin/dashboard', name: 'صفحه اصلی', icon: LayoutDashboard, roles: ['Owner', 'Manager'] },
   { path: '/admin/products', name: 'محصولات', icon: Package, roles: ['Owner', 'Manager'] },
   { path: '/admin/categories', name: 'کتگوری‌ها', icon: Grid, roles: ['Owner', 'Manager'] },
   { path: '/admin/sales', name: 'فروش', icon: ShoppingCart, roles: ['Owner', 'Manager', 'Cashier'] },
