@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
@@ -158,26 +158,26 @@ export const Storefront: React.FC = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-navy border border-brand-gold/30 rounded-full text-sm font-medium text-brand-lightgold mb-6 shadow-inner">
               <Star className="w-4 h-4 fill-brand-gold text-brand-gold" />
-              ╪º┘å╪¬╪«╪º╪¿ ╪º┘ê┘ä ╪«╪º┘å┘ê╪º╪»┘çΓÇî┘ç╪º ┘ê ╪»┌⌐╪º┘å╪»╪º╪▒╪º┘å
+              انتخاب اول خانواده‌ها و دکانداران
             </div>
             <h2 className="text-4xl md:text-5xl lg:text-7xl font-black mb-4 leading-[1.15]">
-              ┘ü╪▒┘ê╪┤┌»╪º┘ç <span className="text-transparent bg-clip-text bg-gradient-to-l from-brand-gold to-brand-lightgold">╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒</span>
+              فروشگاه <span className="text-transparent bg-clip-text bg-gradient-to-l from-brand-gold to-brand-lightgold">ستاره شهر</span>
             </h2>
             <h3 className="text-xl md:text-2xl lg:text-3xl font-light text-slate-300 mb-6">
-              ╪╣┘à╪»┘ç ┘ê ┘╛╪▒┌å┘ê┘å ╪º┘å┘ê╪º╪╣ ╪º╪¼┘å╪º╪│ ┘à┘ê╪▒╪» ┘å█î╪º╪▓ ╪┤┘à╪º
+              عمده و پرچون انواع اجناس مورد نیاز شما
             </h3>
             <p className="text-base md:text-lg text-slate-400 mb-10 leading-relaxed max-w-xl">
-              ╪»╪▒ ┘ü╪▒┘ê╪┤┌»╪º┘ç ╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒╪î ╪º┘å┘ê╪º╪╣ ┘à┘ê╪º╪» ╪«┘ê╪º╪▒┌⌐█î╪î ┘å┘ê╪┤█î╪»┘å█î╪î ┘ä┘ê╪º╪▓┘à ╪¿┘ç╪»╪º╪┤╪¬█î╪î ┘à┘ê╪º╪» ┘╛╪º┌⌐┌⌐╪º╪▒█î╪î ┘ä┘ê╪º╪▓┘à ╪«╪º┘å┘ç ┘ê ╪º╪¼┘å╪º╪│ ╪╣┘à┘ê┘à█î ╪▒╪º ╪¿╪º ┘é█î┘à╪¬ ┘à┘å╪º╪│╪¿ ┘ê ┌⌐█î┘ü█î╪¬ ┘é╪º╪¿┘ä ╪º╪╣╪¬┘à╪º╪» ╪¬┘ç█î┘ç ┌⌐┘å█î╪».
+              در فروشگاه ستاره شهر، انواع مواد خوارکی، نوشیدنی، لوازم بهداشتی، مواد پاککاری، لوازم خانه و اجناس عمومی را با قیمت مناسب و کیفیت قابل اعتماد تهیه کنید.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
               <button onClick={() => scrollTo('products')} className="bg-gradient-to-l from-brand-gold to-brand-lightgold text-brand-blue px-8 py-4 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
                 <Store className="w-5 h-5" />
-                ╪»█î╪»┘å ┘à╪¡╪╡┘ê┘ä╪º╪¬
+                دیدن محصولات
               </button>
               <button onClick={() => scrollTo('wholesale')} className="bg-transparent text-white border border-brand-gold/50 px-8 py-4 rounded-xl font-bold hover:bg-brand-navy transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
                 <Package className="w-5 h-5" />
-                ╪│┘ü╪º╪▒╪┤ ╪╣┘à╪»┘ç
+                سفارش عمده
               </button>
             </div>
           </motion.div>
@@ -189,7 +189,7 @@ export const Storefront: React.FC = () => {
             className="hidden lg:flex justify-center relative"
           >
             <div className="absolute inset-0 bg-brand-gold/20 rounded-full blur-[60px] transform scale-75"></div>
-            <img src="/logo.png" alt="╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒" className="w-[450px] h-[450px] object-contain relative z-10 drop-shadow-2xl" />
+            <img src="/logo.png" alt="ستاره شهر" className="w-[450px] h-[450px] object-contain relative z-10 drop-shadow-2xl" />
           </motion.div>
         </div>
       </section>
@@ -198,20 +198,20 @@ export const Storefront: React.FC = () => {
       <section id="categories" className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">╪»╪│╪¬┘çΓÇî╪¿┘å╪»█îΓÇî┘ç╪º█î ╪º╪¼┘å╪º╪│</h2>
+            <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">دسته‌بندی‌های اجناس</h2>
             <div className="w-20 h-1.5 bg-brand-gold mx-auto rounded-full"></div>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[
-              { name: '┘à┘ê╪º╪» ╪«┘ê╪º╪▒┌⌐█î', icon: <Coffee className="w-8 h-8" /> },
-              { name: '┘å┘ê╪┤█î╪»┘å█îΓÇî┘ç╪º', icon: <Droplets className="w-8 h-8" /> },
-              { name: '┘ä┘ê╪º╪▓┘à ╪¿┘ç╪»╪º╪┤╪¬█î', icon: <ShieldCheck className="w-8 h-8" /> },
-              { name: '┘à┘ê╪º╪» ┘╛╪º┌⌐┌⌐╪º╪▒█î', icon: <Star className="w-8 h-8" /> },
-              { name: '┘ä┘ê╪º╪▓┘à ╪«╪º┘å┘ç', icon: <Home className="w-8 h-8" /> },
-              { name: '╪º╪¼┘å╪º╪│ ╪º╪╖┘ü╪º┘ä', icon: <Baby className="w-8 h-8" /> },
-              { name: '╪º╪¼┘å╪º╪│ ╪╣┘à┘ê┘à█î', icon: <Box className="w-8 h-8" /> },
-              { name: '╪¬╪«┘ü█î┘üΓÇî┘ç╪º█î ┘ê█î┌ÿ┘ç', icon: <Tag className="w-8 h-8" /> }
+              { name: 'مواد خوارکی', icon: <Coffee className="w-8 h-8" /> },
+              { name: 'نوشیدنی‌ها', icon: <Droplets className="w-8 h-8" /> },
+              { name: 'لوازم بهداشتی', icon: <ShieldCheck className="w-8 h-8" /> },
+              { name: 'مواد پاککاری', icon: <Star className="w-8 h-8" /> },
+              { name: 'لوازم خانه', icon: <Home className="w-8 h-8" /> },
+              { name: 'اجناس اطفال', icon: <Baby className="w-8 h-8" /> },
+              { name: 'اجناس عمومی', icon: <Box className="w-8 h-8" /> },
+              { name: 'تخفیف‌های ویژه', icon: <Tag className="w-8 h-8" /> }
             ].map((cat, i) => (
               <div 
                 key={i} 
@@ -237,9 +237,9 @@ export const Storefront: React.FC = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black mb-4">╪│█î╪│╪¬┘à ┘ü╪▒┘ê╪┤ ╪»┘ê┌»╪º┘å┘ç</h2>
+            <h2 className="text-3xl md:text-4xl font-black mb-4">سیستم فروش دوگانه</h2>
             <div className="w-20 h-1.5 bg-brand-gold mx-auto rounded-full"></div>
-            <p className="text-slate-300 mt-6 max-w-2xl mx-auto text-lg">┘à╪º ╪¿╪▒╪º█î ┘ç╪▒ ╪»┘ê ┌»╪▒┘ê┘ç ╪º╪▓ ┘à╪┤╪¬╪▒█î╪º┘å ╪«┘ê╪» ╪«╪»┘à╪º╪¬ ╪¬╪«╪╡╪╡█î ┘ê ┘é█î┘à╪¬ΓÇî┘ç╪º█î ╪▒┘é╪º╪¿╪¬█î ╪º╪▒╪º╪ª┘ç ┘à█îΓÇî╪»┘ç█î┘à.</p>
+            <p className="text-slate-300 mt-6 max-w-2xl mx-auto text-lg">ما برای هر دو گروه از مشتریان خود خدمات تخصصی و قیمت‌های رقابتی ارائه می‌دهیم.</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
@@ -248,10 +248,10 @@ export const Storefront: React.FC = () => {
               <div className="w-20 h-20 bg-brand-blue rounded-2xl flex items-center justify-center mb-8 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
                 <Users className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">┘ü╪▒┘ê╪┤ ┘╛╪▒┌å┘ê┘å</h3>
-              <p className="text-brand-lightgold text-sm font-bold mb-4 uppercase tracking-wider">╪¿╪▒╪º█î ╪«╪º┘å┘ê╪º╪»┘çΓÇî┘ç╪º</p>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">فروش پرچون</h3>
+              <p className="text-brand-lightgold text-sm font-bold mb-4 uppercase tracking-wider">برای خانواده‌ها</p>
               <p className="text-slate-300 leading-relaxed text-lg">
-                ┘à╪┤╪¬╪▒█î╪º┘å ╪╣╪▓█î╪▓ ┘à█îΓÇî╪¬┘ê╪º┘å┘å╪» ╪¬┘à╪º┘à█î ╪º╪¼┘å╪º╪│ ╪╢╪▒┘ê╪▒█î ┘ê ╪▒┘ê╪▓┘à╪▒┘ç ┘à┘å╪▓┘ä ╪«┘ê╪» ╪▒╪º ╪¿┘ç ╪╡┘ê╪▒╪¬ ╪»╪º┘å┘ç █î╪º ╪¿╪│╪¬┘çΓÇî╪¿┘å╪»█î ┌⌐┘ê┌å┌⌐ ╪¿╪º ┘à┘å╪º╪│╪¿ΓÇî╪¬╪▒█î┘å ┘é█î┘à╪¬ΓÇî┘ç╪º█î ╪¿╪º╪▓╪º╪▒ ╪º╪▓ ┘ü╪▒┘ê╪┤┌»╪º┘ç ╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒ ╪¬┘ç█î┘ç ┌⌐┘å┘å╪». ┘à╪º ╪¬╪╢┘à█î┘å ┌⌐█î┘ü█î╪¬ ┘ê ╪¬╪º╪▓┌»█î ╪▒╪º ╪¿┘ç ╪┤┘à╪º ┘à█îΓÇî╪»┘ç█î┘à.
+                مشتریان عزیز می‌توانند تمامی اجناس ضروری و روزمره منزل خود را به صورت دانه یا بسته‌بندی کوچک با مناسب‌ترین قیمت‌های بازار از فروشگاه ستاره شهر تهیه کنند. ما تضمین کیفیت و تازگی را به شما می‌دهیم.
               </p>
             </div>
             
@@ -261,10 +261,10 @@ export const Storefront: React.FC = () => {
               <div className="w-20 h-20 bg-brand-gold rounded-2xl flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(212,175,55,0.3)] group-hover:scale-110 transition-transform">
                 <Truck className="w-10 h-10 text-brand-blue" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">┘ü╪▒┘ê╪┤ ╪╣┘à╪»┘ç</h3>
-              <p className="text-brand-lightgold text-sm font-bold mb-4 uppercase tracking-wider">╪¿╪▒╪º█î ╪»┌⌐╪º┘å╪»╪º╪▒╪º┘å</p>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">فروش عمده</h3>
+              <p className="text-brand-lightgold text-sm font-bold mb-4 uppercase tracking-wider">برای دکانداران</p>
               <p className="text-slate-300 leading-relaxed text-lg relative z-10">
-                ╪»┌⌐╪º┘å╪»╪º╪▒╪º┘å ┘à╪¡╪¬╪▒┘à ┘ê ┘à╪┤╪¬╪▒█î╪º┘å ╪¬╪¼╪º╪▒╪¬█î ┘à█îΓÇî╪¬┘ê╪º┘å┘å╪» ╪│┘ü╪º╪▒╪┤╪º╪¬ ┌⌐┘ä╪º┘å ╪«┘ê╪» ╪▒╪º ╪»╪▒ ┌⌐╪º╪▒╪¬┘åΓÇî┘ç╪º ┘ê ╪¿╪│╪¬┘çΓÇî╪¿┘å╪»█îΓÇî┘ç╪º█î ┌⌐┘ä╪º┘å ╪¿╪º ┘å╪º╪▓┘äΓÇî╪¬╪▒█î┘å ┘é█î┘à╪¬ΓÇî┘ç╪º█î ╪╣┘à╪»┘çΓÇî┘ü╪▒┘ê╪┤█î ╪½╪¿╪¬ ┘å┘à╪º█î┘å╪». ┘à╪º ╪ó┘à╪º╪»┘ç ┘ç┘à┌⌐╪º╪▒█î ╪»┘ê╪º┘à╪»╪º╪▒ ╪¿╪º ╪│┘ê┘╛╪▒┘à╪º╪▒┌⌐╪¬ΓÇî┘ç╪º ┘ç╪│╪¬█î┘à.
+                دکانداران محترم و مشتریان تجارتی می‌توانند سفارشات کلان خود را در کارتن‌ها و بسته‌بندی‌های کلان با نازل‌ترین قیمت‌های عمده‌فروشی ثبت نمایند. ما آماده همکاری دوامدار با سوپرمارکت‌ها هستیم.
               </p>
             </div>
           </div>
@@ -275,18 +275,18 @@ export const Storefront: React.FC = () => {
       <section className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">┌å╪▒╪º ╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒╪ƒ</h2>
+            <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">چرا ستاره شهر؟</h2>
             <div className="w-20 h-1.5 bg-brand-gold mx-auto rounded-full"></div>
           </div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {[
-              { title: '┘é█î┘à╪¬ ┘à┘å╪º╪│╪¿', desc: '╪¬╪╢┘à█î┘å ╪¿┘ç╪¬╪▒█î┘å ┘é█î┘à╪¬ ╪»╪▒ ╪│╪╖╪¡ ╪¿╪º╪▓╪º╪▒', icon: <Tag className="w-7 h-7" /> },
-              { title: '┘ü╪▒┘ê╪┤ ╪╣┘à╪»┘ç ┘ê ┘╛╪▒┌å┘ê┘å', desc: '╪º┘å╪╣╪╖╪º┘ü ┘╛╪░█î╪▒█î ╪»╪▒ ┘à┘é╪º╪»█î╪▒ ╪«╪▒█î╪»', icon: <Store className="w-7 h-7" /> },
-              { title: '╪¬┘å┘ê╪╣ ╪º╪¼┘å╪º╪│', desc: '╪¬╪º┘à█î┘å ╪¬┘à╪º┘à█î ┘å█î╪º╪▓┘à┘å╪»█îΓÇî┘ç╪º█î ╪┤┘à╪º', icon: <Package className="w-7 h-7" /> },
-              { title: '╪«╪»┘à╪º╪¬ ┘à╪╖┘à╪ª┘å', desc: '┌⌐█î┘ü█î╪¬ ╪¬╪╢┘à█î┘å ╪┤╪»┘ç ╪¿╪▒╪º█î ┘ç╪▒ ┘à╪¡╪╡┘ê┘ä', icon: <CheckCircle className="w-7 h-7" /> },
-              { title: '╪«╪º┘å┘ê╪º╪»┘çΓÇî┘ç╪º ┘ê ╪»┌⌐╪º┘å╪»╪º╪▒╪º┘å', desc: '╪«╪»┘à╪º╪¬ ╪▒╪│╪º┘å█î ╪¿┘ç ╪¬┘à╪º┘à ╪º┘é╪┤╪º╪▒', icon: <Users className="w-7 h-7" /> },
-              { title: '┘╛╪º╪│╪«┌»┘ê█î█î ╪│╪▒█î╪╣', desc: '╪▒╪│█î╪»┌»█î ┘ü┘ê╪▒█î ╪¿┘ç ╪│┘ü╪º╪▒╪┤╪º╪¬', icon: <Clock className="w-7 h-7" /> },
+              { title: 'قیمت مناسب', desc: 'تضمین بهترین قیمت در سطح بازار', icon: <Tag className="w-7 h-7" /> },
+              { title: 'فروش عمده و پرچون', desc: 'انعطاف پذیری در مقادیر خرید', icon: <Store className="w-7 h-7" /> },
+              { title: 'تنوع اجناس', desc: 'تامین تمامی نیازمندی‌های شما', icon: <Package className="w-7 h-7" /> },
+              { title: 'خدمات مطمئن', desc: 'کیفیت تضمین شده برای هر محصول', icon: <CheckCircle className="w-7 h-7" /> },
+              { title: 'خانواده‌ها و دکانداران', desc: 'خدمات رسانی به تمام اقشار', icon: <Users className="w-7 h-7" /> },
+              { title: 'پاسخگویی سریع', desc: 'رسیدگی فوری به سفارشات', icon: <Clock className="w-7 h-7" /> },
             ].map((feature, i) => (
               <div key={i} className="flex flex-col items-center text-center p-8 bg-brand-lightbg rounded-[2rem] border border-slate-100 hover:border-brand-gold/30 hover:shadow-[0_10px_40px_rgba(11,31,58,0.06)] transition-all group hover:-translate-y-2">
                 <div className="w-20 h-20 bg-white rounded-full shadow-sm flex items-center justify-center text-brand-blue mb-6 border border-slate-100 group-hover:bg-brand-blue group-hover:text-brand-gold transition-colors duration-300">
@@ -306,19 +306,19 @@ export const Storefront: React.FC = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-brand-gold rounded-full mb-8 shadow-[0_0_30px_rgba(212,175,55,0.4)]">
             <Star className="w-10 h-10 text-brand-blue fill-brand-blue" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-10">╪»╪▒╪¿╪º╪▒┘ç ┘ü╪▒┘ê╪┤┌»╪º┘ç ╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒</h2>
+          <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-10">درباره فروشگاه ستاره شهر</h2>
           
           <div className="bg-white p-10 md:p-16 rounded-[3rem] shadow-[0_20px_60px_rgba(11,31,58,0.04)] border border-slate-100 relative">
             <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 w-32 h-2 bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
             
             <p className="text-lg md:text-2xl text-brand-darktext leading-[2] md:leading-[2] mb-8 font-medium">
-              ┘ü╪▒┘ê╪┤┌»╪º┘ç <span className="text-brand-gold font-black">╪│╪¬╪º╪▒┘ç ╪┤┘ç╪▒</span> █î┌⌐ ┘ü╪▒┘ê╪┤┌»╪º┘ç ╪╣┘à╪»┘ç ┘ê ┘╛╪▒┌å┘ê┘å ╪¿╪▒╪º█î ╪º┘å┘ê╪º╪╣ ╪º╪¼┘å╪º╪│ ╪╢╪▒┘ê╪▒█î ┘ê ╪▒┘ê╪▓┘à╪▒┘ç ╪º╪│╪¬. ┘à╪º ╪¿╪º ┘ç╪»┘ü ╪º╪▒╪º╪ª┘ç ┘é█î┘à╪¬ ┘à┘å╪º╪│╪¿╪î ┌⌐█î┘ü█î╪¬ ╪«┘ê╪¿ ┘ê ╪«╪»┘à╪º╪¬ ┘à╪╖┘à╪ª┘å ┘ü╪╣╪º┘ä█î╪¬ ┘à█îΓÇî┌⌐┘å█î┘à.
+              فروشگاه <span className="text-brand-gold font-black">ستاره شهر</span> یک فروشگاه عمده و پرچون برای انواع اجناس ضروری و روزمره است. ما با هدف ارائه قیمت مناسب، کیفیت خوب و خدمات مطمئن فعالیت می‌کنیم.
             </p>
             
             <div className="w-12 h-1 bg-brand-navy/10 mx-auto mb-8 rounded-full"></div>
             
             <p className="text-base md:text-lg text-brand-graytext leading-relaxed">
-              ╪»╪▒ ┘ü╪▒┘ê╪┤┌»╪º┘ç ┘à╪º╪î ┘à╪┤╪¬╪▒█î╪º┘å ┘à█îΓÇî╪¬┘ê╪º┘å┘å╪» ╪º╪¼┘å╪º╪│ ┘à┘ê╪▒╪» ┘å█î╪º╪▓ ╪«┘ê╪» ╪▒╪º ╪¿┘ç ╪┤┌⌐┘ä ┘╛╪▒┌å┘ê┘å ╪¬┘ç█î┘ç ┌⌐┘å┘å╪» ┘ê ╪»┌⌐╪º┘å╪»╪º╪▒╪º┘å █î╪º ┘à╪┤╪¬╪▒█î╪º┘å ╪¬╪¼╪º╪▒╪¬█î ┘à█îΓÇî╪¬┘ê╪º┘å┘å╪» ╪│┘ü╪º╪▒╪┤ΓÇî┘ç╪º█î ╪╣┘à╪»┘ç ╪«┘ê╪» ╪▒╪º ╪¿╪º ┘å╪º╪▓┘äΓÇî╪¬╪▒█î┘å ┘é█î┘à╪¬ ╪½╪¿╪¬ ┌⌐┘å┘å╪». ╪º╪╣╪¬╪¿╪º╪▒ ┘à╪º╪î ╪º╪╣╪¬┘à╪º╪» ╪┤┘à╪º╪│╪¬.
+              در فروشگاه ما، مشتریان می‌توانند اجناس مورد نیاز خود را به شکل پرچون تهیه کنند و دکانداران یا مشتریان تجارتی می‌توانند سفارش‌های عمده خود را با نازل‌ترین قیمت ثبت کنند. اعتبار ما، اعتماد شماست.
             </p>
           </div>
         </div>
@@ -331,19 +331,19 @@ export const Storefront: React.FC = () => {
             
             {/* Contact Info Side */}
             <div className="lg:col-span-5 lg:sticky lg:top-32">
-              <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">╪º╪▒╪¬╪¿╪º╪╖ ╪¿╪º ┘à╪º</h2>
+              <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">ارتباط با ما</h2>
               <div className="w-20 h-1.5 bg-brand-gold mb-8 rounded-full"></div>
               
               <p className="text-lg text-brand-graytext mb-10 leading-relaxed">
-                ╪¿╪▒╪º█î ╪│┘ü╪º╪▒╪┤╪î ┘à╪╣┘ä┘ê┘à╪º╪¬ ┘é█î┘à╪¬╪î ╪«╪▒█î╪» ╪╣┘à╪»┘ç █î╪º ┘ç┘à┌⌐╪º╪▒█î ╪¬╪¼╪º╪▒╪¬█î ┘à╪│╪¬┘é█î┘à╪º┘ï ╪¿╪º ┘à╪º ╪»╪▒ ╪¬┘à╪º╪│ ╪┤┘ê█î╪».
+                برای سفارش، معلومات قیمت، خرید عمده یا همکاری تجارتی مستقیماً با ما در تماس شوید.
               </p>
               
               <div className="space-y-4">
                 {[
-                  { title: '╪┤┘à╪º╪▒┘çΓÇî┘ç╪º█î ╪¬┘à╪º╪│', val: '+93 70 123 4567', icon: <Phone className="w-6 h-6" /> },
-                  { title: '╪ó╪»╪▒╪│ ┘ü╪▒┘ê╪┤┌»╪º┘ç', val: '┌⌐╪º╪¿┘ä╪î ╪º┘ü╪║╪º┘å╪│╪¬╪º┘å', icon: <MapPin className="w-6 h-6" /> },
-                  { title: '╪│╪º╪╣╪º╪¬ ┌⌐╪º╪▒█î', val: '█╕ ╪╡╪¿╪¡ ╪º┘ä█î █╕ ╪┤╪¿ (┘ç┘à┘çΓÇî╪▒┘ê╪▓┘ç)', icon: <Clock className="w-6 h-6" /> },
-                  { title: '╪¿╪«╪┤ ╪«╪▒█î╪» ╪╣┘à╪»┘ç', val: '╪º╪▒╪│╪º┘ä ┘ü╪▒┘à ╪│┘ü╪º╪▒╪┤ ╪»╪▒ ┌⌐┘å╪º╪▒', icon: <Package className="w-6 h-6" /> }
+                  { title: 'شماره‌های تماس', val: '+93 70 123 4567', icon: <Phone className="w-6 h-6" /> },
+                  { title: 'آدرس فروشگاه', val: 'کابل، افغانستان', icon: <MapPin className="w-6 h-6" /> },
+                  { title: 'ساعات کاری', val: '۸ صبح الی ۸ شب (همه‌روزه)', icon: <Clock className="w-6 h-6" /> },
+                  { title: 'بخش خرید عمده', val: 'ارسال فرم سفارش در کنار', icon: <Package className="w-6 h-6" /> }
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-5 p-5 bg-brand-lightbg rounded-2xl border border-slate-100 hover:border-brand-gold/30 hover:bg-white transition-colors group">
                     <div className="bg-brand-blue/5 text-brand-blue p-4 rounded-xl group-hover:bg-brand-blue group-hover:text-brand-gold transition-colors">
@@ -366,34 +366,34 @@ export const Storefront: React.FC = () => {
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="bg-brand-gold p-3 rounded-xl"><Package className="w-6 h-6 text-brand-blue" /></div>
-                  <h3 className="text-2xl font-bold text-white">┘ü╪▒┘à ╪│┘ü╪º╪▒╪┤ ╪╣┘à╪»┘ç ┘ê ╪¬┘à╪º╪│</h3>
+                  <h3 className="text-2xl font-bold text-white">فرم سفارش عمده و تماس</h3>
                 </div>
                 
                 <form className="space-y-5">
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">┘å╪º┘à / ┘å╪º┘à ╪┤╪▒┌⌐╪¬</label>
-                      <input type="text" className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" placeholder="┘å╪º┘à ╪┤┘à╪º..." />
+                      <label className="block text-sm font-medium text-slate-300 mb-2">نام / نام شرکت</label>
+                      <input type="text" className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" placeholder="نام شما..." />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">╪┤┘à╪º╪▒┘ç ╪¬┘à╪º╪│</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">شماره تماس</label>
                       <input type="tel" className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" placeholder="07XXXXXXXX" dir="ltr" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">┘å┘ê╪╣█î╪¬ ╪»╪▒╪«┘ê╪º╪│╪¬</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">نوعیت درخواست</label>
                     <select className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all appearance-none cursor-pointer">
-                      <option>╪«╪▒█î╪» ╪╣┘à╪»┘ç (╪»┌⌐╪º┘å╪»╪º╪▒╪º┘å)</option>
-                      <option>┘à╪╣┘ä┘ê┘à╪º╪¬ ┘é█î┘à╪¬ΓÇî┘ç╪º</option>
-                      <option>╪│╪º█î╪▒ ┘à┘ê╪º╪▒╪»</option>
+                      <option>خرید عمده (دکانداران)</option>
+                      <option>معلومات قیمت‌ها</option>
+                      <option>سایر موارد</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">┘ä█î╪│╪¬ ╪│┘ü╪º╪▒╪┤ █î╪º ┘╛█î╪º┘à ╪┤┘à╪º</label>
-                    <textarea rows={5} className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500 resize-none" placeholder="┘ä╪╖┘ü╪º┘ï ┘ä█î╪│╪¬ ╪º╪¼┘å╪º╪│ ┘à┘ê╪▒╪» ┘å█î╪º╪▓ █î╪º ┘╛█î╪º┘à ╪«┘ê╪» ╪▒╪º ╪º█î┘å╪¼╪º ╪¿┘å┘ê█î╪│█î╪»..."></textarea>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">لیست سفارش یا پیام شما</label>
+                    <textarea rows={5} className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500 resize-none" placeholder="لطفاً لیست اجناس مورد نیاز یا پیام خود را اینجا بنویسید..."></textarea>
                   </div>
                   <button type="button" className="w-full bg-gradient-to-l from-brand-gold to-brand-lightgold text-brand-blue text-lg font-bold py-4 rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-1">
-                    ╪º╪▒╪│╪º┘ä ╪»╪▒╪«┘ê╪º╪│╪¬
+                    ارسال درخواست
                   </button>
                 </form>
               </div>
@@ -402,6 +402,7 @@ export const Storefront: React.FC = () => {
         </div>
       </section>
 
+      
       {/* Main Catalog */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         
