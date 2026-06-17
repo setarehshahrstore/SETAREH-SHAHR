@@ -22,7 +22,9 @@ import { Settings } from './components/Settings';
 import { Inventory } from './components/Inventory';
 import { POS } from './components/POS';
 import { Partners } from './components/Partners';
-import { Settings as SettingsView } from './components/Settings';
+import { Register } from './components/Register';
+import { ForgotPassword } from './components/ForgotPassword';
+import { CustomerAccount } from './components/CustomerAccount';
 import { Login } from './components/Login';
 import { Finances } from './components/Finances';
 
@@ -72,11 +74,13 @@ export default function App() {
               <Route index element={<Storefront />} />
               <Route path="tracking" element={<OrderTracking />} />
               <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
               <Route 
                 path="account" 
                 element={
                   <ProtectedRoute allowedRoles={['Customer']}>
-                    <Placeholder title="حساب کاربری من" />
+                    <CustomerAccount />
                   </ProtectedRoute>
                 } 
               />
@@ -130,13 +134,7 @@ export default function App() {
                 </ProtectedRoute>
               } />
 
-              <Route path="customers" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Partners />
-                </ProtectedRoute>
-              } />
-
-              <Route path="suppliers" element={
+              <Route path="partners" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
                   <Partners />
                 </ProtectedRoute>
@@ -149,12 +147,6 @@ export default function App() {
               } />
 
               <Route path="debts" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Debts />
-                </ProtectedRoute>
-              } />
-
-              <Route path="payments" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
                   <Debts />
                 </ProtectedRoute>

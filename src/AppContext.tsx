@@ -29,6 +29,16 @@ interface AppContextType {
   deleteProducts: (ids: string[]) => void;
   deleteCustomers: (ids: string[]) => void;
   deleteSuppliers: (ids: string[]) => void;
+  
+  addCategory: (cat: Category) => void;
+  editCategory: (cat: Category) => void;
+  deleteCategory: (id: string) => void;
+
+  addExpense: (expense: any) => void;
+  deleteExpense: (id: string) => void;
+
+  addTransaction: (transaction: any) => void;
+
   resetState: () => void;
 }
 
@@ -49,6 +59,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!parsed.payments) parsed.payments = [];
         if (!parsed.customers) parsed.customers = [];
         if (!parsed.suppliers) parsed.suppliers = [];
+        if (!parsed.categories) parsed.categories = [];
+        if (!parsed.expenses) parsed.expenses = [];
+        if (!parsed.transactions) parsed.transactions = []; // Ensure generic transactions exist if needed
         if (!parsed.exchangeRate) parsed.exchangeRate = 72.5;
         return parsed;
       } catch (e) {
@@ -61,6 +74,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
   }, [state]);
+
+  const addCategory = (cat: Category) => setState(prev => ({ ...prev, categories: [...(prev.categories || []), cat] }));
+  const editCategory = (cat: Category) => setState(prev => ({ ...prev, categories: (prev.categories || []).map(c => c.id === cat.id ? cat : c) }));
+  const deleteCategory = (id: string) => setState(prev => ({ ...prev, categories: (prev.categories || []).filter(c => c.id !== id) }));
+
+  const addExpense = (expense: any) => setState(prev => {
+    const updatedCash = { ...prev.cashRegister };
+    if (expense.currency === 'AFN') updatedCash.balanceAFN -= expense.amount;
+    else updatedCash.balanceUSD -= expense.amount;
+    return { ...prev, cashRegister: updatedCash, expenses: [...(prev.expenses || []), expense] };
+  });
+
+  const deleteExpense = (id: string) => setState(prev => {
+    const expense = (prev.expenses || []).find((e: any) => e.id === id);
+    if (!expense) return prev;
+    const updatedCash = { ...prev.cashRegister };
+    if (expense.currency === 'AFN') updatedCash.balanceAFN += expense.amount;
+    else updatedCash.balanceUSD += expense.amount;
+    return { ...prev, cashRegister: updatedCash, expenses: (prev.expenses || []).filter((e: any) => e.id !== id) };
+  });
+
+  const addTransaction = (transaction: any) => setState(prev => {
+    const updatedCash = { ...prev.cashRegister };
+    if (transaction.type === 'Income') {
+      if (transaction.currency === 'AFN') updatedCash.balanceAFN += transaction.amount;
+      else updatedCash.balanceUSD += transaction.amount;
+    } else {
+      if (transaction.currency === 'AFN') updatedCash.balanceAFN -= transaction.amount;
+      else updatedCash.balanceUSD -= transaction.amount;
+    }
+    // Assume we have a transactions array in state if we want to store them, or just modify cashRegister
+    return { ...prev, cashRegister: updatedCash };
+  });
 
   const addSale = (sale: Sale) => {
     setState((prev) => {
@@ -550,6 +596,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteProducts,
       deleteCustomers,
       deleteSuppliers,
+      addCategory,
+      editCategory,
+      deleteCategory,
+      addExpense,
+      deleteExpense,
+      addTransaction,
       resetState
     }}>
       {children}

@@ -26,7 +26,7 @@ interface AppUser {
   username: string;
   passwordHash: string;
   fullName: string;
-  role: 'Admin' | 'Salesperson' | 'Assistant' | 'Staff';
+  role: 'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff';
 }
 
 export const Settings: React.FC = () => {
@@ -69,7 +69,7 @@ export const Settings: React.FC = () => {
         username: 'ADMIN@STC.COM',
         passwordHash: 'Admin$',
         fullName: 'مدیر کل سیستم (ادمین)',
-        role: 'Admin'
+        role: 'Owner'
       }
     ];
   });
@@ -77,7 +77,7 @@ export const Settings: React.FC = () => {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newFullName, setNewFullName] = useState('');
-  const [newUserRole, setNewUserRole] = useState<'Admin' | 'Salesperson' | 'Assistant' | 'Staff'>('Staff');
+  const [newUserRole, setNewUserRole] = useState<'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff'>('Cashier');
 
   // Active Cashier Shift Tracker (synchronous fallback to usersList names)
   const [activeCashier, setActiveCashier] = useState(() => localStorage.getItem('AFG_STORE_CASHIER') || 'مدیر سیستم (ادمین)');
@@ -561,10 +561,10 @@ export const Settings: React.FC = () => {
                   onChange={(e) => setNewUserRole(e.target.value as any)}
                   className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-right font-bold"
                 >
-                  <option value="Admin">👮 مدیر</option>
-                  <option value="Salesperson">🛍️ فروشنده</option>
-                  <option value="Assistant">🤝 دستیار (سخنگو/همکار)</option>
-                  <option value="Staff">👤 کارمند</option>
+                  <option value="Owner">👑 مالک / مدیر کل</option>
+                  <option value="Manager">👮 مدیر (Manager)</option>
+                  <option value="Cashier">💵 صندوق‌دار (Cashier)</option>
+                  <option value="Warehouse Staff">📦 مسئول گدام (Warehouse)</option>
                 </select>
               </div>
             </div>
@@ -615,7 +615,7 @@ export const Settings: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="bg-slate-100 text-slate-700 p-1.5 rounded-lg text-[10px] font-extrabold">
-                      {u.role === 'Admin' ? '👮 مدیر' : u.role === 'Salesperson' ? '🛍️ فروشنده' : u.role === 'Assistant' ? '🤝 دستیار' : '👤 کارمند'}
+                      {u.role === 'Owner' ? '👑 مالک' : u.role === 'Manager' ? '👮 مدیر' : u.role === 'Cashier' ? '💵 صندوق‌دار' : '📦 مسئول گدام'}
                     </span>
                     <span className="font-extrabold text-slate-800">{u.fullName}</span>
                   </div>

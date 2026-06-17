@@ -6,7 +6,7 @@ import { Search, Eye, Check, X, Trash2, ShieldAlert, Package, RefreshCw, Printer
 import { Sale, SaleItem } from '../types';
 
 export const Orders: React.FC = () => {
-  const { state, updateDeliveryStatus, editSale } = useAppState();
+  const { state, updateDeliveryStatus, editSale, deleteSale } = useAppState();
   
   const todayDate = new Date().toISOString().split('T')[0];
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -44,8 +44,8 @@ export const Orders: React.FC = () => {
   };
 
   const verifyPinAndExecute = () => {
-    // Default PIN is 1234 or verify against users (for simplicity 1234 here as user mentioned)
-    if (pinInput === '1234') {
+    // Verify against Admin$
+    if (pinInput === 'Admin$') {
       adminPinModal.action();
       setAdminPinModal({ isOpen: false, action: () => {} });
     } else {
@@ -62,12 +62,20 @@ export const Orders: React.FC = () => {
     });
   };
 
-  const handleDeleteOrder = (orderId: string) => {
+  const handleCancelOrder = (orderId: string) => {
     requireAdminPin(() => {
-      // Since context might not have deleteSale directly exposed, we change status to Cancelled.
       updateDeliveryStatus(orderId, 'Cancelled');
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(prev => prev ? { ...prev, status: 'Cancelled' } : null);
+      }
+    });
+  };
+
+  const handleTrueDeleteOrder = (orderId: string) => {
+    requireAdminPin(() => {
+      deleteSale(orderId);
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder(null);
       }
     });
   };
@@ -342,21 +350,27 @@ export const Orders: React.FC = () => {
             {/* Admin Order Actions */}
             <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-4 print:hidden">
               {selectedOrder.status !== 'Completed' && selectedOrder.status !== 'Cancelled' && (
-                <>
-                  <button 
-                    onClick={() => handleUpdateStatus(selectedOrder.id, 'Completed')}
-                    className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black text-lg hover:bg-emerald-700 shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <Check className="w-5 h-5" /> تایید و ثبت نهایی سفارش
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteOrder(selectedOrder.id)}
-                    className="bg-rose-100 text-rose-700 px-6 rounded-xl font-bold hover:bg-rose-200 flex items-center gap-2"
-                  >
-                    <X className="w-5 h-5" /> لغو سفارش
-                  </button>
-                </>
+                <button 
+                  onClick={() => handleUpdateStatus(selectedOrder.id, 'Completed')}
+                  className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black text-lg hover:bg-emerald-700 shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" /> تایید و ثبت نهایی سفارش
+                </button>
               )}
+              {selectedOrder.status !== 'Cancelled' && (
+                <button 
+                  onClick={() => handleCancelOrder(selectedOrder.id)}
+                  className="bg-amber-100 text-amber-700 px-6 rounded-xl font-bold hover:bg-amber-200 flex items-center gap-2"
+                >
+                  <X className="w-5 h-5" /> لغو سفارش
+                </button>
+              )}
+              <button 
+                onClick={() => handleTrueDeleteOrder(selectedOrder.id)}
+                className="bg-rose-100 text-rose-700 px-6 rounded-xl font-bold hover:bg-rose-200 flex items-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" /> حذف کامل
+              </button>
             </div>
           </div>
         </div>

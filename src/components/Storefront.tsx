@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
-import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus } from 'lucide-react';
+import { useAuth } from '../AuthContext';
+import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User } from 'lucide-react';
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export const Storefront: React.FC = () => {
   const { state, addSale, addCustomer } = useAppState();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -160,7 +162,16 @@ export const Storefront: React.FC = () => {
                 </span>
               )}
             </button>
-            <Link to="/login" className="text-sm font-bold hover:text-[#D4AF37]">ورود کارمندان</Link>
+            {user?.role === 'Customer' ? (
+              <Link to="/account" className="flex items-center gap-1 text-sm font-bold bg-[#D4AF37] text-[#0B1F3A] px-4 py-2 rounded-xl hover:bg-white transition-colors">
+                <User className="w-4 h-4" /> حساب کاربری من
+              </Link>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link to="/login" className="text-sm font-bold hover:text-[#D4AF37] transition-colors">ورود</Link>
+                <Link to="/register" className="text-sm font-bold bg-[#D4AF37] text-[#0B1F3A] px-4 py-2 rounded-xl hover:bg-white transition-colors hidden sm:block">ثبت‌نام</Link>
+              </div>
+            )}
           </div>
         </div>
       </header>

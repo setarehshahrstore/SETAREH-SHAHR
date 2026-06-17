@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, AlertCircle, Building2 } from 'lucide-react';
 import { useAuth, UserRole } from '../AuthContext';
+import { useAppState } from '../AppContext';
 
 export const Login: React.FC = () => {
+  const { state } = useAppState();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -74,22 +76,27 @@ export const Login: React.FC = () => {
       }
     }
 
-    const foundUser = usersList.find(
+    const foundEmployee = usersList.find(
       u => u.username.toLowerCase() === trimmedUser && u.passwordHash === trimmedPass
     );
 
-    if (foundUser) {
-      login(foundUser.fullName, foundUser.role as UserRole);
-      
-      // Navigate based on role
-      if (foundUser.role === 'Customer') {
+    const foundCustomer = state.customers.find(
+      c => c.username?.toLowerCase() === trimmedUser && c.passwordHash === trimmedPass
+    );
+
+    if (foundEmployee || foundCustomer) {
+      if (foundCustomer) {
+        login(foundCustomer.name, 'Customer');
         navigate('/account', { replace: true });
-      } else if (foundUser.role === 'Cashier') {
-        navigate('/admin/sales', { replace: true });
-      } else if (foundUser.role === 'Warehouse Staff') {
-        navigate('/admin/inventory', { replace: true });
-      } else {
-        navigate('/admin/dashboard', { replace: true });
+      } else if (foundEmployee) {
+        login(foundEmployee.fullName, foundEmployee.role as UserRole);
+        if (foundEmployee.role === 'Cashier') {
+          navigate('/admin/sales', { replace: true });
+        } else if (foundEmployee.role === 'Warehouse Staff') {
+          navigate('/admin/inventory', { replace: true });
+        } else {
+          navigate('/admin/dashboard', { replace: true });
+        }
       }
     } else {
       setError('ایمیل یا رمز عبور اشتباه است.');
@@ -168,6 +175,23 @@ export const Login: React.FC = () => {
 
             </form>
             
+            <div className="flex items-center justify-between mt-6">
+              <button 
+                type="button" 
+                onClick={() => navigate('/forgot-password')} 
+                className="text-xs font-bold text-slate-400 hover:text-[#D4AF37] transition-colors"
+              >
+                فراموشی رمز عبور؟
+              </button>
+              <button 
+                type="button" 
+                onClick={() => navigate('/register')} 
+                className="text-xs font-bold text-slate-400 hover:text-[#D4AF37] transition-colors"
+              >
+                ساخت حساب جدید مشتری
+              </button>
+            </div>
+
             <div className="mt-8 pt-6 border-t border-slate-100 text-center space-y-4">
               {isLogin ? (
                 <p className="text-sm text-slate-600">

@@ -48,9 +48,14 @@ export interface Product {
 export interface Customer {
   id: string;
   name: string;
+  lastName?: string;
+  username?: string;
+  passwordHash?: string;
+  passwordResetRequested?: boolean;
   companyName?: string;
   phone: string;
   city: string;
+  address?: string;
   email?: string;
   debtUSD: number;
   debtAFN: number;

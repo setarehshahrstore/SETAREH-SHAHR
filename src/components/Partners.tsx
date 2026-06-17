@@ -1026,10 +1026,42 @@ export const Partners: React.FC = () => {
                       </span>
                     </div>
                     {activeTab === 'Customers' && (
-                      <div className="flex items-center justify-between border-t border-dashed pt-2 mt-2">
-                        <span>سقف مجاز لجر قرضه مشتری:</span>
-                        <span className="text-emerald-700 font-black font-mono">${(activePartnerDetails as Customer).creditLimitUSD || '0.00'}</span>
-                      </div>
+                      <>
+                        <div className="flex items-center justify-between border-t border-dashed pt-2 mt-2">
+                          <span>سقف مجاز لجر قرضه مشتری:</span>
+                          <span className="text-emerald-700 font-black font-mono">${(activePartnerDetails as Customer).creditLimitUSD || '0.00'}</span>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-dashed pt-2 mt-2">
+                          <span>وضعیت رمز عبور:</span>
+                          {(activePartnerDetails as Customer).passwordResetRequested ? (
+                            <button 
+                              onClick={() => {
+                                const newPassword = window.prompt('رمز عبور جدید را وارد کنید:');
+                                if (newPassword) {
+                                  editCustomer({ ...activePartnerDetails as Customer, passwordHash: newPassword, passwordResetRequested: false });
+                                  alert('رمز عبور با موفقیت تغییر کرد.');
+                                }
+                              }}
+                              className="text-xs bg-rose-100 text-rose-700 px-3 py-1 rounded-lg font-bold hover:bg-rose-200"
+                            >
+                              درخواست بازیابی رمز! (کلیک کنید)
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => {
+                                const newPassword = window.prompt('رمز عبور جدید را وارد کنید:');
+                                if (newPassword) {
+                                  editCustomer({ ...activePartnerDetails as Customer, passwordHash: newPassword });
+                                  alert('رمز عبور با موفقیت تغییر کرد.');
+                                }
+                              }}
+                              className="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-lg font-bold hover:bg-slate-300"
+                            >
+                              تغییر رمز عبور
+                            </button>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
 

@@ -56,14 +56,39 @@ export const Reports: React.FC = () => {
     return Object.values(dataMap).sort((a, b) => a.date.localeCompare(b.date));
   }, [filteredSales, state.products, state.exchangeRate]);
 
+  const handleExportCSV = () => {
+    // Generate CSV for inventory
+    const headers = ['نام محصول', 'دسته بندی', 'موجودی (کارتن)', 'ارزش کل (دالر)'];
+    const rows = state.products.map(p => {
+      const stock = Math.floor(p.stockInBaseUnits / p.multiplier);
+      const val = stock * p.costPriceUSD;
+      return [p.name, p.category, stock.toString(), val.toFixed(2)];
+    });
+    
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+      + headers.join(",") + "\n"
+      + rows.map(e => e.join(",")).join("\n");
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `inventory_report_${todayDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div className="space-y-6 font-sans" dir="rtl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+    <div className="space-y-6 font-sans print:p-0 print:m-0" dir="rtl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm print:hidden">
         <div>
           <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">گزارشات و بیلان</h1>
           <p className="text-xs text-slate-500 mt-1">تهیه راپورهای مالی، فروشات و موجودی</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#0B1F3A] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#123B66] transition-all shadow-md">
+        <button 
+          onClick={() => window.print()}
+          className="flex items-center gap-2 bg-[#0B1F3A] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#123B66] transition-all shadow-md print:hidden"
+        >
           <Printer className="w-5 h-5" />
           چاپ گزارش
         </button>
@@ -141,7 +166,7 @@ export const Reports: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-4 flex justify-between items-center bg-slate-50 border-b border-slate-100">
             <h3 className="font-bold text-slate-800">ارزش کل موجودی انبار</h3>
-            <button className="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-slate-50">
+            <button onClick={handleExportCSV} className="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-slate-50 print:hidden">
               <Download className="w-3 h-3" /> خروجی اکسل
             </button>
           </div>

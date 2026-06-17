@@ -9,21 +9,18 @@ import {
 } from 'lucide-react';
 
 const MENU_ITEMS = [
-  { path: '/admin/dashboard', name: 'داشبورد', icon: LayoutDashboard },
-  { path: '/admin/products', name: 'محصولات', icon: Package },
-  { path: '/admin/categories', name: 'کتگوری‌ها', icon: Grid },
-  { path: '/admin/sales', name: 'فروش', icon: ShoppingCart },
-  { path: '/admin/purchases', name: 'خرید', icon: Truck },
-  { path: '/admin/orders', name: 'سفارشات', icon: ClipboardList },
-  { path: '/admin/customers', name: 'مشتریان', icon: Users },
-  { path: '/admin/suppliers', name: 'فروشندگان', icon: Building2 },
-  { path: '/admin/inventory', name: 'گدام / موجودی', icon: Warehouse },
-  { path: '/admin/debts', name: 'قرض‌ها', icon: CreditCard },
-  { path: '/admin/payments', name: 'پرداخت‌ها', icon: DollarSign },
-  { path: '/admin/expenses', name: 'مصارف', icon: Receipt },
-  { path: '/admin/reports', name: 'گزارشات', icon: BarChart3 },
-  { path: '/admin/employees', name: 'کارمندان', icon: UserCog },
-  { path: '/admin/settings', name: 'تنظیمات', icon: Settings },
+  { path: '/admin/dashboard', name: 'داشبورد', icon: LayoutDashboard, roles: ['Owner', 'Manager'] },
+  { path: '/admin/products', name: 'محصولات', icon: Package, roles: ['Owner', 'Manager'] },
+  { path: '/admin/categories', name: 'کتگوری‌ها', icon: Grid, roles: ['Owner', 'Manager'] },
+  { path: '/admin/sales', name: 'فروش', icon: ShoppingCart, roles: ['Owner', 'Manager', 'Cashier'] },
+  { path: '/admin/purchases', name: 'خرید', icon: Truck, roles: ['Owner', 'Manager'] },
+  { path: '/admin/orders', name: 'سفارشات', icon: ClipboardList, roles: ['Owner', 'Manager', 'Cashier'] },
+  { path: '/admin/partners', name: 'اشخاص (مشتریان و فروشندگان)', icon: Users, roles: ['Owner', 'Manager'] },
+  { path: '/admin/inventory', name: 'گدام / موجودی', icon: Warehouse, roles: ['Owner', 'Manager', 'Warehouse Staff'] },
+  { path: '/admin/debts', name: 'قرضه و پرداخت', icon: CreditCard, roles: ['Owner', 'Manager'] },
+  { path: '/admin/expenses', name: 'مصارف', icon: Receipt, roles: ['Owner', 'Manager'] },
+  { path: '/admin/reports', name: 'گزارشات', icon: BarChart3, roles: ['Owner', 'Manager'] },
+  { path: '/admin/settings', name: 'تنظیمات', icon: Settings, roles: ['Owner', 'Manager'] },
 ];
 
 export const AdminLayout: React.FC = () => {
@@ -58,7 +55,7 @@ export const AdminLayout: React.FC = () => {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 space-y-1 custom-scrollbar">
-        {MENU_ITEMS.map((item) => {
+        {MENU_ITEMS.filter(item => user?.role && item.roles.includes(user.role)).map((item) => {
           const isActive = location.pathname.startsWith(item.path);
           return (
             <Link
@@ -101,7 +98,7 @@ export const AdminLayout: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] text-[#1F2937] font-sans flex" dir="rtl">
       
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block w-64 fixed right-0 top-0 bottom-0 z-40 shadow-xl">
+      <aside className="hidden lg:block w-64 fixed right-0 top-0 bottom-0 z-40 shadow-xl print:hidden">
         <SidebarContent />
       </aside>
 
@@ -115,10 +112,10 @@ export const AdminLayout: React.FC = () => {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 lg:mr-64 flex flex-col min-h-screen">
+      <main className="flex-1 lg:mr-64 flex flex-col min-h-screen print:m-0 print:p-0">
         
         {/* Topbar */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-30 h-16 px-4 flex items-center justify-between">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-30 h-16 px-4 flex items-center justify-between print:hidden">
           
           <div className="flex items-center gap-4">
             <button className="lg:hidden p-2 text-slate-500 hover:text-[#0B1F3A]" onClick={() => setIsMobileSidebarOpen(true)}>

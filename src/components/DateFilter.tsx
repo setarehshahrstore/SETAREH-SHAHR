@@ -75,7 +75,7 @@ export const DateFilter: React.FC<DateFilterProps> = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 space-y-4 font-sans no-print" dir="rtl">
+    <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 space-y-4 font-sans print:hidden" dir="rtl">
       <div className="flex flex-col md:flex-row items-end gap-4">
         
         <div className="flex-1 w-full flex flex-col md:flex-row gap-4">
