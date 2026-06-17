@@ -45,58 +45,6 @@ export const Inventory: React.FC = () => {
   // Editing Product states
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Manage Stock / Units states
-  const [managingStockProduct, setManagingStockProduct] = useState<Product | null>(null);
-  const [manageUnits, setManageUnits] = useState({
-    packHas: false, packName: 'بسته', packQty: '10',
-    boxHas: false, boxName: 'قوطی', boxQty: '100',
-    cartonHas: false, cartonName: 'کارتن', cartonQty: '1000'
-  });
-  const [addStockInputs, setAddStockInputs] = useState({
-    cartons: '', boxes: '', packs: '', pieces: ''
-  });
-
-  const openManageStock = (p: Product) => {
-    setManageUnits({
-      packHas: !!p.units.pack, packName: p.units.pack?.name || 'بسته', packQty: (p.units.pack?.multiplier || 10).toString(),
-      boxHas: !!p.units.box, boxName: p.units.box?.name || 'قوطی', boxQty: (p.units.box?.multiplier || 100).toString(),
-      cartonHas: !!p.units.carton, cartonName: p.units.carton?.name || 'کارتن', cartonQty: (p.units.carton?.multiplier || 1000).toString()
-    });
-    setAddStockInputs({ cartons: '', boxes: '', packs: '', pieces: '' });
-    setManagingStockProduct(p);
-  };
-
-  const handleManageStockSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!managingStockProduct) return;
-
-    const unitsObj: any = { piece: managingStockProduct.units.piece };
-    if (manageUnits.packHas) unitsObj.pack = { name: manageUnits.packName, multiplier: parseInt(manageUnits.packQty) || 10 };
-    if (manageUnits.boxHas) unitsObj.box = { name: manageUnits.boxName, multiplier: parseInt(manageUnits.boxQty) || 100 };
-    if (manageUnits.cartonHas) unitsObj.carton = { name: manageUnits.cartonName, multiplier: parseInt(manageUnits.cartonQty) || 1000 };
-
-    const addCartons = parseInt(addStockInputs.cartons) || 0;
-    const addBoxes = parseInt(addStockInputs.boxes) || 0;
-    const addPacks = parseInt(addStockInputs.packs) || 0;
-    const addPieces = parseInt(addStockInputs.pieces) || 0;
-
-    const totalToAdd = 
-      (manageUnits.cartonHas ? addCartons * (parseInt(manageUnits.cartonQty) || 1000) : 0) +
-      (manageUnits.boxHas ? addBoxes * (parseInt(manageUnits.boxQty) || 100) : 0) +
-      (manageUnits.packHas ? addPacks * (parseInt(manageUnits.packQty) || 10) : 0) +
-      addPieces;
-
-    const updatedProduct: Product = {
-      ...managingStockProduct,
-      units: unitsObj,
-      stockInBaseUnits: managingStockProduct.stockInBaseUnits + totalToAdd
-    };
-
-    editProduct(updatedProduct);
-    setManagingStockProduct(null);
-    alert('موجودی و تنظیمات بسته‌بندی با موفقیت به‌روزرسانی شد.');
-  };
-
   // Canvas barcode print feature states
   const [barcodeProduct, setBarcodeProduct] = useState<Product | null>(null);
   const [barcodeDisplayPrice, setBarcodeDisplayPrice] = useState<'Retail' | 'Wholesale' | 'Both' | 'None'>('Retail');
@@ -1241,13 +1189,6 @@ export const Inventory: React.FC = () => {
                     <td className="p-3.5 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
-                          onClick={() => openManageStock(p)}
-                          className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
-                          title="افزایش موجودی / تنظیم بسته‌بندی"
-                        >
-                          <Layers className="w-4 h-4" />
-                        </button>
-                        <button
                           onClick={() => setBarcodeProduct(p)}
                           className="p-1.5 text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors"
                           title="چاپ لیبل بارکد"
@@ -1419,111 +1360,6 @@ export const Inventory: React.FC = () => {
               </button>
             </div>
 
-          </div>
-        </div>
-      )}
-
-      {/* Manage Stock & Units Modal */}
-      {managingStockProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4" dir="rtl">
-          <div className="bg-white rounded-2xl border-2 border-blue-500 shadow-2xl p-6 max-w-xl w-full text-right animate-fade-in space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
-                <Layers className="w-5 h-5 text-blue-600" />
-                افزایش موجودی / تنظیم بسته‌بندی: {managingStockProduct.name}
-              </h3>
-              <button 
-                onClick={() => setManagingStockProduct(null)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
-              >
-                ✕ بستن
-              </button>
-            </div>
-
-            <form onSubmit={handleManageStockSubmit} className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-bold text-xs text-slate-700 mb-3 border-b border-slate-200 pb-2">۱. تنظیمات بسته‌بندی و ضرایب</h4>
-                <div className="space-y-3">
-                  {/* Pack */}
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={manageUnits.packHas} onChange={e => setManageUnits({...manageUnits, packHas: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" />
-                    <span className="text-xs font-bold text-slate-600 w-16">بسته کوچک:</span>
-                    <input disabled={!manageUnits.packHas} type="text" value={manageUnits.packName} onChange={e => setManageUnits({...manageUnits, packName: e.target.value})} className="flex-1 p-1.5 text-xs bg-white border border-slate-200 rounded" placeholder="نام بسته" />
-                    <span className="text-xs text-slate-400">=</span>
-                    <input disabled={!manageUnits.packHas} type="number" value={manageUnits.packQty} onChange={e => setManageUnits({...manageUnits, packQty: e.target.value})} className="w-16 p-1.5 text-xs bg-white border border-slate-200 rounded text-center" placeholder="ضریب" />
-                    <span className="text-[10px] text-slate-500">{managingStockProduct.units.piece}</span>
-                  </div>
-                  {/* Box */}
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={manageUnits.boxHas} onChange={e => setManageUnits({...manageUnits, boxHas: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" />
-                    <span className="text-xs font-bold text-slate-600 w-16">قوطی/جعبه:</span>
-                    <input disabled={!manageUnits.boxHas} type="text" value={manageUnits.boxName} onChange={e => setManageUnits({...manageUnits, boxName: e.target.value})} className="flex-1 p-1.5 text-xs bg-white border border-slate-200 rounded" placeholder="نام جعبه" />
-                    <span className="text-xs text-slate-400">=</span>
-                    <input disabled={!manageUnits.boxHas} type="number" value={manageUnits.boxQty} onChange={e => setManageUnits({...manageUnits, boxQty: e.target.value})} className="w-16 p-1.5 text-xs bg-white border border-slate-200 rounded text-center" placeholder="ضریب" />
-                    <span className="text-[10px] text-slate-500">{managingStockProduct.units.piece}</span>
-                  </div>
-                  {/* Carton */}
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={manageUnits.cartonHas} onChange={e => setManageUnits({...manageUnits, cartonHas: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" />
-                    <span className="text-xs font-bold text-slate-600 w-16">کارتن کلان:</span>
-                    <input disabled={!manageUnits.cartonHas} type="text" value={manageUnits.cartonName} onChange={e => setManageUnits({...manageUnits, cartonName: e.target.value})} className="flex-1 p-1.5 text-xs bg-white border border-slate-200 rounded" placeholder="نام کارتن" />
-                    <span className="text-xs text-slate-400">=</span>
-                    <input disabled={!manageUnits.cartonHas} type="number" value={manageUnits.cartonQty} onChange={e => setManageUnits({...manageUnits, cartonQty: e.target.value})} className="w-16 p-1.5 text-xs bg-white border border-slate-200 rounded text-center" placeholder="ضریب" />
-                    <span className="text-[10px] text-slate-500">{managingStockProduct.units.piece}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h4 className="font-bold text-xs text-slate-700 mb-3 border-b border-slate-200 pb-2">۲. افزودن به موجودی (محاسبه خودکار کل)</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {manageUnits.cartonHas && (
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">چند {manageUnits.cartonName}؟</label>
-                      <input type="number" min="0" value={addStockInputs.cartons} onChange={e => setAddStockInputs({...addStockInputs, cartons: e.target.value})} className="w-full bg-white border p-1.5 rounded text-xs font-mono text-center" />
-                    </div>
-                  )}
-                  {manageUnits.boxHas && (
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">چند {manageUnits.boxName}؟</label>
-                      <input type="number" min="0" value={addStockInputs.boxes} onChange={e => setAddStockInputs({...addStockInputs, boxes: e.target.value})} className="w-full bg-white border p-1.5 rounded text-xs font-mono text-center" />
-                    </div>
-                  )}
-                  {manageUnits.packHas && (
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-500 mb-1">چند {manageUnits.packName}؟</label>
-                      <input type="number" min="0" value={addStockInputs.packs} onChange={e => setAddStockInputs({...addStockInputs, packs: e.target.value})} className="w-full bg-white border p-1.5 rounded text-xs font-mono text-center" />
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 mb-1">چند {managingStockProduct.units.piece} (تک)؟</label>
-                    <input type="number" min="0" value={addStockInputs.pieces} onChange={e => setAddStockInputs({...addStockInputs, pieces: e.target.value})} className="w-full bg-white border p-1.5 rounded text-xs font-mono text-center" />
-                  </div>
-                </div>
-                
-                <div className="mt-3 p-2 bg-blue-50 border border-blue-100 rounded-lg text-center">
-                  <span className="text-[10px] text-blue-600 font-bold">
-                    مجموع واحدهای اضافه شده: {' '}
-                    <span className="font-mono font-black text-blue-800 text-sm">
-                      { (manageUnits.cartonHas ? (parseInt(addStockInputs.cartons)||0) * (parseInt(manageUnits.cartonQty)||1000) : 0) +
-                        (manageUnits.boxHas ? (parseInt(addStockInputs.boxes)||0) * (parseInt(manageUnits.boxQty)||100) : 0) +
-                        (manageUnits.packHas ? (parseInt(addStockInputs.packs)||0) * (parseInt(manageUnits.packQty)||10) : 0) +
-                        (parseInt(addStockInputs.pieces)||0) }
-                    </span>
-                    {' '}{managingStockProduct.units.piece}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" onClick={() => setManagingStockProduct(null)} className="bg-slate-200 hover:bg-slate-300 px-4 py-2 rounded-lg font-bold text-xs">
-                  انصراف
-                </button>
-                <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-xs shadow-sm">
-                  ذخیره و افزایش موجودی
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
