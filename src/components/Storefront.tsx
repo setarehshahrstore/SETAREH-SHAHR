@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
