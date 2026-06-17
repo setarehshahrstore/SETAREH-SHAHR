@@ -6,6 +6,7 @@ import {
   Package, Plus, Search, Filter, Edit, Trash2, Printer, 
   Image as ImageIcon, X, AlertCircle, Barcode
 } from 'lucide-react';
+import { SecurityGateModal } from './SecurityGate';
 
 const IMAGE_PRESETS = [
   { name: 'آیتم عمومی', url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=250' },
@@ -262,19 +263,18 @@ export const Products: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal using SecurityGate */}
       {productToDelete && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 text-center space-y-4">
-            <AlertCircle className="w-16 h-16 text-rose-500 mx-auto" />
-            <h3 className="text-xl font-bold text-slate-800">حذف محصول؟</h3>
-            <p className="text-slate-500 text-sm">آیا مطمئن هستید که می‌خواهید "{productToDelete.name}" را حذف کنید؟ این عمل غیرقابل بازگشت است.</p>
-            <div className="flex gap-3 justify-center pt-4">
-              <button onClick={() => setProductToDelete(null)} className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200">انصراف</button>
-              <button onClick={() => { deleteProduct(productToDelete.id); setProductToDelete(null); }} className="px-5 py-2.5 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 shadow-lg shadow-rose-600/30">بله، حذف کن</button>
-            </div>
-          </div>
-        </div>
+        <SecurityGateModal
+          isOpen={!!productToDelete}
+          onClose={() => setProductToDelete(null)}
+          onConfirm={() => {
+            deleteProduct(productToDelete.id);
+            setProductToDelete(null);
+          }}
+          title="حذف کالا از سیستم"
+          description={`آیا مطمئن هستید که می‌خواهید "${productToDelete.name}" را حذف کنید؟ این عمل غیرقابل بازگشت است و ممکن است روی گزارش‌های مالی تاثیر بگذارد.`}
+        />
       )}
 
       {/* Add/Edit Product Modal */}
