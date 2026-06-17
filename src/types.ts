@@ -186,6 +186,8 @@ export interface Expense {
   description: string;
   amountUSD: number;
   amountAFN: number;
+  amount?: number;
+  currency?: string;
 }
 
 export interface AppState {
@@ -197,6 +199,7 @@ export interface AppState {
   purchases: Purchase[];
   payments: DebtPayment[];
   expenses: Expense[];
+  transactions?: any[];
   cashRegister: CashRegister;
   exchangeRate: number; // 1 USD = X AFN (defaults to 71.5)
   inquiries?: CustomerInquiry[];

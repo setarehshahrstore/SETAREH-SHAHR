@@ -48,6 +48,8 @@ export const Purchases: React.FC = () => {
     setItems([...items, {
       productId: prod.id,
       productName: prod.name,
+      selectedUnit: 'Piece',
+      multiplier: 1,
       quantity,
       costPriceAFN: cost,
       costPriceUSD: 0,
@@ -88,7 +90,8 @@ export const Purchases: React.FC = () => {
       totalUSD: 0,
       paidAFN: paid,
       paidUSD: 0,
-      exchangeRate: state.exchangeRate
+      exchangeRate: state.exchangeRate,
+      paymentMethod: paid >= totalAFN ? 'Cash' : paid > 0 ? 'Partial' : 'Credit'
     };
 
     addPurchase(newPurchase);

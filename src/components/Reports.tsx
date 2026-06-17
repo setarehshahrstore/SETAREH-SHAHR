@@ -60,8 +60,9 @@ export const Reports: React.FC = () => {
     // Generate CSV for inventory
     const headers = ['نام محصول', 'دسته بندی', 'موجودی (کارتن)', 'ارزش کل (دالر)'];
     const rows = state.products.map(p => {
-      const stock = Math.floor(p.stockInBaseUnits / p.multiplier);
-      const val = stock * p.costPriceUSD;
+      const maxMultiplier = p.units?.carton?.multiplier || p.units?.box?.multiplier || p.units?.pack?.multiplier || 1;
+      const stock = Math.floor(p.stockInBaseUnits / maxMultiplier);
+      const val = p.stockInBaseUnits * p.costPriceUSD;
       return [p.name, p.category, stock.toString(), val.toFixed(2)];
     });
     
