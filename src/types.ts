@@ -52,6 +52,7 @@ export interface Customer {
   username?: string;
   passwordHash?: string;
   passwordResetRequested?: boolean;
+  requirePasswordChange?: boolean;
   companyName?: string;
   phone: string;
   city: string;

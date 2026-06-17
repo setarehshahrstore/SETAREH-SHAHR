@@ -5,10 +5,12 @@ import { useAuth, UserRole } from '../AuthContext';
 import { useAppState } from '../AppContext';
 
 export const Login: React.FC = () => {
-  const { state } = useAppState();
+  const { state, editCustomer } = useAppState();
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [requireNewPasswordUser, setRequireNewPasswordUser] = useState<any | null>(null);
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -86,6 +88,11 @@ export const Login: React.FC = () => {
 
     if (foundEmployee || foundCustomer) {
       if (foundCustomer) {
+        if (foundCustomer.requirePasswordChange) {
+          setRequireNewPasswordUser(foundCustomer);
+          setError('');
+          return;
+        }
         login(foundCustomer.name, 'Customer');
         navigate('/account', { replace: true });
       } else if (foundEmployee) {
@@ -101,6 +108,25 @@ export const Login: React.FC = () => {
     } else {
       setError('ایمیل یا رمز عبور اشتباه است.');
     }
+  };
+
+  const handleSetNewPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 4) {
+      setError('رمز عبور جدید باید حداقل ۴ کاراکتر باشد.');
+      return;
+    }
+    
+    // Update customer in state
+    editCustomer({
+      ...requireNewPasswordUser,
+      passwordHash: newPassword,
+      requirePasswordChange: false
+    });
+
+    // Log them in
+    login(requireNewPasswordUser.name, 'Customer');
+    navigate('/account', { replace: true });
   };
 
   return (
@@ -124,7 +150,43 @@ export const Login: React.FC = () => {
           </div>
 
           <div className="p-8">
-            <form onSubmit={handleLogin} className="space-y-6">
+            {requireNewPasswordUser ? (
+              <form onSubmit={handleSetNewPassword} className="space-y-6">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-bold text-slate-800">تعیین رمز عبور جدید</h3>
+                  <p className="text-sm text-slate-500 mt-2">شما با رمز یکبار مصرف وارد شدید. لطفاً رمز عبور جدید خود را وارد کنید.</p>
+                </div>
+                {error && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2 animate-fade-in">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">رمز عبور جدید</label>
+                  <div className="relative">
+                    <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
+                      placeholder="رمز جدید..."
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8942E] text-white py-3.5 rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-[#D4AF37]/40 hover:-translate-y-0.5"
+                >
+                  <ShieldCheck className="w-5 h-5" />
+                  ذخیره رمز و ورود
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-6">
               
               {error && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2 animate-fade-in">
@@ -174,6 +236,7 @@ export const Login: React.FC = () => {
               </button>
 
             </form>
+            )}
             
             <div className="flex items-center justify-between mt-6">
               <button 

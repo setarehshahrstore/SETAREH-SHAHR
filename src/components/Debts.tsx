@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useAppState } from '../AppContext';
 import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency } from '../utils';
-import { Users, Building2, CreditCard, X, Edit, Trash2, Plus, FileText, Search } from 'lucide-react';
+import { Users, Building2, CreditCard, X, Edit, Trash2, Plus, FileText, Search, KeyRound } from 'lucide-react';
 import { AdminPasswordPrompt } from './AdminPasswordPrompt';
 import { DebtPayment } from '../types';
 
 export const Debts: React.FC = () => {
-  const { state, addPayment, updateCustomerDebt, updateSupplierDebt, deletePayment, editPayment, addCustomer, addSupplier } = useAppState();
+  const { state, addPayment, updateCustomerDebt, updateSupplierDebt, deletePayment, editPayment, addCustomer, addSupplier, editCustomer } = useAppState();
   
   const todayDate = new Date().toISOString().split('T')[0];
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -212,6 +212,18 @@ export const Debts: React.FC = () => {
     }
   };
 
+  const handleResetPassword = (customer: any) => {
+    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setAdminPrompt({
+      isOpen: true,
+      title: 'بازیابی رمز عبور مشتری',
+      action: () => {
+        editCustomer({ ...customer, passwordHash: randomOtp, requirePasswordChange: true });
+        alert(`رمز یکبار مصرف تولید شد:\n\n${randomOtp}\n\nاین رمز را به مشتری بدهید تا با آن وارد شود و رمز جدیدی انتخاب کند.`);
+      }
+    });
+  };
+
   return (
     <div className="space-y-6 font-sans" dir="rtl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
@@ -285,6 +297,15 @@ export const Debts: React.FC = () => {
                     <td className="px-4 py-3 font-mono font-bold text-rose-600">${person.debtUSD.toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 justify-end">
+                        {activeTab === 'Customers' && (
+                          <button 
+                            onClick={() => handleResetPassword(person)}
+                            className="text-xs font-bold bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-slate-100"
+                            title="تغییر رمز عبور مشتری به رمز یکبار مصرف"
+                          >
+                            <KeyRound className="w-3 h-3" /> بازیابی رمز
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleOpenDebt(person)}
                           className="text-xs font-bold bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-amber-100"
