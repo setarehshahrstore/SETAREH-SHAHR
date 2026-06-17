@@ -45,7 +45,8 @@ export const Storefront: React.FC = () => {
       if (existing) {
         return prev.map(item => item === existing ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { product, quantity: 1, type }];
+      const initialQty = type === 'Wholesale' && product.minWholesaleQty ? product.minWholesaleQty : 1;
+      return [...prev, { product, quantity: initialQty, type }];
     });
     setIsCartOpen(true);
   };
@@ -57,7 +58,9 @@ export const Storefront: React.FC = () => {
   const updateCartQty = (index: number, delta: number) => {
     setCart(prev => {
       const updated = [...prev];
-      updated[index].quantity = Math.max(1, updated[index].quantity + delta);
+      const item = updated[index];
+      const minQty = item.type === 'Wholesale' && item.product.minWholesaleQty ? item.product.minWholesaleQty : 1;
+      item.quantity = Math.max(minQty, item.quantity + delta);
       return updated;
     });
   };
@@ -536,10 +539,22 @@ export const Storefront: React.FC = () => {
                       </div>
                     )}
                     {product.stockInBaseUnits <= 0 && (
-                      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
+                      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
                         <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">تمام شد</span>
                       </div>
                     )}
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 z-20">
+                      {product.isDiscounted && (
+                        <span className="bg-rose-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
+                          <Tag className="w-3 h-3" /> لیلام
+                        </span>
+                      )}
+                      {product.isBestSeller && (
+                        <span className="bg-amber-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
+                          <Star className="w-3 h-3" /> پرفروش
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4 flex-1 flex flex-col">
                     <p className="text-[10px] text-slate-400 font-bold mb-1">{product.category}</p>
@@ -561,8 +576,13 @@ export const Storefront: React.FC = () => {
                       </div>
                       
                       {(product.wholesalePriceAFN ?? 0) > 0 && (
-                        <div className="flex justify-between items-center bg-amber-50 p-2 rounded-xl border border-amber-100">
-                          <span className="text-[10px] font-bold text-amber-700">قیمت عمده</span>
+                        <div className="flex justify-between items-center bg-amber-50 p-2 rounded-xl border border-amber-100 relative">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-amber-700">قیمت عمده</span>
+                            {product.minWholesaleQty && product.minWholesaleQty > 1 && (
+                              <span className="text-[9px] text-amber-600/80 mt-0.5">حداقل: {product.minWholesaleQty}</span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="font-black text-amber-600 font-mono">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
                             <button 

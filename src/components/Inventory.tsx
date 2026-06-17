@@ -218,7 +218,8 @@ export const Inventory: React.FC = () => {
     costPriceCarton: '800.00', stockPieces: '0', stockCartons: '0', minStock: '100',
     hasPack: true, packName: 'بسته', packQty: '10',
     hasBox: true, boxName: 'قوطی', boxQty: '100',
-    hasCarton: true, cartonName: 'کارتن', cartonQty: '1000'
+    hasCarton: true, cartonName: 'کارتن', cartonQty: '1000',
+    minWholesaleQty: '', isDiscounted: false, isBestSeller: false
   });
 
   const handlePieceCostChange = (val: string) => {
@@ -315,7 +316,10 @@ export const Inventory: React.FC = () => {
         ...(formData.hasPack && { pack: { name: formData.packName, multiplier: parseInt(formData.packQty) || 1 } }),
         ...(formData.hasBox && { box: { name: formData.boxName, multiplier: parseInt(formData.boxQty) || 1 } }),
         ...(formData.hasCarton && { carton: { name: formData.cartonName, multiplier: parseInt(formData.cartonQty) || 1 } })
-      }
+      },
+      minWholesaleQty: parseInt(formData.minWholesaleQty) || undefined,
+      isDiscounted: formData.isDiscounted,
+      isBestSeller: formData.isBestSeller
     };
 
     if (editingProduct) {
@@ -340,7 +344,10 @@ export const Inventory: React.FC = () => {
       minStock: p.minStockInBaseUnits.toString(),
       hasPack: !!p.units.pack, packName: p.units.pack?.name || 'بسته', packQty: (p.units.pack?.multiplier || 10).toString(),
       hasBox: !!p.units.box, boxName: p.units.box?.name || 'قوطی', boxQty: (p.units.box?.multiplier || 100).toString(),
-      hasCarton: !!p.units.carton, cartonName: p.units.carton?.name || 'کارتن', cartonQty: (p.units.carton?.multiplier || 1000).toString()
+      hasCarton: !!p.units.carton, cartonName: p.units.carton?.name || 'کارتن', cartonQty: (p.units.carton?.multiplier || 1000).toString(),
+      minWholesaleQty: p.minWholesaleQty ? p.minWholesaleQty.toString() : '',
+      isDiscounted: p.isDiscounted || false,
+      isBestSeller: p.isBestSeller || false
     });
     setEditingProduct(p);
     setIsAddModalOpen(true);
@@ -696,6 +703,10 @@ export const Inventory: React.FC = () => {
                     <input type="number" step="0.01" required value={formData.wholesalePriceUSD} onChange={e => setFormData({...formData, wholesalePriceUSD: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" />
                   </div>
                   <div className="pt-2">
+                    <label className="block text-xs font-bold text-slate-600 mb-1">حداقل خرید عمده (اختیاری)</label>
+                    <input type="number" min="1" value={formData.minWholesaleQty} onChange={e => setFormData({...formData, minWholesaleQty: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" placeholder="مثال: 50" />
+                  </div>
+                  <div className="pt-2">
                     <label className="block text-xs font-bold text-slate-600 mb-1">نرخ فروش پرچون</label>
                     <input type="number" step="0.01" required value={formData.retailPriceUSD} onChange={e => setFormData({...formData, retailPriceUSD: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 font-mono text-left" dir="ltr" />
                   </div>
@@ -787,6 +798,25 @@ export const Inventory: React.FC = () => {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2">تنظیمات پیشرفته مارکتینگ</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                    <input type="checkbox" checked={formData.isDiscounted} onChange={e => setFormData({...formData, isDiscounted: e.target.checked})} className="accent-rose-500 w-5 h-5" />
+                    <div>
+                      <div className="font-bold text-rose-600 text-sm">لیلام / تخفیف ویژه</div>
+                      <div className="text-[10px] text-slate-500">با انتخاب این گزینه برچسب قرمز لیلام روی محصول در فروشگاه نمایش داده می‌شود.</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
+                    <input type="checkbox" checked={formData.isBestSeller} onChange={e => setFormData({...formData, isBestSeller: e.target.checked})} className="accent-amber-500 w-5 h-5" />
+                    <div>
+                      <div className="font-bold text-amber-600 text-sm">محصول پرفروش</div>
+                      <div className="text-[10px] text-slate-500">با انتخاب این گزینه برچسب پرفروش روی محصول در فروشگاه نمایش داده می‌شود.</div>
+                    </div>
+                  </label>
                 </div>
               </div>
 

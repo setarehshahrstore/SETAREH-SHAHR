@@ -43,6 +43,11 @@ export interface Product {
   minStockInBaseUnits: number; // Low stock threshold
   location?: string; // Warehouse bin/location
   imageUrl?: string; // Image for storefront
+
+  // Advanced features
+  minWholesaleQty?: number; // Minimum quantity to allow wholesale pricing
+  isDiscounted?: boolean;   // Clearance / Discount flag
+  isBestSeller?: boolean;   // Best-seller flag
 }
 
 export interface Customer {
