@@ -39,6 +39,13 @@ interface AppContextType {
 
   addTransaction: (transaction: any) => void;
 
+  // Chat Methods
+  addChatSession: (session: ChatSession) => void;
+  addChatMessage: (sessionId: string, message: ChatMessage) => void;
+  updateChatStatus: (sessionId: string, status: 'Active' | 'Waiting' | 'Closed') => void;
+  markChatReadByAdmin: (sessionId: string) => void;
+  markChatReadByCustomer: (sessionId: string) => void;
+
   resetState: () => void;
 }
 
@@ -62,6 +69,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!parsed.categories) parsed.categories = [];
         if (!parsed.expenses) parsed.expenses = [];
         if (!parsed.transactions) parsed.transactions = []; // Ensure generic transactions exist if needed
+        if (!parsed.chatSessions) parsed.chatSessions = [];
         if (!parsed.exchangeRate) parsed.exchangeRate = 72.5;
         return parsed;
       } catch (e) {
@@ -109,6 +117,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Assume we have a transactions array in state if we want to store them, or just modify cashRegister
     return { ...prev, cashRegister: updatedCash };
   });
+
+  const addChatSession = (session: ChatSession) => setState(prev => ({
+    ...prev,
+    chatSessions: [...(prev.chatSessions || []), session]
+  }));
+
+  const addChatMessage = (sessionId: string, message: ChatMessage) => setState(prev => {
+    const sessions = prev.chatSessions || [];
+    const updatedSessions = sessions.map(s => {
+      if (s.id === sessionId) {
+        return {
+          ...s,
+          messages: [...s.messages, message],
+          status: message.sender === 'Customer' ? 'Waiting' : 'Active',
+          unreadByAdmin: message.sender === 'Customer' ? s.unreadByAdmin + 1 : s.unreadByAdmin,
+          unreadByCustomer: message.sender !== 'Customer' ? s.unreadByCustomer + 1 : s.unreadByCustomer
+        };
+      }
+      return s;
+    });
+    return { ...prev, chatSessions: updatedSessions };
+  });
+
+  const updateChatStatus = (sessionId: string, status: 'Active' | 'Waiting' | 'Closed') => setState(prev => ({
+    ...prev,
+    chatSessions: (prev.chatSessions || []).map(s => s.id === sessionId ? { ...s, status } : s)
+  }));
+
+  const markChatReadByAdmin = (sessionId: string) => setState(prev => ({
+    ...prev,
+    chatSessions: (prev.chatSessions || []).map(s => s.id === sessionId ? { ...s, unreadByAdmin: 0 } : s)
+  }));
+
+  const markChatReadByCustomer = (sessionId: string) => setState(prev => ({
+    ...prev,
+    chatSessions: (prev.chatSessions || []).map(s => s.id === sessionId ? { ...s, unreadByCustomer: 0 } : s)
+  }));
 
   const addSale = (sale: Sale) => {
     setState((prev) => {
@@ -604,6 +649,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addExpense,
       deleteExpense,
       addTransaction,
+      addChatSession,
+      addChatMessage,
+      updateChatStatus,
+      markChatReadByAdmin,
+      markChatReadByCustomer,
       resetState
     }}>
       {children}

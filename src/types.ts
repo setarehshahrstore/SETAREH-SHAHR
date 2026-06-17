@@ -190,6 +190,24 @@ export interface Expense {
   currency?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  sender: 'Customer' | 'Admin' | 'AI';
+  text: string;
+  timestamp: string;
+}
+
+export interface ChatSession {
+  id: string;
+  customerId?: string; // Optional if guest
+  customerName: string;
+  customerPhone?: string;
+  messages: ChatMessage[];
+  status: 'Active' | 'Waiting' | 'Closed';
+  unreadByAdmin: number;
+  unreadByCustomer: number;
+}
+
 export interface AppState {
   categories: Category[];
   products: Product[];
@@ -200,6 +218,7 @@ export interface AppState {
   payments: DebtPayment[];
   expenses: Expense[];
   transactions?: any[];
+  chatSessions?: ChatSession[];
   cashRegister: CashRegister;
   exchangeRate: number; // 1 USD = X AFN (defaults to 71.5)
   inquiries?: CustomerInquiry[];

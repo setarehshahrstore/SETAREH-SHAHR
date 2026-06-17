@@ -199,7 +199,7 @@ export const Storefront: React.FC = () => {
 
         <div className="flex flex-col md:flex-row gap-8 print:hidden">
           {/* Categories Sidebar */}
-          <div className="w-full md:w-64 shrink-0">
+          <div className="w-full md:w-64 shrink-0" id="categories">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sticky top-24">
               <h3 className="font-black text-slate-800 mb-4">دسته‌بندی‌ها</h3>
               <div className="space-y-1">
@@ -219,7 +219,8 @@ export const Storefront: React.FC = () => {
           </div>
 
           {/* Products Grid */}
-          <div className="flex-1">
+          <div className="flex-1" id="products">
+            <div id="wholesale"></div>
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 mb-6 flex items-center">
               <Search className="w-5 h-5 text-slate-400 mx-3 shrink-0" />
               <input 

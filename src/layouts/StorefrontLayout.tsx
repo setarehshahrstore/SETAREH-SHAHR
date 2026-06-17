@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, Menu, X, MessageCircle, ChevronLeft, MapPin, Phone, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../AuthContext';
+import { CustomerChat } from '../components/CustomerChat';
 
 export const StorefrontLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -131,7 +132,7 @@ export const StorefrontLayout: React.FC = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             
             {/* Brand Column */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2" id="about">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-white p-1 rounded-lg">
                   <img src="/logo.png" alt="ستاره شهر" className="w-12 h-12 object-contain" />
@@ -158,7 +159,7 @@ export const StorefrontLayout: React.FC = () => {
             </div>
             
             {/* Contact Column */}
-            <div>
+            <div id="contact">
               <h4 className="text-brand-lightgold font-bold text-lg mb-6">ارتباط با ما</h4>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 text-slate-300">
@@ -184,6 +185,7 @@ export const StorefrontLayout: React.FC = () => {
           </div>
         </div>
       </footer>
+      <CustomerChat />
     </div>
   );
 };

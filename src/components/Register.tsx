@@ -99,7 +99,7 @@ export const Register: React.FC = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-4">
+        <form onSubmit={handleSubmit} className="p-8 space-y-4" autoComplete="off">
           {error && (
             <div className="bg-rose-50 text-rose-700 p-4 rounded-xl text-sm font-bold border border-rose-200">
               {error}
@@ -120,7 +120,7 @@ export const Register: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">نام کاربری (Username) <span className="text-rose-500">*</span></label>
-              <input required type="text" dir="ltr" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" placeholder="مثال: ali123" />
+              <input required autoComplete="new-username" type="text" dir="ltr" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" placeholder="مثال: ali123" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس <span className="text-rose-500">*</span></label>
@@ -141,11 +141,11 @@ export const Register: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">رمز عبور <span className="text-rose-500">*</span></label>
-              <input required type="password" dir="ltr" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
+              <input required autoComplete="new-password" type="password" dir="ltr" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">تکرار رمز عبور <span className="text-rose-500">*</span></label>
-              <input required type="password" dir="ltr" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
+              <input required autoComplete="new-password" type="password" dir="ltr" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
             </div>
           </div>
 

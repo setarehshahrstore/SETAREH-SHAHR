@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAppState } from '../AppContext';
 import { useAuth } from '../AuthContext';
 import { 
   LayoutDashboard, Package, Grid, ShoppingCart, Truck, ClipboardList, 
   Users, Building2, Warehouse, CreditCard, DollarSign, Receipt, 
   BarChart3, UserCog, Settings, Bell, Search, Plus, Menu, X, LogOut,
-  Store
+  Store, MessageCircle
 } from 'lucide-react';
 
 const MENU_ITEMS = [
@@ -21,13 +22,29 @@ const MENU_ITEMS = [
   { path: '/admin/expenses', name: 'مصارف', icon: Receipt, roles: ['Owner', 'Manager'] },
   { path: '/admin/reports', name: 'گزارشات', icon: BarChart3, roles: ['Owner', 'Manager'] },
   { path: '/admin/settings', name: 'تنظیمات', icon: Settings, roles: ['Owner', 'Manager'] },
+  { path: '/admin/live-chat', name: 'پشتیبانی زنده', icon: MessageCircle, roles: ['Owner', 'Manager', 'Cashier', 'Warehouse Staff'] },
 ];
 
 export const AdminLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { state } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const totalUnreadChats = (state.chatSessions || []).reduce((sum, s) => sum + s.unreadByAdmin, 0);
+  const [prevUnread, setPrevUnread] = useState(totalUnreadChats);
+
+  React.useEffect(() => {
+    if (totalUnreadChats > prevUnread) {
+      // Play sound
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play().catch(() => {});
+      } catch (e) {}
+    }
+    setPrevUnread(totalUnreadChats);
+  }, [totalUnreadChats, prevUnread]);
 
   const handleLogout = () => {
     logout();
@@ -62,14 +79,21 @@ export const AdminLayout: React.FC = () => {
               key={item.path}
               to={item.path}
               onClick={() => setIsMobileSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl font-medium transition-colors ${
                 isActive 
                   ? 'bg-white/10 text-[#D4AF37] border-r-4 border-[#D4AF37]' 
                   : 'text-slate-300 hover:bg-white/5 hover:text-white'
               }`}
             >
-              <item.icon className={`w-5 h-5 ${isActive ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
-              {item.name}
+              <div className="flex items-center gap-3">
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+                {item.name}
+              </div>
+              {item.path === '/admin/live-chat' && totalUnreadChats > 0 && (
+                <span className="bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">
+                  {totalUnreadChats}
+                </span>
+              )}
             </Link>
           );
         })}
