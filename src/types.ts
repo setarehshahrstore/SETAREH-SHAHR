@@ -142,6 +142,7 @@ export interface Sale {
   status: 'Completed' | 'Pending Delivery' | 'Requires Customer Approval' | 'Delivered' | 'Cancelled';
   deliveryAddress?: string;
   deliveryCity?: string;
+  cashierName?: string; // Track who served the customer
   deliveryStatus?: DeliveryStatus;
   deliveryDriver?: string;
 }

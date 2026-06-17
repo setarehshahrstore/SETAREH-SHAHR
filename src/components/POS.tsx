@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../AppContext';
+import { useAuth } from '../AuthContext';
 import { formatCurrency, getUnitOptions } from '../utils';
 import { 
   Scan, 
@@ -35,6 +36,7 @@ const QUICK_PRESETS = [
 
 export const POS: React.FC = () => {
   const { state, addSale, addProduct, editSale, deleteSale, deleteSales, addCustomer } = useAppState();
+  const { user } = useAuth();
   
   const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -435,7 +437,8 @@ export const POS: React.FC = () => {
       changeAFN: changeDueInAFN > 0 ? changeDueInAFN : 0,
       paymentMethod: isCredit ? 'Credit' : 'Cash',
       exchangeRate: state.exchangeRate,
-      status: 'Completed'
+      status: 'Completed',
+      cashierName: user?.fullName || 'سیستم'
     };
 
     addSale(newSale);

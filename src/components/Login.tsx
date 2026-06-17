@@ -94,9 +94,11 @@ export const Login: React.FC = () => {
           return;
         }
         login(foundCustomer.name, 'Customer');
+        alert(`خوش آمدید ${foundCustomer.name} عزیز!`);
         navigate('/account', { replace: true });
       } else if (foundEmployee) {
         login(foundEmployee.fullName, foundEmployee.role as UserRole);
+        alert(`خوش آمدید ${foundEmployee.fullName} عزیز!`);
         if (foundEmployee.role === 'Cashier') {
           navigate('/admin/sales', { replace: true });
         } else if (foundEmployee.role === 'Warehouse Staff') {
@@ -126,6 +128,7 @@ export const Login: React.FC = () => {
 
     // Log them in
     login(requireNewPasswordUser.name, 'Customer');
+    alert(`خوش آمدید ${requireNewPasswordUser.name} عزیز!`);
     navigate('/account', { replace: true });
   };
 

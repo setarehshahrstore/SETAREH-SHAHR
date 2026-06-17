@@ -313,7 +313,8 @@ export const Storefront: React.FC = () => {
       exchangeRate: state.exchangeRate,
       status: 'Pending Delivery',
       deliveryAddress: customerAddress,
-      deliveryCity: 'کابل'
+      deliveryCity: 'کابل',
+      cashierName: user?.fullName || 'ثبت آنلاین'
     };
 
     addSale(newSale);
@@ -618,6 +619,9 @@ export const Storefront: React.FC = () => {
                   <p className="text-sm text-slate-500">تاریخ: {new Date().toLocaleDateString('fa-IR')}</p>
                   <p className="text-sm text-slate-500">مشتری: {successfulOrder.customerName}</p>
                   <p className="text-sm text-slate-500" dir="ltr">{successfulOrder.customerPhone || '---'}</p>
+                  {successfulOrder.cashierName && (
+                    <p className="text-sm text-slate-500 mt-1">خدمت شده توسط: {successfulOrder.cashierName}</p>
+                  )}
                 </div>
               </div>
               
