@@ -3,7 +3,7 @@ import { useAppState } from '../AppContext';
 import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency, getUnitOptions } from '../utils';
 import { 
-  Plus, Search, FileText, X, Trash2, 
+  Plus, Search, FileText, X, Trash2, Edit2, AlertTriangle,
   ShoppingBag, Layers, Filter, Sparkles, Truck, DollarSign,
   PackagePlus, UserPlus
 } from 'lucide-react';
@@ -19,9 +19,15 @@ const QUICK_PRESETS = [
 ];
 
 export const Purchases: React.FC = () => {
-  const { state, addPurchase, addProduct, addSupplier } = useAppState();
+  const { state, addPurchase, addProduct, addSupplier, deletePurchase, editPurchase } = useAppState();
   
   const [purchaseSubTab, setPurchaseSubTab] = useState<'Purchase' | 'Manage'>('Purchase');
+
+  // Manage Modals State
+  const [viewingPurchase, setViewingPurchase] = useState<Purchase | null>(null);
+  const [deletingPurchase, setDeletingPurchase] = useState<Purchase | null>(null);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   
   // Date filter for Manage tab
   const todayDate = new Date().toISOString().split('T')[0];
@@ -626,9 +632,17 @@ export const Purchases: React.FC = () => {
                         <td className="px-4 py-3 font-mono text-emerald-600">{formatCurrency(purchase.paidAFN + (purchase.paidUSD * purchase.exchangeRate), 'AFN')}</td>
                         <td className="px-4 py-3 font-mono font-bold text-rose-600">{balanceAFN > 0 ? formatCurrency(balanceAFN, 'AFN') + ' قرض' : 'تصفیه'}</td>
                         <td className="px-4 py-3 text-center">
-                          <button className="text-slate-400 hover:text-indigo-600 transition-colors" title="مشاهده فاکتور">
-                            <FileText className="w-4 h-4 mx-auto" />
-                          </button>
+                          <div className="flex items-center justify-center gap-3">
+                            <button onClick={() => setViewingPurchase(purchase)} className="text-slate-400 hover:text-indigo-600 transition-colors" title="مشاهده فاکتور">
+                              <FileText className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setEditingPurchase(purchase)} className="text-emerald-500 hover:text-emerald-600 transition-colors" title="ویرایش فاکتور">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => setDeletingPurchase(purchase)} className="text-rose-400 hover:text-rose-600 transition-colors" title="حذف فاکتور">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -735,6 +749,247 @@ export const Purchases: React.FC = () => {
               </div>
               <button type="submit" className="w-full bg-indigo-600 text-white font-bold rounded-lg py-2 hover:bg-indigo-700">ثبت تامین‌کننده</button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Purchase Confirmation Modal */}
+      {deletingPurchase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 text-right" dir="rtl">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl p-6 space-y-4">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <div className="bg-rose-100 text-rose-600 p-3 rounded-full">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <h3 className="font-black text-slate-800 text-lg">حذف فاکتور خرید!</h3>
+              <p className="text-xs text-slate-500 font-bold">آیا از حذف دائم فاکتور <span className="text-rose-600">{deletingPurchase.invoiceNo}</span> مطمئن هستید؟ این عملیات روی گدام و صندوق تاثیر می‌گذارد و غیر قابل بازگشت است.</p>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-600">رمز عبور مدیر (Admin$):</label>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="رمز عبور را وارد کنید..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-center font-mono focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingPurchase(null);
+                  setAdminPassword('');
+                }}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-xs transition-colors"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (adminPassword === 'Admin$') {
+                    deletePurchase(deletingPurchase.id);
+                    setDeletingPurchase(null);
+                    setAdminPassword('');
+                    alert("فاکتور خرید با موفقیت حذف شد.");
+                  } else {
+                    alert("رمز عبور اشتباه است!");
+                  }
+                }}
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl font-black text-xs transition-colors"
+              >
+                تایید و حذف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Printable Invoice View Modal */}
+      {viewingPurchase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto no-print" dir="rtl">
+          <style>{`
+            @media print {
+              body * { visibility: hidden; }
+              .print-receipt, .print-receipt * { visibility: visible; }
+              .print-receipt {
+                position: absolute; left: 0; top: 0; width: 100% !important;
+                padding: 12px; direction: rtl !important; font-family: inherit;
+              }
+              .no-print { display: none !important; }
+            }
+          `}</style>
+          
+          <div className="bg-white p-6 rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl space-y-4 text-right print-receipt">
+            <div className="text-center space-y-1.5 border-b pb-4 border-slate-100">
+              <span className="text-xl font-black text-slate-800 tracking-tight">فروشگاه ستاره شهر</span>
+              <p className="text-[10px] text-slate-400 font-bold">فاکتور خرید کالا از تامین‌کننده</p>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-[10.5px] space-y-1 text-slate-600 font-medium">
+              <div className="flex justify-between">
+                <span>شماره فاکتور:</span>
+                <span className="font-mono font-black text-slate-900">{viewingPurchase.invoiceNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>تاریخ ثبت:</span>
+                <span className="font-mono">{new Date(viewingPurchase.date).toLocaleString('fa-IR')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>تامین‌کننده (فروشنده):</span>
+                <span className="font-bold text-slate-800">{viewingPurchase.supplierName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>وضعیت تسویه:</span>
+                <span className="font-bold text-indigo-700">
+                  {viewingPurchase.paymentMethod === 'Credit' ? 'اعتباری (قرض در لیجر)' : 'نقدی (صندوق)'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto border-b border-slate-100 pb-3">
+              <span className="block text-[10px] font-black text-slate-400 tracking-wider">اقلام خریداری شده:</span>
+              <div className="space-y-2 divide-y divide-slate-100 text-xs text-right">
+                {viewingPurchase.items.map((item, idx) => (
+                  <div key={idx} className="pt-2 first:pt-0 flex items-center justify-between gap-1.5">
+                    <div className="space-y-0.5 text-right">
+                      <span className="font-extrabold text-slate-800">{item.productName}</span>
+                      <p className="text-[9.5px] text-slate-400 font-sans text-right">
+                        {item.quantity} x {item.selectedUnit} (فی: {formatCurrency(item.costPriceAFN, 'AFN')})
+                      </p>
+                    </div>
+                    <span className="font-mono font-bold text-slate-800 shrink-0">
+                      {formatCurrency(item.totalAFN, 'AFN')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs text-slate-650 border-b border-slate-100 pb-3 font-medium">
+              <div className="flex justify-between text-sm font-black text-slate-900 pt-1">
+                <span>مبلغ نهایی فاکتور:</span>
+                <span className="font-mono text-indigo-800">{formatCurrency(viewingPurchase.totalAFN, 'AFN')}</span>
+              </div>
+
+              {viewingPurchase.paidAFN > 0 && (
+                <>
+                  <div className="flex justify-between text-[11px] text-slate-700 font-bold border-t border-slate-100 pt-1.5 mt-1.5">
+                    <span>مبلغ پرداختی ما (AFN):</span>
+                    <span className="font-mono">{formatCurrency(viewingPurchase.paidAFN, 'AFN')}</span>
+                  </div>
+                </>
+              )}
+              {viewingPurchase.paidUSD > 0 && (
+                <>
+                  <div className="flex justify-between text-[11px] text-slate-700 font-bold">
+                    <span>مبلغ پرداختی ما (USD):</span>
+                    <span className="font-mono">${viewingPurchase.paidUSD.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-between text-[10px] text-slate-400 font-mono mt-1 pt-1 border-t border-slate-100">
+                <span>معادل کل ارز دالر ($):</span>
+                <span>${viewingPurchase.totalUSD.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2 no-print">
+              <button
+                type="button"
+                onClick={() => setViewingPurchase(null)}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg font-bold text-xs transition-colors"
+              >
+                بستن
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-bold text-xs flex items-center gap-1 shadow-sm transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                پرینت فاکتور
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Purchase Modal */}
+      {editingPurchase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" dir="rtl">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-6 space-y-4 text-right">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <Edit2 className="w-5 h-5 text-emerald-600" />
+              <div>
+                <h3 className="font-black text-slate-800 text-sm">ویرایش فاکتور خرید {editingPurchase.invoiceNo}</h3>
+                <p className="text-[10px] text-slate-400">اصلاح مبالغ پرداختی فاکتور. (برای تغییر اقلام، فاکتور را حذف و مجدداً ثبت کنید)</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">مبلغ پرداختی (افغانی):</label>
+                <input
+                  type="number"
+                  value={editingPurchase.paidAFN}
+                  onChange={(e) => setEditingPurchase({...editingPurchase, paidAFN: parseFloat(e.target.value) || 0})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">مبلغ پرداختی (دالر):</label>
+                <input
+                  type="number"
+                  value={editingPurchase.paidUSD}
+                  onChange={(e) => setEditingPurchase({...editingPurchase, paidUSD: parseFloat(e.target.value) || 0})}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-xs">
+                <div className="flex justify-between font-bold text-emerald-800">
+                  <span>جمع کل فاکتور:</span>
+                  <span>{formatCurrency(editingPurchase.totalAFN, 'AFN')} / ${editingPurchase.totalUSD.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setEditingPurchase(null)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const totalPaidEquivalentAFN = editingPurchase.paidAFN + (editingPurchase.paidUSD * editingPurchase.exchangeRate);
+                  let paymentMethod: 'Cash' | 'Credit' | 'Partial' = 'Credit';
+                  if (totalPaidEquivalentAFN >= editingPurchase.totalAFN - 1) {
+                    paymentMethod = 'Cash';
+                  } else if (totalPaidEquivalentAFN > 0) {
+                    paymentMethod = 'Partial';
+                  }
+                  
+                  editPurchase({
+                    ...editingPurchase,
+                    paymentMethod
+                  });
+                  setEditingPurchase(null);
+                  alert("تغییرات با موفقیت ذخیره شد.");
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-bold text-xs flex items-center gap-1"
+              >
+                <Edit2 className="w-4 h-4" /> ثبت تغییرات
+              </button>
+            </div>
           </div>
         </div>
       )}
