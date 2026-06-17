@@ -81,8 +81,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addExpense = (expense: any) => setState(prev => {
     const updatedCash = { ...prev.cashRegister };
-    if (expense.currency === 'AFN') updatedCash.balanceAFN -= expense.amount;
-    else updatedCash.balanceUSD -= expense.amount;
+    const amount = expense.amount || (expense.currency === 'AFN' ? expense.amountAFN : expense.amountUSD) || 0;
+    if (expense.currency === 'AFN') updatedCash.balanceAFN -= amount;
+    else updatedCash.balanceUSD -= amount;
     return { ...prev, cashRegister: updatedCash, expenses: [...(prev.expenses || []), expense] };
   });
 
@@ -90,8 +91,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const expense = (prev.expenses || []).find((e: any) => e.id === id);
     if (!expense) return prev;
     const updatedCash = { ...prev.cashRegister };
-    if (expense.currency === 'AFN') updatedCash.balanceAFN += expense.amount;
-    else updatedCash.balanceUSD += expense.amount;
+    const amount = expense.amount || (expense.currency === 'AFN' ? expense.amountAFN : expense.amountUSD) || 0;
+    if (expense.currency === 'AFN') updatedCash.balanceAFN += amount;
+    else updatedCash.balanceUSD += amount;
     return { ...prev, cashRegister: updatedCash, expenses: (prev.expenses || []).filter((e: any) => e.id !== id) };
   });
 
