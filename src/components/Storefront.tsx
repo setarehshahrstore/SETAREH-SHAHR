@@ -337,8 +337,17 @@ export const Storefront: React.FC = () => {
               
               <div className="space-y-4">
                 {[
-                  { title: 'شماره‌های تماس', val: '+93 70 123 4567', icon: <Phone className="w-6 h-6" /> },
-                  { title: 'آدرس فروشگاه', val: 'کابل، افغانستان', icon: <MapPin className="w-6 h-6" /> },
+                  { 
+                    title: 'شماره تماس و واتساپ', 
+                    val: (
+                      <div className="flex flex-col items-start gap-1">
+                        <a href="tel:+93796626004" className="hover:text-brand-gold transition-colors block text-left" dir="ltr">+93 796 626 004</a>
+                        <a href="https://wa.me/93796626004" target="_blank" rel="noreferrer" className="text-emerald-500 hover:text-emerald-600 block text-[13px] font-bold text-left" dir="ltr">WhatsApp (+93 796 626 004)</a>
+                      </div>
+                    ), 
+                    icon: <Phone className="w-6 h-6" /> 
+                  },
+                  { title: 'آدرس فروشگاه', val: 'شهر مزار شریف مرکز', icon: <MapPin className="w-6 h-6" /> },
                   { title: 'ساعات کاری', val: '۸ صبح الی ۸ شب (همه‌روزه)', icon: <Clock className="w-6 h-6" /> },
                   { title: 'بخش خرید عمده', val: 'ارسال فرم سفارش در کنار', icon: <Package className="w-6 h-6" /> }
                 ].map((item, i) => (

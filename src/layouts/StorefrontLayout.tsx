@@ -173,15 +173,15 @@ export const StorefrontLayout: React.FC = () => {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 text-slate-300">
                   <MapPin className="w-5 h-5 text-brand-gold shrink-0 mt-0.5" />
-                  <span>کابل، افغانستان</span>
+                  <span>شهر مزار شریف مرکز</span>
                 </li>
                 <li className="flex items-center gap-3 text-slate-300">
                   <Phone className="w-5 h-5 text-brand-gold shrink-0" />
-                  <span dir="ltr">+93 70 123 4567</span>
+                  <a href="tel:+93796626004" className="hover:text-white" dir="ltr">+93 796 626 004</a>
                 </li>
                 <li className="flex items-center gap-3 text-slate-300">
                   <Mail className="w-5 h-5 text-brand-gold shrink-0" />
-                  <span>info@setarehshahr.com</span>
+                  <a href="mailto:setarehshahrhelp@mail.com" className="hover:text-white">setarehshahrhelp@mail.com</a>
                 </li>
               </ul>
             </div>
