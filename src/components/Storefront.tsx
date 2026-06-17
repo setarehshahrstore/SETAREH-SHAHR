@@ -7,6 +7,78 @@ import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const ProductCard = ({ product, addToCart, className = '' }: { product: Product, addToCart: (p: Product, t: 'Retail' | 'Wholesale') => void, className?: string }) => (
+  <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group flex flex-col ${className}`}>
+    <div className="aspect-square bg-slate-50 relative overflow-hidden">
+      {product.image ? (
+        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-slate-300">
+          <Package className="w-12 h-12" />
+        </div>
+      )}
+      {product.stockInBaseUnits <= 0 && (
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
+          <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">تمام شد</span>
+        </div>
+      )}
+      <div className="absolute top-2 right-2 flex flex-col gap-1 z-20">
+        {product.isDiscounted && (
+          <span className="bg-rose-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
+            <Tag className="w-3 h-3" /> لیلام
+          </span>
+        )}
+        {product.isBestSeller && (
+          <span className="bg-amber-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
+            <Star className="w-3 h-3" /> پرفروش
+          </span>
+        )}
+      </div>
+    </div>
+    <div className="p-4 flex-1 flex flex-col">
+      <p className="text-[10px] text-slate-400 font-bold mb-1">{product.category}</p>
+      <h3 className="font-bold text-slate-800 text-sm mb-4 leading-tight flex-1">{product.name}</h3>
+      
+      <div className="space-y-2 mt-auto">
+        <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+          <span className="text-[10px] font-bold text-slate-500">قیمت پرچون</span>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
+            <button 
+              disabled={product.stockInBaseUnits <= 0}
+              onClick={() => addToCart(product, 'Retail')}
+              className="bg-[#0B1F3A] text-white p-1.5 rounded-lg hover:bg-[#123B66] disabled:opacity-50"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        
+        {(product.wholesalePriceAFN ?? 0) > 0 && (
+          <div className="flex justify-between items-center bg-amber-50 p-2 rounded-xl border border-amber-100 relative">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-amber-700">قیمت عمده</span>
+              {product.minWholesaleQty && product.minWholesaleQty > 1 && (
+                <span className="text-[9px] text-amber-600/80 mt-0.5">حداقل: {product.minWholesaleQty}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-black text-amber-600 font-mono">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
+              <button 
+                disabled={product.stockInBaseUnits <= 0}
+                onClick={() => addToCart(product, 'Wholesale')}
+                className="bg-amber-600 text-white p-1.5 rounded-lg hover:bg-amber-700 disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 export const Storefront: React.FC = () => {
   const { state, addSale, addCustomer, cart, setCart, isCartOpen, setIsCartOpen } = useAppState();
   const { user } = useAuth();
@@ -25,11 +97,16 @@ export const Storefront: React.FC = () => {
   });
   const [successfulOrder, setSuccessfulOrder] = useState<any | null>(null);
 
-  const categories = ['All', ...Array.from(new Set(state.products.map(p => p.category)))];
+  const categories = ['All', 'تخفیف‌های ویژه', 'پرفروش‌ترین‌ها', ...Array.from(new Set(state.products.map(p => p.category)))];
 
   const filteredProducts = useMemo(() => {
     return state.products.filter(p => {
-      const matchesCat = activeCategory === 'All' || p.category === activeCategory;
+      let matchesCat = false;
+      if (activeCategory === 'All') matchesCat = true;
+      else if (activeCategory === 'تخفیف‌های ویژه') matchesCat = !!p.isDiscounted;
+      else if (activeCategory === 'پرفروش‌ترین‌ها') matchesCat = !!p.isBestSeller;
+      else matchesCat = p.category === activeCategory;
+
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCat && matchesSearch;
     });
@@ -234,6 +311,10 @@ export const Storefront: React.FC = () => {
             ].map((cat, i) => (
               <div 
                 key={i} 
+                onClick={() => {
+                  setActiveCategory(cat.name);
+                  scrollTo('products');
+                }}
                 className="bg-brand-lightbg border border-slate-100 rounded-2xl p-6 text-center hover:bg-white hover:shadow-[0_10px_40px_rgba(11,31,58,0.06)] hover:border-brand-gold/30 transition-all cursor-pointer group hover:-translate-y-1 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-full h-1 bg-brand-gold transform scale-x-0 group-hover:scale-x-100 transition-transform origin-right duration-300"></div>
@@ -498,17 +579,31 @@ export const Storefront: React.FC = () => {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sticky top-24">
               <h3 className="font-black text-slate-800 mb-4">دسته‌بندی‌ها</h3>
               <div className="space-y-1">
-                {categories.map(cat => (
-                  <button 
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                      activeCategory === cat ? 'bg-[#0B1F3A] text-white' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {cat === 'All' ? 'همه محصولات' : cat}
-                  </button>
-                ))}
+                {categories.map(cat => {
+                  let buttonClass = 'w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-between ';
+                  let icon = null;
+
+                  if (cat === 'تخفیف‌های ویژه') {
+                    buttonClass += activeCategory === cat ? 'bg-rose-500 text-white' : 'text-rose-600 hover:bg-rose-50';
+                    icon = <Tag className="w-4 h-4" />;
+                  } else if (cat === 'پرفروش‌ترین‌ها') {
+                    buttonClass += activeCategory === cat ? 'bg-amber-500 text-white' : 'text-amber-600 hover:bg-amber-50';
+                    icon = <Star className="w-4 h-4" />;
+                  } else {
+                    buttonClass += activeCategory === cat ? 'bg-[#0B1F3A] text-white' : 'text-slate-600 hover:bg-slate-50';
+                  }
+
+                  return (
+                    <button 
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={buttonClass}
+                    >
+                      <span>{cat === 'All' ? 'همه محصولات' : cat}</span>
+                      {icon}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -527,77 +622,37 @@ export const Storefront: React.FC = () => {
               />
             </div>
 
+            {activeCategory === 'All' && state.products.some(p => p.isDiscounted) && (
+              <div className="mb-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Tag className="w-6 h-6 text-rose-500" />
+                  <h3 className="text-xl font-black text-rose-600">فرصت‌های طلایی - اجناس لیلام</h3>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
+                  {state.products.filter(p => p.isDiscounted).map(product => (
+                    <ProductCard key={product.id} product={product} addToCart={addToCart} className="min-w-[260px] snap-start" />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {activeCategory === 'All' && state.products.some(p => p.isBestSeller) && (
+              <div className="mb-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Star className="w-6 h-6 text-amber-500" />
+                  <h3 className="text-xl font-black text-amber-600">پرفروش‌ترین‌های ستاره شهر</h3>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
+                  {state.products.filter(p => p.isBestSeller).map(product => (
+                    <ProductCard key={product.id} product={product} addToCart={addToCart} className="min-w-[260px] snap-start" />
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group flex flex-col">
-                  <div className="aspect-square bg-slate-50 relative overflow-hidden">
-                    {product.image ? (
-                      <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <Package className="w-12 h-12" />
-                      </div>
-                    )}
-                    {product.stockInBaseUnits <= 0 && (
-                      <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
-                        <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">تمام شد</span>
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 flex flex-col gap-1 z-20">
-                      {product.isDiscounted && (
-                        <span className="bg-rose-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
-                          <Tag className="w-3 h-3" /> لیلام
-                        </span>
-                      )}
-                      {product.isBestSeller && (
-                        <span className="bg-amber-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
-                          <Star className="w-3 h-3" /> پرفروش
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="p-4 flex-1 flex flex-col">
-                    <p className="text-[10px] text-slate-400 font-bold mb-1">{product.category}</p>
-                    <h3 className="font-bold text-slate-800 text-sm mb-4 leading-tight flex-1">{product.name}</h3>
-                    
-                    <div className="space-y-2 mt-auto">
-                      <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
-                        <span className="text-[10px] font-bold text-slate-500">قیمت پرچون</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
-                          <button 
-                            disabled={product.stockInBaseUnits <= 0}
-                            onClick={() => addToCart(product, 'Retail')}
-                            className="bg-[#0B1F3A] text-white p-1.5 rounded-lg hover:bg-[#123B66] disabled:opacity-50"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {(product.wholesalePriceAFN ?? 0) > 0 && (
-                        <div className="flex justify-between items-center bg-amber-50 p-2 rounded-xl border border-amber-100 relative">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-amber-700">قیمت عمده</span>
-                            {product.minWholesaleQty && product.minWholesaleQty > 1 && (
-                              <span className="text-[9px] text-amber-600/80 mt-0.5">حداقل: {product.minWholesaleQty}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-amber-600 font-mono">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
-                            <button 
-                              disabled={product.stockInBaseUnits <= 0}
-                              onClick={() => addToCart(product, 'Wholesale')}
-                              className="bg-amber-600 text-white p-1.5 rounded-lg hover:bg-amber-700 disabled:opacity-50"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ProductCard key={product.id} product={product} addToCart={addToCart} />
               ))}
               {filteredProducts.length === 0 && (
                 <div className="col-span-full py-20 text-center text-slate-400 font-bold">
