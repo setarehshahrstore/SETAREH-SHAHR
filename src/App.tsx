@@ -28,6 +28,7 @@ import { CustomerAccount } from './components/CustomerAccount';
 import { Login } from './components/Login';
 import { Finances } from './components/Finances';
 import { LiveChatAdmin } from './components/LiveChatAdmin';
+import { Inquiries } from './components/Inquiries';
 
 // Placeholder components for new pages
 const Placeholder = ({ title }: { title: string }) => (
@@ -186,6 +187,12 @@ export default function App() {
               <Route path="live-chat" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Cashier', 'Warehouse Staff']}>
                   <LiveChatAdmin />
+                </ProtectedRoute>
+              } />
+
+              <Route path="inquiries" element={
+                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
+                  <Inquiries />
                 </ProtectedRoute>
               } />
 

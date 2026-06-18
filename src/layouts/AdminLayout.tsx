@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, Grid, ShoppingCart, Truck, ClipboardList, 
   Users, Building2, Warehouse, CreditCard, DollarSign, Receipt, 
   BarChart3, UserCog, Settings, Bell, Search, Plus, Menu, X, LogOut,
-  Store, MessageCircle
+  Store, MessageCircle, PhoneCall
 } from 'lucide-react';
 
 const MENU_ITEMS = [
@@ -24,6 +24,7 @@ const MENU_ITEMS = [
   { path: '/admin/reports', name: 'گزارشات', icon: BarChart3, roles: ['Owner', 'Manager'] },
   { path: '/admin/settings', name: 'تنظیمات', icon: Settings, roles: ['Owner', 'Manager'] },
   { path: '/admin/live-chat', name: 'پشتیبانی زنده', icon: MessageCircle, roles: ['Owner', 'Manager', 'Cashier', 'Warehouse Staff'] },
+  { path: '/admin/inquiries', name: 'درخواست‌های تماس', icon: PhoneCall, roles: ['Owner', 'Manager'] },
 ];
 
 export const AdminLayout: React.FC = () => {
@@ -35,18 +36,33 @@ export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
 
   const totalUnreadChats = (state.chatSessions || []).reduce((sum, s) => sum + s.unreadByAdmin, 0);
-  const [prevUnread, setPrevUnread] = useState(totalUnreadChats);
+  const totalPendingInquiries = (state.inquiries || []).filter(i => i.status === 'Pending').length;
+  const newOrdersCount = (state.sales || []).filter(s => s.status !== 'Completed' && s.status !== 'Delivered' && s.status !== 'Cancelled').length;
+
+  const totalNotifications = totalUnreadChats + totalPendingInquiries + newOrdersCount;
+  
+  const [prevNotifications, setPrevNotifications] = useState(totalNotifications);
 
   React.useEffect(() => {
-    if (totalUnreadChats > prevUnread) {
-      // Play sound
+    if (totalNotifications > prevNotifications) {
       try {
-        const audio = new Audio('/notification.mp3');
-        audio.play().catch(() => {});
-      } catch (e) {}
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch (e) {
+        console.error("Audio play failed", e);
+      }
     }
-    setPrevUnread(totalUnreadChats);
-  }, [totalUnreadChats, prevUnread]);
+    setPrevNotifications(totalNotifications);
+  }, [totalNotifications, prevNotifications]);
 
   const handleLogout = () => {
     logout();
@@ -121,7 +137,7 @@ export const AdminLayout: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1F2937] font-sans flex" dir="rtl">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1F2937] font-sans flex print:block print:bg-white print:text-black" dir="rtl">
       
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 fixed right-0 top-0 bottom-0 z-40 shadow-xl print:hidden">
@@ -175,8 +191,8 @@ export const AdminLayout: React.FC = () => {
                 className="relative p-2 text-slate-400 hover:text-[#0B1F3A] transition-colors rounded-full hover:bg-slate-50"
               >
                 <Bell className="w-5 h-5" />
-                {totalUnreadChats > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                {totalNotifications > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
                 )}
               </button>
 
@@ -191,22 +207,34 @@ export const AdminLayout: React.FC = () => {
                   >
                     <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                       <h3 className="font-bold text-slate-800">اعلان‌ها</h3>
-                      {totalUnreadChats > 0 && (
+                      {totalNotifications > 0 && (
                         <span className="bg-rose-100 text-rose-600 text-[10px] px-2 py-1 rounded-lg font-bold">
-                          {totalUnreadChats} پیام جدید
+                          {totalNotifications} مورد جدید
                         </span>
                       )}
                     </div>
                     <div className="max-h-[300px] overflow-y-auto">
-                      {totalUnreadChats > 0 ? (
-                        <Link 
-                          to="/admin/live-chat" 
-                          onClick={() => setIsNotificationsOpen(false)}
-                          className="flex flex-col gap-1 p-4 hover:bg-slate-50 border-b border-slate-100 transition-colors"
-                        >
-                          <span className="text-sm font-bold text-slate-800">پیام جدید در پشتیبانی زنده</span>
-                          <span className="text-xs text-slate-500">مشتری منتظر پاسخ شماست. برای مشاهده کلیک کنید.</span>
-                        </Link>
+                      {totalNotifications > 0 ? (
+                        <>
+                          {totalUnreadChats > 0 && (
+                            <Link to="/admin/live-chat" onClick={() => setIsNotificationsOpen(false)} className="flex flex-col gap-1 p-4 hover:bg-slate-50 border-b border-slate-100 transition-colors">
+                              <span className="text-sm font-bold text-slate-800">پیام جدید در پشتیبانی زنده ({totalUnreadChats})</span>
+                              <span className="text-xs text-slate-500">مشتری منتظر پاسخ شماست.</span>
+                            </Link>
+                          )}
+                          {totalPendingInquiries > 0 && (
+                            <Link to="/admin/inquiries" onClick={() => setIsNotificationsOpen(false)} className="flex flex-col gap-1 p-4 hover:bg-slate-50 border-b border-slate-100 transition-colors">
+                              <span className="text-sm font-bold text-slate-800">درخواست تماس جدید ({totalPendingInquiries})</span>
+                              <span className="text-xs text-slate-500">مشتری منتظر تماس شماست.</span>
+                            </Link>
+                          )}
+                          {newOrdersCount > 0 && (
+                            <Link to="/admin/orders" onClick={() => setIsNotificationsOpen(false)} className="flex flex-col gap-1 p-4 hover:bg-slate-50 border-b border-slate-100 transition-colors">
+                              <span className="text-sm font-bold text-slate-800">سفارش جدید ({newOrdersCount})</span>
+                              <span className="text-xs text-slate-500">سفارشات جدید در انتظار بررسی هستند.</span>
+                            </Link>
+                          )}
+                        </>
                       ) : (
                         <div className="p-8 text-center text-slate-500 text-sm">
                           هیچ اعلان جدیدی وجود ندارد
@@ -225,7 +253,7 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Page Content Outlet */}
-        <div className="p-4 sm:p-6 flex-1 overflow-x-hidden">
+        <div className="p-4 sm:p-6 flex-1 overflow-x-hidden print:overflow-visible print:p-0">
           <Outlet />
         </div>
       </main>

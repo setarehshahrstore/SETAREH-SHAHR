@@ -15,9 +15,9 @@ export const Dashboard: React.FC = () => {
   const { state, updateExchangeRate } = useAppState();
   
   // Date Filter State
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = new Date().toLocaleDateString('en-CA');
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0],
+    from: new Date(new Date().setDate(new Date().getDate() - 7)).toLocaleDateString('en-CA'),
     to: todayDate
   });
 

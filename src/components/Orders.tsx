@@ -9,9 +9,9 @@ import { Sale, SaleItem } from '../types';
 export const Orders: React.FC = () => {
   const { state, updateDeliveryStatus, editSale, deleteSale } = useAppState();
   
-  const todayDate = new Date().toISOString().split('T')[0];
+  const todayDate = new Date().toLocaleDateString('en-CA'); // Gets local YYYY-MM-DD
   const [dateRange, setDateRange] = useState<DateRange>({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+    from: new Date(new Date().setDate(new Date().getDate() - 30)).toLocaleDateString('en-CA'),
     to: todayDate
   });
 
@@ -403,6 +403,9 @@ export const Orders: React.FC = () => {
               }`}
               dir="ltr"
               autoFocus
+              autoComplete="new-password"
+              autoCorrect="off"
+              spellCheck={false}
             />
             {pinError && <p className="text-xs text-rose-500 font-bold mb-6">رمز عبور اشتباه است!</p>}
             

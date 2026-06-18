@@ -71,6 +71,9 @@ export const AdminPasswordPrompt: React.FC<AdminPasswordPromptProps> = ({
                 placeholder="••••••••"
                 dir="ltr"
                 autoFocus
+                autoComplete="new-password"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
             {error && (
