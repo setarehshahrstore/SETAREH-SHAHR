@@ -29,7 +29,7 @@ export const Inquiries: React.FC = () => {
     setAdminPrompt({ isOpen: true, title, action });
   };
 
-  const handleUpdateStatus = (id: string, newStatus: 'Pending' | 'Contacted' | 'Closed') => {
+  const handleUpdateStatus = (id: string, newStatus: 'Pending' | 'Answered') => {
     const inq = inquiries.find(i => i.id === id);
     if (inq) {
       editInquiry({ ...inq, status: newStatus });
@@ -94,34 +94,22 @@ export const Inquiries: React.FC = () => {
                   <td className="px-4 py-3">
                     <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 ${
                       inq.status === 'Pending' ? 'bg-amber-100 text-amber-700 print:border print:border-amber-300' :
-                      inq.status === 'Contacted' ? 'bg-blue-100 text-blue-700 print:border print:border-blue-300' :
-                      'bg-slate-100 text-slate-600 print:border print:border-slate-300'
+                      'bg-blue-100 text-blue-700 print:border print:border-blue-300'
                     }`}>
                       {inq.status === 'Pending' && <Clock className="w-3 h-3" />}
-                      {inq.status === 'Contacted' && <CheckCircle className="w-3 h-3" />}
-                      {inq.status === 'Closed' && <X className="w-3 h-3" />}
+                      {inq.status === 'Answered' && <CheckCircle className="w-3 h-3" />}
                       
-                      {inq.status === 'Pending' ? 'در انتظار تماس' : 
-                       inq.status === 'Contacted' ? 'تماس گرفته شد' : 'بسته شده'}
+                      {inq.status === 'Pending' ? 'در انتظار تماس' : 'تماس گرفته شد / پاسخ داده شد'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center print:hidden flex items-center justify-center gap-2">
                     {inq.status === 'Pending' && (
                       <button 
-                        onClick={() => handleUpdateStatus(inq.id, 'Contacted')}
+                        onClick={() => handleUpdateStatus(inq.id, 'Answered')}
                         className="bg-blue-50 text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-100 text-xs font-bold"
-                        title="تغییر وضعیت به تماس گرفته شد"
+                        title="تغییر وضعیت به پاسخ داده شد"
                       >
                         <Check className="w-4 h-4" />
-                      </button>
-                    )}
-                    {inq.status !== 'Closed' && (
-                      <button 
-                        onClick={() => handleUpdateStatus(inq.id, 'Closed')}
-                        className="bg-slate-50 text-slate-600 px-2 py-1.5 rounded-lg hover:bg-slate-100 text-xs font-bold"
-                        title="بستن درخواست"
-                      >
-                        <X className="w-4 h-4" />
                       </button>
                     )}
                     <button 
