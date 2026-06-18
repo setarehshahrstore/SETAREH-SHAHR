@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
-import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box, Printer, Trash2 } from 'lucide-react';
+import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box, Printer, Trash2, Check } from 'lucide-react';
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -107,7 +107,7 @@ const ProductCard = ({ product, addToCart, className = '' }: { product: Product 
 );
 
 export const Storefront: React.FC = () => {
-  const { state, addSale, addCustomer, cart, setCart, isCartOpen, setIsCartOpen } = useAppState();
+  const { state, addSale, addCustomer, cart, setCart, isCartOpen, setIsCartOpen, addInquiry } = useAppState();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -123,6 +123,44 @@ export const Storefront: React.FC = () => {
     address: ''
   });
   const [successfulOrder, setSuccessfulOrder] = useState<any | null>(null);
+
+  // Inquiry Form State
+  const [inquiryName, setInquiryName] = useState('');
+  const [inquiryPhone, setInquiryPhone] = useState('');
+  const [inquiryType, setInquiryType] = useState('خرید عمده (دکانداران)');
+  const [inquiryMessage, setInquiryMessage] = useState('');
+  const [isInquirySubmitting, setIsInquirySubmitting] = useState(false);
+  const [inquirySuccess, setInquirySuccess] = useState(false);
+
+  const handleInquirySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inquiryName.trim() || !inquiryPhone.trim() || !inquiryMessage.trim()) return;
+
+    setIsInquirySubmitting(true);
+    
+    // Simulate slight network delay
+    setTimeout(() => {
+      addInquiry({
+        id: `inquiry-${Date.now()}`,
+        name: inquiryName.trim(),
+        phone: inquiryPhone.trim(),
+        message: `[${inquiryType}]\n${inquiryMessage.trim()}`,
+        date: new Date().toISOString(),
+        status: 'Pending'
+      });
+      
+      setIsInquirySubmitting(false);
+      setInquirySuccess(true);
+      
+      // Auto reset form after 5 seconds
+      setTimeout(() => {
+        setInquirySuccess(false);
+        setInquiryName('');
+        setInquiryPhone('');
+        setInquiryMessage('');
+      }, 5000);
+    }, 800);
+  };
 
   const [isAnnouncementOpen, setIsAnnouncementOpen] = useState(false);
 
@@ -563,32 +601,78 @@ export const Storefront: React.FC = () => {
                   <h3 className="text-2xl font-bold text-white">فرم سفارش عمده و تماس</h3>
                 </div>
                 
-                <form className="space-y-5">
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">نام / نام شرکت</label>
-                      <input type="text" className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" placeholder="نام شما..." />
+                <form onSubmit={handleInquirySubmit} className="space-y-5">
+                  {inquirySuccess ? (
+                    <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 p-6 rounded-2xl text-center">
+                      <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Check className="w-8 h-8 text-emerald-500" />
+                      </div>
+                      <h4 className="text-xl font-bold mb-2 text-white">درخواست شما با موفقیت ثبت شد!</h4>
+                      <p className="text-sm leading-relaxed">همکاران ما به زودترین فرصت با شما به تماس خواهند شد.</p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">شماره تماس</label>
-                      <input type="tel" className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" placeholder="07XXXXXXXX" dir="ltr" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">نوعیت درخواست</label>
-                    <select className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all appearance-none cursor-pointer">
-                      <option>خرید عمده (دکانداران)</option>
-                      <option>معلومات قیمت‌ها</option>
-                      <option>سایر موارد</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">لیست سفارش یا پیام شما</label>
-                    <textarea rows={5} className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500 resize-none" placeholder="لطفاً لیست اجناس مورد نیاز یا پیام خود را اینجا بنویسید..."></textarea>
-                  </div>
-                  <button type="button" className="w-full bg-gradient-to-l from-brand-gold to-brand-lightgold text-brand-blue text-lg font-bold py-4 rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-1">
-                    ارسال درخواست
-                  </button>
+                  ) : (
+                    <>
+                      <div className="grid md:grid-cols-2 gap-5">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">نام / نام شرکت</label>
+                          <input 
+                            required
+                            type="text" 
+                            value={inquiryName}
+                            onChange={(e) => setInquiryName(e.target.value)}
+                            className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" 
+                            placeholder="نام شما..." 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">شماره تماس</label>
+                          <input 
+                            required
+                            type="tel" 
+                            value={inquiryPhone}
+                            onChange={(e) => setInquiryPhone(e.target.value)}
+                            className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" 
+                            placeholder="07XXXXXXXX" 
+                            dir="ltr" 
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">نوعیت درخواست</label>
+                        <select 
+                          value={inquiryType}
+                          onChange={(e) => setInquiryType(e.target.value)}
+                          className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all appearance-none cursor-pointer"
+                        >
+                          <option>خرید عمده (دکانداران)</option>
+                          <option>معلومات قیمت‌ها</option>
+                          <option>سایر موارد</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">لیست سفارش یا پیام شما</label>
+                        <textarea 
+                          required
+                          rows={5} 
+                          value={inquiryMessage}
+                          onChange={(e) => setInquiryMessage(e.target.value)}
+                          className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500 resize-none" 
+                          placeholder="لطفاً لیست اجناس مورد نیاز یا پیام خود را اینجا بنویسید..."
+                        ></textarea>
+                      </div>
+                      <button 
+                        type="submit" 
+                        disabled={isInquirySubmitting}
+                        className="w-full bg-gradient-to-l from-brand-gold to-brand-lightgold text-brand-blue text-lg font-bold py-4 rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                      >
+                        {isInquirySubmitting ? (
+                          <div className="w-6 h-6 border-2 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          'ارسال درخواست'
+                        )}
+                      </button>
+                    </>
+                  )}
                 </form>
               </div>
             </div>
