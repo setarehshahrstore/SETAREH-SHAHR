@@ -30,8 +30,8 @@ export const Orders: React.FC = () => {
     return state.sales.filter(s => {
       const sDate = s.date.split('T')[0];
       const matchesDate = sDate >= dateRange.from && sDate <= dateRange.to;
-      const matchesSearch = s.invoiceNo.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            s.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = (s.invoiceNo || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            (s.customerName || '').toLowerCase().includes(searchQuery.toLowerCase());
       // We assume mostly online or delivery orders here, or just all sales.
       // If we strictly want 'orders', we can filter out 'Completed' walk-ins, but we'll show all for now.
       return matchesDate && matchesSearch;

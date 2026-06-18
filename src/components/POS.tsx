@@ -976,16 +976,16 @@ export const POS: React.FC = () => {
                           const query = invoiceSearchQuery.toLowerCase().trim();
                           if (!query) return true;
                           return (
-                            sale.invoiceNo.toLowerCase().includes(query) ||
-                            sale.customerName.toLowerCase().includes(query)
+                            (sale.invoiceNo || '').toLowerCase().includes(query) ||
+                            (sale.customerName || '').toLowerCase().includes(query)
                           );
                         }).length > 0 &&
                         selectedSaleIds.length === state.sales.filter(sale => {
                           const query = invoiceSearchQuery.toLowerCase().trim();
                           if (!query) return true;
                           return (
-                            sale.invoiceNo.toLowerCase().includes(query) ||
-                            sale.customerName.toLowerCase().includes(query)
+                            (sale.invoiceNo || '').toLowerCase().includes(query) ||
+                            (sale.customerName || '').toLowerCase().includes(query)
                           );
                         }).length
                       }
@@ -994,8 +994,8 @@ export const POS: React.FC = () => {
                           const query = invoiceSearchQuery.toLowerCase().trim();
                           if (!query) return true;
                           return (
-                            sale.invoiceNo.toLowerCase().includes(query) ||
-                            sale.customerName.toLowerCase().includes(query)
+                            (sale.invoiceNo || '').toLowerCase().includes(query) ||
+                            (sale.customerName || '').toLowerCase().includes(query)
                           );
                         });
                         if (e.target.checked) {
@@ -1022,8 +1022,8 @@ export const POS: React.FC = () => {
                   const query = invoiceSearchQuery.toLowerCase().trim();
                   if (!query) return true;
                   return (
-                    sale.invoiceNo.toLowerCase().includes(query) ||
-                    sale.customerName.toLowerCase().includes(query)
+                    (sale.invoiceNo || '').toLowerCase().includes(query) ||
+                    (sale.customerName || '').toLowerCase().includes(query)
                   );
                 }).length === 0 ? (
                   <tr>

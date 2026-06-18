@@ -19,7 +19,9 @@ export const syncToFirebase = (prev: AppState, next: AppState) => {
       nextArray.forEach(item => {
         const oldItem = prevArray.find(old => old.id === item.id);
         if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(item)) {
-          setDoc(doc(db, col, item.id || Date.now().toString()), item).catch(e => console.error('Error writing to ' + col, e));
+          // Remove undefined values to prevent Firebase "Unsupported field value: undefined" errors
+          const cleanItem = JSON.parse(JSON.stringify(item));
+          setDoc(doc(db, col, item.id || Date.now().toString()), cleanItem).catch(e => console.error('Error writing to ' + col, e));
         }
       });
       

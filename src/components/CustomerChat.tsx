@@ -34,7 +34,7 @@ export const CustomerChat: React.FC = () => {
         
         const newSession: ChatSession = {
           id: newId,
-          customerId: user?.id,
+          customerId: user?.id || 'guest',
           customerName: user ? user.fullName : 'مشتری جدید',
           status: 'Active',
           unreadByAdmin: 0,
