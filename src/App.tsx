@@ -1,209 +1,54 @@
-import React, { Component, ErrorInfo } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './AppContext';
-import { AuthProvider } from './AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import React from 'react';
 
-import { StorefrontLayout } from './layouts/StorefrontLayout';
-import { AdminLayout } from './layouts/AdminLayout';
-
-import { Storefront } from './components/Storefront'; // Landing Page
-import { OrderTracking } from './components/OrderTracking';
-import { Dashboard } from './components/Dashboard';
-import { Products } from './components/Products';
-import { Categories } from './components/Categories';
-import { Purchases } from './components/Purchases';
-import { Orders } from './components/Orders';
-import { Debts } from './components/Debts';
-import { Expenses } from './components/Expenses';
-import { Reports } from './components/Reports';
-import { Employees } from './components/Employees';
-import { Settings } from './components/Settings';
-import { Inventory } from './components/Inventory';
-import { POS } from './components/POS';
-import { Partners } from './components/Partners';
-import { Register } from './components/Register';
-import { ForgotPassword } from './components/ForgotPassword';
-import { CustomerAccount } from './components/CustomerAccount';
-import { Login } from './components/Login';
-import { Finances } from './components/Finances';
-import { LiveChatAdmin } from './components/LiveChatAdmin';
-import { Inquiries } from './components/Inquiries';
-
-// Placeholder components for new pages
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center h-64 text-slate-500 font-bold text-xl">
-    {title} - در حال ساخت...
-  </div>
-);
-
-class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Global Error Caught:", error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-10 bg-red-50 text-red-900 min-h-screen text-left" dir="ltr">
-          <h1 className="text-3xl font-bold mb-4">React App Crashed</h1>
-          <p className="font-bold mb-2">{this.state.error?.toString()}</p>
-          <pre className="bg-white p-4 overflow-auto rounded text-sm text-gray-800">
-            {this.state.error?.stack}
-          </pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+// This is the "Heart" of your website. 
+// It defines exactly what people see when they visit setareh-shahr.vercel.app
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-      <AppProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Storefront Routes */}
-            <Route path="/" element={<StorefrontLayout />}>
-              <Route index element={<Storefront />} />
-              <Route path="tracking" element={<OrderTracking />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
-              <Route 
-                path="account" 
-                element={
-                  <ProtectedRoute allowedRoles={['Customer']}>
-                    <CustomerAccount />
-                  </ProtectedRoute>
-                } 
+    <div className="min-h-screen bg-white">
+      {/* 1. NAVIGATION BAR (Top of the screen) */}
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-gray-100">
+        <h1 className="text-xl font-extrabold tracking-tighter uppercase">Setareh Shahr</h1>
+        <button className="bg-black text-white px-6 py-2 rounded-full text-sm font-bold active:scale-95 transition">
+          Explore
+        </button>
+      </nav>
+
+      {/* 2. HERO SECTION (Main visual area) */}
+      <main className="pt-32 px-6 pb-24">
+        <div className="max-w-screen-xl mx-auto">
+          <div className="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest uppercase bg-orange-100 text-orange-600 rounded-full">
+            Now Open for Delivery
+          </div>
+          
+          <h2 className="text-5xl md:text-8xl font-extrabold leading-[0.9] tracking-tighter mb-8">
+            ELEVATED <br/> DINING <br/> <span className="text-gray-400">EXPERIENCE.</span>
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-12 items-end">
+            <p className="text-lg text-gray-500 max-w-sm leading-relaxed">
+              We combine traditional secrets with modern aesthetics to create the perfect flavor for the city.
+            </p>
+            
+            <div className="relative group overflow-hidden rounded-[2.5rem] shadow-2xl">
+              <img 
+                src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80" 
+                className="w-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                alt="Main dish"
               />
-            </Route>
+            </div>
+          </div>
+        </div>
+      </main>
 
-            {/* Secure Admin ERP Routes */}
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Cashier', 'Warehouse Staff']}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              {/* Default redirect handled in ProtectedRoute, but we add an index redirect */}
-              <Route index element={<Navigate to="dashboard" replace />} />
-              
-              <Route path="dashboard" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="products" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Products />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="categories" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Categories />
-                </ProtectedRoute>
-              } />
-
-              <Route path="sales" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Cashier']}>
-                  <POS />
-                </ProtectedRoute>
-              } />
-
-              <Route path="purchases" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Purchases />
-                </ProtectedRoute>
-              } />
-
-              <Route path="orders" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Cashier']}>
-                  <Orders />
-                </ProtectedRoute>
-              } />
-
-              <Route path="partners" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Partners />
-                </ProtectedRoute>
-              } />
-
-              <Route path="inventory" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Warehouse Staff']}>
-                  <Inventory />
-                </ProtectedRoute>
-              } />
-
-              <Route path="debts" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Debts />
-                </ProtectedRoute>
-              } />
-
-              <Route path="expenses" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Expenses />
-                </ProtectedRoute>
-              } />
-
-              <Route path="finances" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Finances />
-                </ProtectedRoute>
-              } />
-
-              <Route path="reports" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Reports />
-                </ProtectedRoute>
-              } />
-
-              <Route path="employees" element={
-                <ProtectedRoute allowedRoles={['Owner']}>
-                  <Employees />
-                </ProtectedRoute>
-              } />
-
-              <Route path="settings" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-
-              <Route path="live-chat" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager', 'Cashier', 'Warehouse Staff']}>
-                  <LiveChatAdmin />
-                </ProtectedRoute>
-              } />
-
-              <Route path="inquiries" element={
-                <ProtectedRoute allowedRoles={['Owner', 'Manager']}>
-                  <Inquiries />
-                </ProtectedRoute>
-              } />
-
-            </Route>
-
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AppProvider>
-    </AuthProvider>
-    </ErrorBoundary>
+      {/* 3. MOBILE APP NAVIGATION (The bar at the bottom of the phone screen) */}
+      <div className="md:hidden fixed bottom-6 left-6 right-6 z-50">
+        <div className="bg-black/90 backdrop-blur-xl rounded-3xl p-4 flex justify-around items-center shadow-2xl">
+          <button className="text-white font-bold">Home</button>
+          <button className="text-gray-400 font-bold">Menu</button>
+          <button className="text-gray-400 font-bold">Orders</button>
+        </div>
+      </div>
+    </div>
   );
 }
