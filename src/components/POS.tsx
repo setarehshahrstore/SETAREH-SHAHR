@@ -20,9 +20,11 @@ import {
   Edit2,
   Lock,
   Users,
-  X
+  X,
+  Printer
 } from 'lucide-react';
 import { Sale, SaleItem, Product } from '../types';
+import { ShiftCloseModal } from './ShiftCloseModal';
 
 // Image presets for new quick product additions
 const QUICK_PRESETS = [
@@ -42,10 +44,11 @@ export const POS: React.FC = () => {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   
   const [posSubTab, setPosSubTab] = useState<'POS' | 'Invoices'>('POS');
+  const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [editingInvoice, setEditingInvoice] = useState<Sale | null>(null);
   const [deletingSale, setDeletingSale] = useState<Sale | null>(null);
-  const [changeConfirmData, setChangeConfirmData] = useState<{ changeAFN: number, method: 'Cash' | 'Credit' } | null>(null);
+  const [changeConfirmData, setChangeConfirmData] = useState<{ changeAFN: number, method: 'Cash' | 'Credit' | 'Card' | 'Check' } | null>(null);
 
   // Scanned checkout items state
   const [posItems, setPosItems] = useState<Array<{
@@ -394,10 +397,10 @@ export const POS: React.FC = () => {
   const changeDueInAFN = totalAmountPaidInAFN - finalAFN;
   const changeDueInUSD = changeDueInAFN / state.exchangeRate;
 
-  const handlePOSCheckout = (paymentMethod: 'Cash' | 'Credit', skipChangeCheck = false) => {
+  const handlePOSCheckout = (paymentMethod: 'Cash' | 'Credit' | 'Card' | 'Check', skipChangeCheck = false) => {
     if (posItems.length === 0) return;
 
-    if (paymentMethod === 'Cash' && !skipChangeCheck && changeDueInAFN > 0) {
+    if ((paymentMethod === 'Cash' || paymentMethod === 'Card' || paymentMethod === 'Check') && !skipChangeCheck && changeDueInAFN > 0) {
       setChangeConfirmData({ changeAFN: changeDueInAFN, method: paymentMethod });
       return;
     }
@@ -439,7 +442,7 @@ export const POS: React.FC = () => {
       paidAFN: isCredit ? 0 : finalAFN,
       tenderedAFN: totalAmountPaidInAFN,
       changeAFN: changeDueInAFN > 0 ? changeDueInAFN : 0,
-      paymentMethod: isCredit ? 'Credit' : 'Cash',
+      paymentMethod: paymentMethod,
       exchangeRate: state.exchangeRate,
       status: deliveryMethod === 'Delivery' ? 'Pending Delivery' : 'Completed',
       cashierName: user?.fullName || 'سیستم',
@@ -486,32 +489,42 @@ export const POS: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setPosSubTab('POS')}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-              posSubTab === 'POS'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-350 hover:text-slate-850 dark:hover:text-slate-100'
-            }`}
+            onClick={() => setIsShiftModalOpen(true)}
+            className="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white shadow-sm"
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            صندوق فروش (POS)
+            <Printer className="w-3.5 h-3.5 text-amber-400" />
+            بستن شیفت و راپور امروز
           </button>
-          <button
-            onClick={() => {
-              setPosSubTab('Invoices');
-              setSelectedSaleIds([]);
-            }}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
-              posSubTab === 'Invoices'
-                ? 'bg-emerald-600 text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-350 hover:text-slate-850 dark:hover:text-slate-100'
-            }`}
-          >
-            <span>📂</span>
-            بایگانی فاکتورها ({state.sales.length})
-          </button>
+
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0 self-start sm:self-auto">
+            <button
+              onClick={() => setPosSubTab('POS')}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                posSubTab === 'POS'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-350 hover:text-slate-850 dark:hover:text-slate-100'
+              }`}
+            >
+              <ShoppingBag className="w-3.5 h-3.5" />
+              صندوق فروش (POS)
+            </button>
+            <button
+              onClick={() => {
+                setPosSubTab('Invoices');
+                setSelectedSaleIds([]);
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                posSubTab === 'Invoices'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-350 hover:text-slate-850 dark:hover:text-slate-100'
+              }`}
+            >
+              <span>📂</span>
+              بایگانی فاکتورها ({state.sales.length})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -565,7 +578,7 @@ export const POS: React.FC = () => {
         </div>
 
         {/* Selected checkout order items list */}
-        <div className="border border-slate-100 rounded-xl overflow-hidden min-h-64 flex flex-col">
+        <div className="border border-slate-100 rounded-xl overflow-x-auto min-h-64 flex flex-col">
           <table className="min-w-full text-right text-xs">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
               <tr>
@@ -945,24 +958,42 @@ export const POS: React.FC = () => {
             </div>
           )}
 
-          <div className="flex gap-2 w-full pt-2">
+          <div className="flex gap-2 w-full pt-2 flex-wrap">
             <button
               onClick={() => handlePOSCheckout('Cash')}
               disabled={posItems.length === 0}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex-1 min-w-[120px] bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
             >
               <CreditCard className="w-4 h-4" />
-              تصفیه نقدی
+              تصفیه نقدی (صندوق)
+            </button>
+
+            <button
+              onClick={() => handlePOSCheckout('Card')}
+              disabled={posItems.length === 0}
+              className="flex-1 min-w-[120px] bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <CreditCard className="w-4 h-4" />
+              کارت بانکی
+            </button>
+
+            <button
+              onClick={() => handlePOSCheckout('Check')}
+              disabled={posItems.length === 0}
+              className="flex-1 min-w-[120px] bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <CreditCard className="w-4 h-4" />
+              چک بانکی
             </button>
 
             {customerId !== 'walk-in' && (
               <button
                 onClick={() => handlePOSCheckout('Credit')}
                 disabled={posItems.length === 0}
-                className="flex-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 min-w-[120px] bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <DollarSign className="w-4 h-4 text-emerald-400" />
-                فاکتور قرضه
+                فاکتور قرضه (نسیه)
               </button>
             )}
           </div>
@@ -1955,6 +1986,8 @@ export const POS: React.FC = () => {
           </div>
         </div>
       )}
+
+      {isShiftModalOpen && <ShiftCloseModal onClose={() => setIsShiftModalOpen(false)} />}
 
     </div>
   );

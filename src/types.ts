@@ -1,6 +1,6 @@
 export type Currency = 'USD' | 'AFN';
 
-export type PaymentMethod = 'Cash' | 'Credit' | 'Partial';
+export type PaymentMethod = 'Cash' | 'Card' | 'Check' | 'Credit' | 'Partial';
 
 export type DeliveryStatus = 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
 
@@ -14,6 +14,8 @@ export interface UnitStructure {
   pack?: { name: string; multiplier: number }; // e.g. Pack = 50 Pieces
   box?: { name: string; multiplier: number };  // e.g. Box = 300 Pieces
   carton?: { name: string; multiplier: number }; // e.g. Carton = 1800 Pieces
+  dozen?: { name: string; multiplier: number }; // e.g. Dozen = 12 Pieces
+  packet?: { name: string; multiplier: number }; // e.g. Packet
 }
 
 export interface Product {
@@ -236,6 +238,7 @@ export interface AppState {
   payments: DebtPayment[];
   expenses: Expense[];
   transactions?: any[];
+  capitalLogs?: any[];
   chatSessions?: ChatSession[];
   cashRegister: CashRegister;
   exchangeRate: number; // 1 USD = X AFN (defaults to 71.5)

@@ -166,7 +166,60 @@ export const Orders: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden print:shadow-none print:border-none">
+      {/* Mobile Card List View for Orders */}
+      <div className="block sm:hidden space-y-3 print:hidden">
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center text-slate-400 font-bold text-sm">
+            هیچ سفارشی در این تاریخ پیدا نشد
+          </div>
+        ) : (
+          filteredOrders.map(order => {
+            const customer = state.customers.find(c => c.id === order.customerId);
+            return (
+              <div key={order.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="font-mono font-black text-slate-800 text-sm block">فاکتور: {order.invoiceNo}</span>
+                    <span className="text-slate-500 text-xs mt-0.5 block">{order.customerName}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    order.status === 'Completed' || order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                    order.status === 'Pending Delivery' ? 'bg-blue-100 text-blue-700' :
+                    order.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' :
+                    order.status === 'Requires Customer Approval' ? 'bg-amber-100 text-amber-700' :
+                    'bg-indigo-100 text-indigo-700'
+                  }`}>
+                    {order.status === 'Completed' ? 'تکمیل شده (حضوری)' :
+                     order.status === 'Delivered' ? 'ارسال شده' : 
+                     order.status === 'Pending Delivery' ? 'در انتظار ارسال' : 
+                     order.status === 'Cancelled' ? 'لغو شده' :
+                     order.status === 'Requires Customer Approval' ? 'منتظر تایید مشتری' :
+                     'در انتظار بررسی'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                  <span className="text-slate-500 font-mono">{new Date(order.date).toLocaleDateString('fa-IR')}</span>
+                  <span className="font-mono font-black text-[#0B1F3A] text-sm">{formatCurrency(order.finalAFN, 'AFN')}</span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="font-mono text-slate-400 text-xs" dir="ltr">{customer?.phone || '-'}</span>
+                  <button 
+                    onClick={() => setSelectedOrder(order)}
+                    className="bg-[#0B1F3A] text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> جزئیات
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop / Tablet Orders Table View */}
+      <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden print:shadow-none print:border-none">
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm">
             <thead className="bg-[#0B1F3A] text-white text-xs uppercase print:text-black print:bg-slate-100">

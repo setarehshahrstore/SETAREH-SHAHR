@@ -22,8 +22,8 @@ export const syncToFirebase = (prev: AppState, next: AppState) => {
           // Remove undefined values to prevent Firebase "Unsupported field value: undefined" errors
           const cleanItem = JSON.parse(JSON.stringify(item));
           setDoc(doc(db, col, item.id || Date.now().toString()), cleanItem).catch(e => {
-            // Log as warning rather than breaking error if backend is temporarily offline
-            console.warn(`Firestore sync write notice for ${col}/${item.id}:`, e?.message || e);
+            // Local fallback active - log quietly
+            console.debug(`Firestore sync notice for ${col}/${item.id}:`, e?.message || e);
           });
         }
       });
@@ -32,7 +32,7 @@ export const syncToFirebase = (prev: AppState, next: AppState) => {
       prevArray.forEach(oldItem => {
         if (!nextArray.find(item => item.id === oldItem.id)) {
           deleteDoc(doc(db, col, oldItem.id)).catch(e => {
-            console.warn(`Firestore sync delete notice for ${col}/${oldItem.id}:`, e?.message || e);
+            console.debug(`Firestore sync notice for ${col}/${oldItem.id}:`, e?.message || e);
           });
         }
       });
@@ -42,12 +42,12 @@ export const syncToFirebase = (prev: AppState, next: AppState) => {
   // Handle singletons
   if (prev.exchangeRate !== next.exchangeRate) {
     setDoc(doc(db, 'singletons', 'exchangeRate'), { value: next.exchangeRate }).catch(e => {
-      console.warn('Firestore exchangeRate sync notice:', e?.message || e);
+      console.debug('Firestore exchangeRate notice:', e?.message || e);
     });
   }
   if (prev.cashRegister !== next.cashRegister) {
     setDoc(doc(db, 'singletons', 'cashRegister'), next.cashRegister).catch(e => {
-      console.warn('Firestore cashRegister sync notice:', e?.message || e);
+      console.debug('Firestore cashRegister notice:', e?.message || e);
     });
   }
 };
@@ -68,12 +68,12 @@ export const startFirebaseListeners = (setState: React.Dispatch<React.SetStateAc
           }
         },
         (error) => {
-          console.warn(`Firestore sync notification for '${col}':`, error.message);
+          console.debug(`Firestore sync notification for '${col}':`, error.message);
         }
       );
       unsubscribers.push(unsub);
     } catch (e) {
-      console.warn(`Could not attach listener for '${col}':`, e);
+      console.debug(`Could not attach listener for '${col}':`, e);
     }
   });
 
@@ -86,12 +86,12 @@ export const startFirebaseListeners = (setState: React.Dispatch<React.SetStateAc
         }
       },
       (error) => {
-        console.warn("Firestore sync notification for 'singletons/exchangeRate':", error.message);
+        console.debug("Firestore sync notification for 'singletons/exchangeRate':", error.message);
       }
     );
     unsubscribers.push(unsubExchange);
   } catch (e) {
-    console.warn("Could not attach listener for 'singletons/exchangeRate':", e);
+    console.debug("Could not attach listener for 'singletons/exchangeRate':", e);
   }
 
   try {
@@ -103,12 +103,12 @@ export const startFirebaseListeners = (setState: React.Dispatch<React.SetStateAc
         }
       },
       (error) => {
-        console.warn("Firestore sync notification for 'singletons/cashRegister':", error.message);
+        console.debug("Firestore sync notification for 'singletons/cashRegister':", error.message);
       }
     );
     unsubscribers.push(unsubCash);
   } catch (e) {
-    console.warn("Could not attach listener for 'singletons/cashRegister':", e);
+    console.debug("Could not attach listener for 'singletons/cashRegister':", e);
   }
 
   return () => {

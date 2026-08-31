@@ -5,6 +5,7 @@ import { DateFilter, DateRange } from './DateFilter';
 import { ExchangeRateDisplay } from './ExchangeRateDisplay';
 import { LowStockReportModal } from './LowStockReportModal';
 import { PriceTagPrintingModal } from './PriceTagPrintingModal';
+import { ShiftCloseModal } from './ShiftCloseModal';
 import { Link } from 'react-router-dom';
 import { 
   TrendingUp, TrendingDown, AlertTriangle, DollarSign, Users, ShoppingCart, 
@@ -30,6 +31,7 @@ export const Dashboard: React.FC = () => {
   // Modals for Low Stock and Smart Price Tag Printing
   const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
   const [isPriceTagModalOpen, setIsPriceTagModalOpen] = useState(false);
+  const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
 
   const handleUpdateRate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +128,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20 font-sans" dir="rtl">
-      
       {/* Top Welcome Section */}
       <div className="bg-gradient-to-l from-[#0B1F3A] via-[#122b4d] to-[#1A3A5F] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
@@ -159,13 +160,14 @@ export const Dashboard: React.FC = () => {
       />
 
       {/* Quick Action Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         {[
           { to: '/admin/sales', icon: ShoppingCart, label: 'فروش جدید', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600' },
           { to: '/admin/inventory?add=true', icon: PackagePlus, label: 'افزودن محصول', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600' },
           { to: '/admin/purchases', icon: FilePlus, label: 'ثبت خرید گدام', color: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600' },
           { to: '/admin/customers', icon: UserPlus, label: 'افزودن مشتری', color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
-          { to: '/admin/finances', icon: CreditCard, label: 'ثبت پرداخت', color: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white hover:border-rose-600' },
+          { to: '/admin/finances', icon: DollarSign, label: 'مالی و سرمایه', color: 'bg-teal-50 text-teal-700 border-teal-100 hover:bg-teal-600 hover:text-white hover:border-teal-600' },
+          { onClick: () => setIsShiftModalOpen(true), icon: Printer, label: 'بستن شیفت (راپور)', color: 'bg-slate-900 text-amber-400 border-slate-800 hover:bg-slate-800 hover:text-white' },
           { onClick: () => setIsPriceTagModalOpen(true), icon: Tag, label: 'چاپ اتیکت قیمت', color: 'bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
           { onClick: () => setIsLowStockModalOpen(true), icon: AlertTriangle, label: 'لیست کسری کالا', color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600' }
         ].map((btn, idx) => (
@@ -442,6 +444,8 @@ export const Dashboard: React.FC = () => {
         products={state.products}
         exchangeRate={state.exchangeRate}
       />
+
+      {isShiftModalOpen && <ShiftCloseModal onClose={() => setIsShiftModalOpen(false)} />}
     </div>
   );
 };

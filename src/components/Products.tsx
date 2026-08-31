@@ -112,7 +112,60 @@ export const Products: React.FC = () => {
       </div>
 
       {/* Product List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="block sm:hidden space-y-3">
+        {filteredProducts.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center text-slate-500 font-medium">
+            هیچ محصولی یافت نشد.
+          </div>
+        ) : (
+          filteredProducts.map(p => (
+            <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-3">
+              <div className="flex items-center gap-3">
+                <img src={p.image} alt={p.name} className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-slate-850 text-sm truncate">{p.name}</h3>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded font-bold">{p.category}</span>
+                    <span className="font-mono text-[10px] text-slate-400" dir="ltr">{p.sku}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-center">
+                <div className="bg-slate-50 p-2 rounded-lg">
+                  <span className="text-[10px] text-slate-500 block">نرخ عمده:</span>
+                  <span className="font-bold text-[#0B1F3A] text-xs">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</span>
+                </div>
+                <div className="bg-emerald-50/60 p-2 rounded-lg border border-emerald-100">
+                  <span className="text-[10px] text-emerald-700 font-bold block">نرخ پرچون:</span>
+                  <span className="font-black text-[#2E7D5B] text-xs">{formatCurrency(p.retailPriceAFN, 'AFN')}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button 
+                  onClick={() => setBarcodeProduct(p)} 
+                  className="flex-1 py-1.5 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                >
+                  <Barcode className="w-4 h-4" />
+                  چاپ بارکد
+                </button>
+                <button 
+                  onClick={() => setProductToDelete(p)} 
+                  className="py-1.5 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  حذف
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop / Tablet Table View */}
+      <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm">
             <thead className="bg-[#0B1F3A] text-white text-xs uppercase">

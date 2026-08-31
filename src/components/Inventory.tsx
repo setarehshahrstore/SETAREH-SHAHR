@@ -231,7 +231,9 @@ export const Inventory: React.FC = () => {
     costPriceCarton: '800.00', stockPieces: '0', stockCartons: '0', minStock: '100',
     hasPack: true, packName: 'بسته', packQty: '10',
     hasBox: true, boxName: 'قوطی', boxQty: '100',
-    hasCarton: true, cartonName: 'کارتن', cartonQty: '1000',
+    hasCarton: true, cartonName: 'کارتن', cartonQty: '0',
+    hasDozen: false, dozenName: 'درجن', dozenQty: '12',
+    hasPacket: false, packetName: 'پاکت', packetQty: '0',
     minWholesaleQty: '', isDiscounted: false, isBestSeller: false
   });
 
@@ -371,7 +373,9 @@ export const Inventory: React.FC = () => {
         piece: formData.baseUnit,
         ...(formData.hasPack && { pack: { name: formData.packName, multiplier: parseInt(formData.packQty) || 1 } }),
         ...(formData.hasBox && { box: { name: formData.boxName, multiplier: parseInt(formData.boxQty) || 1 } }),
-        ...(formData.hasCarton && { carton: { name: formData.cartonName, multiplier: parseInt(formData.cartonQty) || 1 } })
+        ...(formData.hasCarton && { carton: { name: formData.cartonName, multiplier: parseInt(formData.cartonQty) || 1 } }),
+        ...(formData.hasDozen && { dozen: { name: formData.dozenName, multiplier: parseInt(formData.dozenQty) || 1 } }),
+        ...(formData.hasPacket && { packet: { name: formData.packetName, multiplier: parseInt(formData.packetQty) || 1 } })
       },
       minWholesaleQty: parseInt(formData.minWholesaleQty) || undefined,
       isDiscounted: formData.isDiscounted,
@@ -403,7 +407,9 @@ export const Inventory: React.FC = () => {
       minStock: p.minStockInBaseUnits.toString(),
       hasPack: !!p.units.pack, packName: p.units.pack?.name || 'بسته', packQty: (p.units.pack?.multiplier || 10).toString(),
       hasBox: !!p.units.box, boxName: p.units.box?.name || 'قوطی', boxQty: (p.units.box?.multiplier || 100).toString(),
-      hasCarton: !!p.units.carton, cartonName: p.units.carton?.name || 'کارتن', cartonQty: (p.units.carton?.multiplier || 1000).toString(),
+      hasCarton: !!p.units.carton, cartonName: p.units.carton?.name || 'کارتن', cartonQty: (p.units.carton?.multiplier || 0).toString(),
+      hasDozen: !!p.units.dozen, dozenName: p.units.dozen?.name || 'درجن', dozenQty: (p.units.dozen?.multiplier || 12).toString(),
+      hasPacket: !!p.units.packet, packetName: p.units.packet?.name || 'پاکت', packetQty: (p.units.packet?.multiplier || 0).toString(),
       minWholesaleQty: p.minWholesaleQty ? p.minWholesaleQty.toString() : '',
       isDiscounted: p.isDiscounted || false,
       isBestSeller: p.isBestSeller || false
@@ -868,70 +874,172 @@ export const Inventory: React.FC = () => {
               {/* Units */}
               <div className="space-y-4">
                 <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2">واحدهای شمارش و بسته‌بندی</h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div className="col-span-1">
-                    <label className="block text-xs font-bold text-slate-600 mb-1">واحد پایه (تک)</label>
-                    <input type="text" required value={formData.baseUnit} onChange={e => setFormData({...formData, baseUnit: e.target.value})} className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-[#D4AF37]" placeholder="دانه" />
+                
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                  <div className="max-w-xs">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">واحد پایه فروش (تک / دانه / عدد)</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={formData.baseUnit} 
+                      onChange={e => setFormData({...formData, baseUnit: e.target.value})} 
+                      className="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white font-bold text-[#0B1F3A] focus:border-[#D4AF37]" 
+                      placeholder="مثلاً: دانه، کیلو، عدد" 
+                    />
                   </div>
-                  <div className="col-span-1 md:col-span-3 flex flex-wrap gap-4 pt-4 md:pt-0 border-t border-slate-100 md:border-t-0 mt-4 md:mt-0">
-                    <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex-1">
-                      <label className="flex items-center gap-2 text-sm font-bold text-[#0B1F3A] cursor-pointer">
-                        <input type="checkbox" checked={formData.hasPack} onChange={e => setFormData({...formData, hasPack: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4" />
-                        بسته کوچک
-                      </label>
-                      {formData.hasPack && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <input type="text" value={formData.packName} onChange={e => setFormData({...formData, packName: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="نام" />
-                          <span className="text-xs text-slate-500">=</span>
-                          <input type="number" min="1" value={formData.packQty} onChange={e => setFormData({...formData, packQty: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="تعداد" />
-                          <span className="text-[10px] text-slate-400">{formData.baseUnit}</span>
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex-1">
-                      <label className="flex items-center gap-2 text-sm font-bold text-[#0B1F3A] cursor-pointer">
-                        <input type="checkbox" checked={formData.hasBox} onChange={e => setFormData({...formData, hasBox: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4" />
-                        جعبه / قوطی
-                      </label>
-                      {formData.hasBox && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <input type="text" value={formData.boxName} onChange={e => setFormData({...formData, boxName: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="نام" />
-                          <span className="text-xs text-slate-500">=</span>
-                          <input type="number" min="1" value={formData.boxQty} onChange={e => setFormData({...formData, boxQty: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="تعداد" />
-                          <span className="text-[10px] text-slate-400">{formData.baseUnit}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-2">تعریف واحدهای بسته‌بندی بزرگتر (اختیاری):</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      
+                      {/* Pack */}
+                      <div className={`p-3 rounded-xl border transition-all ${formData.hasPack ? 'bg-white border-indigo-300 shadow-sm' : 'bg-slate-100/70 border-slate-200'}`}>
+                        <label className="flex items-center gap-2 text-xs font-bold text-[#0B1F3A] cursor-pointer">
+                          <input type="checkbox" checked={formData.hasPack} onChange={e => setFormData({...formData, hasPack: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4 rounded" />
+                          <span>بسته کوچک (Pack)</span>
+                        </label>
+                        {formData.hasPack && (
+                          <div className="mt-2 space-y-1.5 pt-2 border-t border-slate-100">
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">نام:</span>
+                              <input type="text" value={formData.packName} onChange={e => setFormData({...formData, packName: e.target.value})} className="w-full p-1.5 text-xs bg-slate-50 border rounded-lg" placeholder="نام واحد" />
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">معادل:</span>
+                              <input type="number" min="1" value={formData.packQty} onChange={e => setFormData({...formData, packQty: e.target.value})} className="w-20 p-1.5 text-xs bg-slate-50 border rounded-lg text-center font-bold" />
+                              <span className="text-[11px] text-slate-500">{formData.baseUnit || 'دانه'}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg flex-1">
-                      <label className="flex items-center gap-2 text-sm font-bold text-[#0B1F3A] cursor-pointer">
-                        <input type="checkbox" checked={formData.hasCarton} onChange={e => setFormData({...formData, hasCarton: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4" />
-                        کارتن بزرگ
-                      </label>
-                      {formData.hasCarton && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <input type="text" value={formData.cartonName} onChange={e => setFormData({...formData, cartonName: e.target.value})} className="w-16 p-1 text-xs border rounded" placeholder="نام" />
-                          <span className="text-xs text-slate-500">=</span>
-                          <input type="number" min="1" value={formData.cartonQty} onChange={e => {
-                            const newQty = e.target.value;
-                            const multiplier = parseInt(newQty) || 1;
-                            const costPiece = parseFloat(formData.costPriceUSD) || 0;
-                            const stockCartons = parseFloat(formData.stockCartons) || 0;
-                            setFormData({
-                              ...formData, 
-                              cartonQty: newQty,
-                              costPriceCarton: (costPiece * multiplier).toFixed(2),
-                              stockPieces: Math.round(stockCartons * multiplier).toString()
-                            });
-                          }} className="w-16 p-1 text-xs border rounded" placeholder="تعداد" />
-                          <span className="text-[10px] text-slate-400">{formData.baseUnit}</span>
-                        </div>
-                      )}
+                      {/* Box */}
+                      <div className={`p-3 rounded-xl border transition-all ${formData.hasBox ? 'bg-white border-indigo-300 shadow-sm' : 'bg-slate-100/70 border-slate-200'}`}>
+                        <label className="flex items-center gap-2 text-xs font-bold text-[#0B1F3A] cursor-pointer">
+                          <input type="checkbox" checked={formData.hasBox} onChange={e => setFormData({...formData, hasBox: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4 rounded" />
+                          <span>جعبه / قوطی (Box)</span>
+                        </label>
+                        {formData.hasBox && (
+                          <div className="mt-2 space-y-1.5 pt-2 border-t border-slate-100">
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">نام:</span>
+                              <input type="text" value={formData.boxName} onChange={e => setFormData({...formData, boxName: e.target.value})} className="w-full p-1.5 text-xs bg-slate-50 border rounded-lg" placeholder="نام واحد" />
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">معادل:</span>
+                              <input type="number" min="1" value={formData.boxQty} onChange={e => setFormData({...formData, boxQty: e.target.value})} className="w-20 p-1.5 text-xs bg-slate-50 border rounded-lg text-center font-bold" />
+                              <span className="text-[11px] text-slate-500">{formData.baseUnit || 'دانه'}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Carton */}
+                      <div className={`p-3 rounded-xl border transition-all ${formData.hasCarton ? 'bg-white border-indigo-300 shadow-sm' : 'bg-slate-100/70 border-slate-200'}`}>
+                        <label className="flex items-center gap-2 text-xs font-bold text-[#0B1F3A] cursor-pointer">
+                          <input type="checkbox" checked={formData.hasCarton} onChange={e => setFormData({...formData, hasCarton: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4 rounded" />
+                          <span>کارتن بزرگ (Carton)</span>
+                        </label>
+                        {formData.hasCarton && (
+                          <div className="mt-2 space-y-1.5 pt-2 border-t border-slate-100">
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">نام:</span>
+                              <input type="text" value={formData.cartonName} onChange={e => setFormData({...formData, cartonName: e.target.value})} className="w-full p-1.5 text-xs bg-slate-50 border rounded-lg" placeholder="نام واحد" />
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">معادل:</span>
+                              <input type="number" min="1" value={formData.cartonQty} onChange={e => {
+                                const newQty = e.target.value;
+                                const multiplier = parseInt(newQty) || 1;
+                                const costPiece = parseFloat(formData.costPriceUSD) || 0;
+                                const stockCartons = parseFloat(formData.stockCartons) || 0;
+                                setFormData({
+                                  ...formData, 
+                                  cartonQty: newQty,
+                                  costPriceCarton: (costPiece * multiplier).toFixed(2),
+                                  stockPieces: Math.round(stockCartons * multiplier).toString()
+                                });
+                              }} className="w-20 p-1.5 text-xs bg-slate-50 border rounded-lg text-center font-bold" />
+                              <span className="text-[11px] text-slate-500">{formData.baseUnit || 'دانه'}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Dozen */}
+                      <div className={`p-3 rounded-xl border transition-all ${formData.hasDozen ? 'bg-white border-indigo-300 shadow-sm' : 'bg-slate-100/70 border-slate-200'}`}>
+                        <label className="flex items-center gap-2 text-xs font-bold text-[#0B1F3A] cursor-pointer">
+                          <input type="checkbox" checked={formData.hasDozen} onChange={e => setFormData({...formData, hasDozen: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4 rounded" />
+                          <span>درجن / دوجین (Dozen)</span>
+                        </label>
+                        {formData.hasDozen && (
+                          <div className="mt-2 space-y-1.5 pt-2 border-t border-slate-100">
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">نام:</span>
+                              <input type="text" value={formData.dozenName} onChange={e => setFormData({...formData, dozenName: e.target.value})} className="w-full p-1.5 text-xs bg-slate-50 border rounded-lg" placeholder="نام واحد" />
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">معادل:</span>
+                              <input type="number" min="1" value={formData.dozenQty} onChange={e => setFormData({...formData, dozenQty: e.target.value})} className="w-20 p-1.5 text-xs bg-slate-50 border rounded-lg text-center font-bold" />
+                              <span className="text-[11px] text-slate-500">{formData.baseUnit || 'دانه'}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Packet */}
+                      <div className={`p-3 rounded-xl border transition-all ${formData.hasPacket ? 'bg-white border-indigo-300 shadow-sm' : 'bg-slate-100/70 border-slate-200'}`}>
+                        <label className="flex items-center gap-2 text-xs font-bold text-[#0B1F3A] cursor-pointer">
+                          <input type="checkbox" checked={formData.hasPacket} onChange={e => setFormData({...formData, hasPacket: e.target.checked})} className="accent-[#0B1F3A] w-4 h-4 rounded" />
+                          <span>پاکت / کیسه (Packet)</span>
+                        </label>
+                        {formData.hasPacket && (
+                          <div className="mt-2 space-y-1.5 pt-2 border-t border-slate-100">
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">نام:</span>
+                              <input type="text" value={formData.packetName} onChange={e => setFormData({...formData, packetName: e.target.value})} className="w-full p-1.5 text-xs bg-slate-50 border rounded-lg" placeholder="نام واحد" />
+                            </div>
+                            <div className="flex items-center gap-1 text-xs">
+                              <span className="text-[11px] text-slate-500 font-bold w-10 shrink-0">معادل:</span>
+                              <input type="number" min="1" value={formData.packetQty} onChange={e => setFormData({...formData, packetQty: e.target.value})} className="w-20 p-1.5 text-xs bg-slate-50 border rounded-lg text-center font-bold" />
+                              <span className="text-[11px] text-slate-500">{formData.baseUnit || 'دانه'}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Low Stock Alert Threshold Limit */}
+              <div className="bg-amber-50/80 p-4 rounded-xl border border-amber-200 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <label className="text-sm font-black text-amber-900 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                    تعیین حد هشدار کسری انبار (حداقل موجودی مجاز)
+                  </label>
+                  <span className="text-[11px] text-amber-800 font-bold bg-amber-100 px-2 py-0.5 rounded-md">واحد پایه: {formData.baseUnit || 'دانه'}</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  هرگاه تعداد موجودی کالا در انبار کمتر یا مساوی این عدد شود، سیستم به طور خودکار هشدار کمبود موجودی صادر نموده و در گزارش کسری گدام و خرید قرار می‌دهد.
+                </p>
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="relative w-40">
+                    <input 
+                      type="number" 
+                      min="0" 
+                      value={formData.minStock} 
+                      onChange={e => setFormData({...formData, minStock: e.target.value})} 
+                      className="w-full p-2.5 bg-white border border-amber-300 rounded-xl text-sm font-bold font-mono text-center focus:border-amber-600 focus:ring-1 focus:ring-amber-600 shadow-xs" 
+                      placeholder="مثلاً: 10" 
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-700">{formData.baseUnit || 'دانه'}</span>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2">تنظیمات پیشرفته مارکتینگ</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -963,8 +1071,127 @@ export const Inventory: React.FC = () => {
         </div>
       )}
 
-      {/* Main product levels spreadsheet view */}
-      <div className="bg-white rounded-xl border border-slate-100 shadow-xs overflow-x-auto">
+      {/* Mobile Card List View (Visible on Mobile) */}
+      <div className="block md:hidden space-y-3">
+        {filteredProducts.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-100 text-center text-slate-400 font-bold text-sm">
+            کالایی با فیلترها و عبارت جستجوی فوق پیدا نگردید.
+          </div>
+        ) : (
+          filteredProducts.map(p => {
+            const isLow = p.stockInBaseUnits <= p.minStockInBaseUnits;
+            const isSelected = selectedProductIds.includes(p.id);
+
+            return (
+              <div 
+                key={p.id} 
+                className={`bg-white p-4 rounded-2xl border transition-all shadow-xs space-y-3 ${
+                  isSelected ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-200/80'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedProductIds([...selectedProductIds, p.id]);
+                        } else {
+                          setSelectedProductIds(selectedProductIds.filter(id => id !== p.id));
+                        }
+                      }}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer w-4 h-4 mt-0.5"
+                    />
+                    <img 
+                      src={p.image || IMAGE_PRESETS[0].url} 
+                      alt={p.name} 
+                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" 
+                      referrerPolicy="no-referrer" 
+                    />
+                    <div>
+                      <h4 className="font-black text-slate-850 text-sm">{p.name}</h4>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded font-bold">{p.category}</span>
+                        <span className="font-mono text-[10px] text-slate-400">بارکد: {p.sku}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    {isLow ? (
+                      <span className="bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-black px-2 py-1 rounded-lg inline-flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        کسری انبار
+                      </span>
+                    ) : (
+                      <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black px-2 py-1 rounded-lg">
+                        موجودی کافی
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Stock & Unit Breakdown */}
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">موجودی انبار:</span>
+                    <span className="font-black text-emerald-700 text-sm font-mono">{formatStock(p.stockInBaseUnits, p.units)}</span>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-[10px] text-slate-500 block">حد هشدار کسری:</span>
+                    <span className="font-bold text-slate-700 font-mono">{p.minStockInBaseUnits} {p.baseUnit}</span>
+                  </div>
+                </div>
+
+                {/* Pricing Grid */}
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-center">
+                  <div className="bg-slate-50/70 p-2 rounded-lg">
+                    <span className="text-[10px] text-slate-500 block">خرید:</span>
+                    <span className="font-bold text-slate-800 text-xs font-mono">{formatCurrency(p.costPriceAFN, 'AFN')}</span>
+                  </div>
+                  <div className="bg-slate-50/70 p-2 rounded-lg">
+                    <span className="text-[10px] text-slate-500 block">عمده:</span>
+                    <span className="font-bold text-indigo-700 text-xs font-mono">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</span>
+                  </div>
+                  <div className="bg-emerald-50/50 p-2 rounded-lg border border-emerald-100">
+                    <span className="text-[10px] text-emerald-700 font-bold block">پرچون:</span>
+                    <span className="font-black text-emerald-800 text-xs font-mono">{formatCurrency(p.retailPriceAFN, 'AFN')}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => setBarcodeProduct(p)}
+                    className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <Barcode className="w-3.5 h-3.5" />
+                    چاپ بارکد
+                  </button>
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    ویرایش
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProductClick(p.id, p.name)}
+                    className="p-1.5 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors"
+                    title="حذف کالا"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Main product levels spreadsheet view (Desktop & Tablets) */}
+      <div className="hidden md:block bg-white rounded-xl border border-slate-100 shadow-xs overflow-x-auto">
         <table className="min-w-full text-right text-xs">
           <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10.5px]">
             <tr>
@@ -996,7 +1223,7 @@ export const Inventory: React.FC = () => {
           <tbody className="divide-y divide-slate-100 font-semibold">
             {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={9} className="p-12 text-center text-slate-400 font-bold text-sm">
+                <td colSpan={10} className="p-12 text-center text-slate-400 font-bold text-sm">
                   کالایی با فیلترها و عبارت جستجوی فوق پیدا نگردید.
                 </td>
               </tr>

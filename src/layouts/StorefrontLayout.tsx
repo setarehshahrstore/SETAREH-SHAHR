@@ -14,12 +14,44 @@ export const StorefrontLayout: React.FC = () => {
   const { user } = useAuth();
   const { cart, setIsCartOpen } = useAppState();
 
-  const handleNav = (id: string) => {
+  const handleNav = (target: string) => {
     setIsMobileMenuOpen(false);
+    
+    if (target === 'about') {
+      navigate('/about');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (target === 'contact') {
+      navigate('/contact');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const sectionMap: Record<string, string> = {
+      categories: 'categories-section',
+      products: 'products-section',
+      wholesale: 'wholesale-section',
+    };
+
+    const targetId = sectionMap[target] || target;
+
     if (location.pathname !== '/') {
-      navigate('/#' + id);
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
     } else {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -209,6 +241,7 @@ export const StorefrontLayout: React.FC = () => {
                 <li><button onClick={() => handleNav('products')} className="text-slate-300 hover:text-white transition-colors flex items-center gap-2"><ChevronLeft className="w-4 h-4 text-brand-gold" /> محصولات</button></li>
                 <li><button onClick={() => handleNav('wholesale')} className="text-slate-300 hover:text-white transition-colors flex items-center gap-2"><ChevronLeft className="w-4 h-4 text-brand-gold" /> خرید عمده</button></li>
                 <li><button onClick={() => handleNav('about')} className="text-slate-300 hover:text-white transition-colors flex items-center gap-2"><ChevronLeft className="w-4 h-4 text-brand-gold" /> درباره ما</button></li>
+                <li><button onClick={() => handleNav('contact')} className="text-slate-300 hover:text-white transition-colors flex items-center gap-2"><ChevronLeft className="w-4 h-4 text-brand-gold" /> تماس با ما</button></li>
               </ul>
             </div>
             

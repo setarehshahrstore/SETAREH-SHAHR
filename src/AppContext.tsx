@@ -55,6 +55,7 @@ interface AppContextType {
   deleteExpense: (id: string) => void;
 
   addTransaction: (transaction: any) => void;
+  addCapitalLog: (log: any) => void;
 
   // Chat Methods
   addChatSession: (session: ChatSession) => void;
@@ -188,6 +189,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     // Assume we have a transactions array in state if we want to store them, or just modify cashRegister
     return { ...prev, cashRegister: updatedCash };
+  });
+
+  const addCapitalLog = (log: any) => setState(prev => {
+    const updatedCash = { ...prev.cashRegister };
+    if (log.type === 'Add') {
+      if (log.currency === 'AFN') updatedCash.balanceAFN += log.amount;
+      else updatedCash.balanceUSD += log.amount;
+    } else {
+      if (log.currency === 'AFN') updatedCash.balanceAFN -= log.amount;
+      else updatedCash.balanceUSD -= log.amount;
+    }
+    return { 
+      ...prev, 
+      cashRegister: updatedCash,
+      capitalLogs: [...(prev.capitalLogs || []), log]
+    };
   });
 
   const addChatSession = (session: ChatSession) => setState(prev => ({
@@ -969,6 +986,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addExpense,
       deleteExpense,
       addTransaction,
+      addCapitalLog,
       addChatSession,
       addChatMessage,
       updateChatStatus,

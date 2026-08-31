@@ -20,6 +20,7 @@ const MENU_ITEMS = [
   { path: '/admin/partners', name: 'اشخاص (مشتریان و فروشندگان)', icon: Users, roles: ['Owner', 'Manager'] },
   { path: '/admin/inventory', name: 'گدام / موجودی', icon: Warehouse, roles: ['Owner', 'Manager', 'Warehouse Staff'] },
   { path: '/admin/debts', name: 'قرضه و پرداخت', icon: CreditCard, roles: ['Owner', 'Manager'] },
+  { path: '/admin/finances', name: 'مالی و سرمایه (شیفت)', icon: DollarSign, roles: ['Owner', 'Manager'] },
   { path: '/admin/expenses', name: 'مصارف', icon: Receipt, roles: ['Owner', 'Manager'] },
   { path: '/admin/reports', name: 'گزارشات', icon: BarChart3, roles: ['Owner', 'Manager'] },
   { path: '/admin/settings', name: 'تنظیمات', icon: Settings, roles: ['Owner', 'Manager'] },

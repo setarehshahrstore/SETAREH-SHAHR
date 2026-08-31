@@ -8,6 +8,8 @@ import { StorefrontLayout } from './layouts/StorefrontLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 
 import { Storefront } from './components/Storefront'; // Landing Page
+import { AboutUs } from './components/AboutUs';
+import { ContactUs } from './components/ContactUs';
 import { OrderTracking } from './components/OrderTracking';
 import { Dashboard } from './components/Dashboard';
 import { Products } from './components/Products';
@@ -76,6 +78,8 @@ export default function App() {
             {/* Public Storefront Routes */}
             <Route path="/" element={<StorefrontLayout />}>
               <Route index element={<Storefront />} />
+              <Route path="about" element={<AboutUs />} />
+              <Route path="contact" element={<ContactUs />} />
               <Route path="tracking" element={<OrderTracking />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
