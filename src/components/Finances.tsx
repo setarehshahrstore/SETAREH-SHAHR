@@ -246,12 +246,22 @@ export const Finances: React.FC = () => {
   const totalLiabilitiesAFN = supplierDebtsAFN;
   const netWorthAFN = totalAssetsAFN - totalLiabilitiesAFN;
 
-  const totalInvestedCapitalAFN = (state.capitalLogs || []).reduce((acc: number, log: any) => {
-    const valAFN = log.currency === 'AFN' ? log.amount : log.amount * safeRate;
-    return log.type === 'Add' ? acc + valAFN : acc - valAFN;
+  // Separate Capital: AFN from personal pocket vs USD from personal pocket (No forced conversions)
+  const totalInvestedAFN = (state.capitalLogs || []).reduce((acc: number, log: any) => {
+    if (log.currency !== 'AFN') return acc;
+    return log.type === 'Add' ? acc + log.amount : acc - log.amount;
   }, 0);
 
+  const totalInvestedUSD = (state.capitalLogs || []).reduce((acc: number, log: any) => {
+    if (log.currency !== 'USD') return acc;
+    return log.type === 'Add' ? acc + log.amount : acc - log.amount;
+  }, 0);
+
+  // Combined Equivalent for Net Balance calculation
+  const totalInvestedCapitalAFN = totalInvestedAFN + (totalInvestedUSD * safeRate);
+
   const profitAFN = netWorthAFN - totalInvestedCapitalAFN;
+  const profitUSD = profitAFN / safeRate;
   const circulatingMoneyAFN = inventoryValueAFN + customerDebtsAFN; // Money in goods and receivables
 
   return (
@@ -264,7 +274,7 @@ export const Finances: React.FC = () => {
             <span>بخش حفاظت شده با رمز ارشد ادمین (Admin$)</span>
           </div>
           <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">مدیریت مالی و صندوق</h1>
-          <p className="text-xs text-slate-500 mt-1">مدیریت موجودی نقدی، سرمایه اولیه، دریافت‌ها، پرداخت‌ها و موازنه ترازنامه</p>
+          <p className="text-xs text-slate-500 mt-1">مدیریت موجودی نقدی، سرمایه اولیه پرداختی (افغانی و دالر)، دریافت‌ها، پرداخت‌ها و ترازنامه</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button 
@@ -294,7 +304,7 @@ export const Finances: React.FC = () => {
             className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            مدیریت سرمایه
+            مدیریت سرمایه اولیه
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}
@@ -306,37 +316,71 @@ export const Finances: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center relative group">
+      {/* KPI Cards: Distinct AFN & USD Initial Capital with real-time conversion sub-labels */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-2">
+        {/* Card 1: AFN Capital */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between relative group hover:border-indigo-200 transition-all">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] text-slate-500 font-bold mb-1">سرمایه کل وارد شده</p>
+            <p className="text-[11px] text-slate-500 font-bold mb-1">سرمایه اولیه (افغانی)</p>
             <button 
               onClick={() => setIsCapitalModalOpen(true)}
               className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold opacity-80 group-hover:opacity-100 flex items-center gap-0.5"
+              title="تنظیم سرمایه افغانی"
             >
               <Edit2 className="w-3 h-3" /> تنظیم
             </button>
           </div>
-          <h3 className="text-lg font-black text-indigo-700">{formatCurrency(totalInvestedCapitalAFN, 'AFN')}</h3>
-          <p className="text-[10px] text-slate-400 mt-1" dir="ltr">~ ${(totalInvestedCapitalAFN / safeRate).toFixed(2)}</p>
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-indigo-700 font-mono">{formatCurrency(totalInvestedAFN, 'AFN')}</h3>
+            <p className="text-[10px] text-slate-400 mt-1 font-mono" dir="ltr">~ ${(totalInvestedAFN / safeRate).toFixed(2)}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center">
+
+        {/* Card 2: USD Capital */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between relative group hover:border-emerald-200 transition-all">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-slate-500 font-bold mb-1">سرمایه اولیه (دالر)</p>
+            <button 
+              onClick={() => setIsCapitalModalOpen(true)}
+              className="text-[10px] text-emerald-600 hover:text-emerald-800 font-bold opacity-80 group-hover:opacity-100 flex items-center gap-0.5"
+              title="تنظیم سرمایه دالری"
+            >
+              <Edit2 className="w-3 h-3" /> تنظیم
+            </button>
+          </div>
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-emerald-700 font-mono" dir="ltr">${totalInvestedUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+            <p className="text-[10px] text-slate-400 mt-1 font-mono">~ {formatCurrency(totalInvestedUSD * safeRate, 'AFN')}</p>
+          </div>
+        </div>
+
+        {/* Card 3: Net Market Worth */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <p className="text-[11px] text-slate-500 font-bold mb-1">ارزش کل مارکت (دارایی خالص)</p>
-          <h3 className="text-lg font-black text-[#0B1F3A]">{formatCurrency(netWorthAFN, 'AFN')}</h3>
-          <p className="text-[10px] text-slate-400 mt-1" dir="ltr">~ ${(netWorthAFN / safeRate).toFixed(2)}</p>
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-[#0B1F3A] font-mono">{formatCurrency(netWorthAFN, 'AFN')}</h3>
+            <p className="text-[10px] text-slate-400 mt-1 font-mono" dir="ltr">~ ${(netWorthAFN / safeRate).toFixed(2)}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center">
+
+        {/* Card 4: Circulating Capital */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
           <p className="text-[11px] text-slate-500 font-bold mb-1">پول در گردش (اموال + طلبات)</p>
-          <h3 className="text-lg font-black text-amber-600">{formatCurrency(circulatingMoneyAFN, 'AFN')}</h3>
-          <p className="text-[10px] text-slate-400 mt-1" dir="ltr">~ ${(circulatingMoneyAFN / safeRate).toFixed(2)}</p>
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-amber-600 font-mono">{formatCurrency(circulatingMoneyAFN, 'AFN')}</h3>
+            <p className="text-[10px] text-slate-400 mt-1 font-mono" dir="ltr">~ ${(circulatingMoneyAFN / safeRate).toFixed(2)}</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center">
-          <p className="text-[11px] text-slate-500 font-bold mb-1">مفاد خالص</p>
-          <h3 className={`text-lg font-black ${profitAFN >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {profitAFN >= 0 ? '+' : ''}{formatCurrency(profitAFN, 'AFN')}
-          </h3>
-          <p className="text-[10px] text-slate-400 mt-1" dir="ltr">~ ${(profitAFN / safeRate).toFixed(2)}</p>
+
+        {/* Card 5: Net Profit */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+          <p className="text-[11px] text-slate-500 font-bold mb-1">مفاد خالص کل</p>
+          <div>
+            <h3 className={`text-base sm:text-lg font-black font-mono ${profitAFN >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {profitAFN >= 0 ? '+' : ''}{formatCurrency(profitAFN, 'AFN')}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1 font-mono" dir="ltr">~ {profitUSD >= 0 ? '+' : ''}${profitUSD.toFixed(2)}</p>
+          </div>
         </div>
       </div>
 
@@ -593,21 +637,36 @@ export const Finances: React.FC = () => {
       {/* Capital Management Modal */}
       {isCapitalModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
             <div className="p-6 bg-indigo-700 text-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-xl font-black">مدیریت سرمایه و دارایی اولیه</h2>
-                <p className="text-xs text-indigo-200 mt-0.5">افزایش، برداشت یا مشاهده تاریخچه سرمایه</p>
+                <h2 className="text-xl font-black">مدیریت سرمایه اولیه و پایه‌گذاری</h2>
+                <p className="text-xs text-indigo-200 mt-0.5">ثبت جداگانه سرمایه پرداختی شخصی (افغانی و دالر) بدون تبدیل اجباری</p>
               </div>
-              <button onClick={() => setIsCapitalModalOpen(false)} className="text-indigo-200 hover:text-white transition-colors">
+              <button onClick={() => setIsCapitalModalOpen(false)} className="text-indigo-200 hover:text-white transition-colors cursor-pointer">
                 <X className="w-6 h-6" />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="p-6 overflow-y-auto space-y-5">
+              
+              {/* Distinct Capital Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-indigo-50/80 border border-indigo-200 rounded-2xl p-4">
+                  <span className="text-[11px] text-indigo-800 font-bold block">سرمایه اولیه افغانی (پرداختی از جیب)</span>
+                  <h3 className="text-lg font-black text-indigo-950 font-mono mt-1">{formatCurrency(totalInvestedAFN, 'AFN')}</h3>
+                  <span className="text-[10px] text-indigo-600 font-mono block mt-0.5" dir="ltr">معادل روز: ~${(totalInvestedAFN / safeRate).toFixed(2)}</span>
+                </div>
+                <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4">
+                  <span className="text-[11px] text-emerald-800 font-bold block">سرمایه اولیه دالری (پرداختی از جیب)</span>
+                  <h3 className="text-lg font-black text-emerald-950 font-mono mt-1" dir="ltr">${totalInvestedUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                  <span className="text-[10px] text-emerald-600 font-mono block mt-0.5">معادل روز: ~{formatCurrency(totalInvestedUSD * safeRate, 'AFN')}</span>
+                </div>
+              </div>
+
               {/* Add/Withdraw Form */}
               <form onSubmit={handleCapitalSubmit} className="space-y-4 text-sm bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <h4 className="font-bold text-slate-800 text-xs">ثبت تغییر جدید در سرمایه:</h4>
+                <h4 className="font-bold text-slate-800 text-xs">ثبت تغییر جدید در سرمایه اولیه:</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-600 mb-1">نوع تغییر</label>
@@ -617,10 +676,10 @@ export const Finances: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">ارز (Currency)</label>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">ارز سرمایه (Currency)</label>
                     <select value={capCurrency} onChange={e => setCapCurrency(e.target.value as any)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500 font-bold">
-                      <option value="AFN">افغانی</option>
-                      <option value="USD">دالر</option>
+                      <option value="AFN">افغانی (AFN)</option>
+                      <option value="USD">دالر (USD)</option>
                     </select>
                   </div>
                 </div>
@@ -632,10 +691,10 @@ export const Finances: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">توضیحات / منبع سرمایه</label>
-                  <input type="text" value={capNote} onChange={e => setCapNote(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500" placeholder="مثال: سرمایه اولیه شرکت، سود برداشت شده..." />
+                  <input type="text" value={capNote} onChange={e => setCapNote(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500" placeholder="مثال: سرمایه نقدی پایه از جیب شخصی، برداشت صاحب کسب‌وکار..." />
                 </div>
 
-                <button type="submit" className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-md ${
+                <button type="submit" className={`w-full py-3 rounded-xl font-bold text-sm transition-all shadow-md cursor-pointer ${
                   capType === 'Add' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-orange-500 hover:bg-orange-600 text-white'
                 }`}>
                   {capType === 'Add' ? '+ ثبت افزایش سرمایه' : '- ثبت برداشت سرمایه'}
@@ -654,7 +713,10 @@ export const Finances: React.FC = () => {
                             {log.type === 'Add' ? 'افزایش' : 'برداشت'}
                           </span>
                           <span className="font-mono font-bold text-slate-800">
-                            {log.currency === 'AFN' ? formatCurrency(log.amount, 'AFN') : `$${log.amount}`}
+                            {log.currency === 'AFN' ? formatCurrency(log.amount, 'AFN') : `$${log.amount.toLocaleString()}`}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            ({log.currency === 'AFN' ? `~$${(log.amount / safeRate).toFixed(2)}` : `~${formatCurrency(log.amount * safeRate, 'AFN')}`})
                           </span>
                         </div>
                         <p className="text-slate-500 text-[11px] mt-1">{log.note || 'بدون توضیح'}</p>
