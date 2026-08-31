@@ -4,10 +4,13 @@ import { formatCurrency } from '../utils';
 import { Product } from '../types';
 import { 
   Package, Plus, Search, Filter, Edit, Trash2, Printer, 
-  Image as ImageIcon, X, AlertCircle, Barcode, FileSpreadsheet
+  Image as ImageIcon, X, AlertCircle, Barcode, FileSpreadsheet, Images,
+  Archive, CheckCircle2, Upload
 } from 'lucide-react';
 import { SecurityGateModal } from './SecurityGate';
 import { ExcelImportModal } from './ExcelImportModal';
+import { BulkImageUploadModal } from './BulkImageUploadModal';
+import { compressImageFile } from '../utils/imageOptimizer';
 
 const IMAGE_PRESETS = [
   { name: 'آیتم عمومی', url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=250' },
@@ -17,22 +20,60 @@ const IMAGE_PRESETS = [
 ];
 
 export const Products: React.FC = () => {
-  const { state, addProduct, addProducts, editProduct, deleteProduct } = useAppState();
+  const { state, addProduct, addProducts, editProduct, bulkUpdateProducts, deleteProduct } = useAppState();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
+  const [filterStatus, setFilterStatus] = useState<'All' | 'Published' | 'Draft'>('All');
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isExcelImportModalOpen, setIsExcelImportModalOpen] = useState(false);
+  const [isBulkImageModalOpen, setIsBulkImageModalOpen] = useState(false);
   
+  const [uploadingTargetId, setUploadingTargetId] = useState<string | null>(null);
+  const singleImageInputRef = useRef<HTMLInputElement | null>(null);
+
   // Hardcoded categories list from earlier version
   const categoriesList: string[] = ['All', 'خواربار و مواد غذایی', 'نوشیدنی‌ها', 'مواد شوینده و بهداشتی', 'لبنیات', 'تنقلات و شیرینی‌جات', 'آرایشی', 'سایر'];
+
+  const publishedCount = state.products.filter(p => !p.isDraft && p.status !== 'draft').length;
+  const draftCount = state.products.filter(p => p.isDraft || p.status === 'draft').length;
 
   // Filtered Products
   const filteredProducts = state.products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCat = filterCategory === 'All' || p.category === filterCategory;
-    return matchesSearch && matchesCat;
+    const isDraft = p.isDraft || p.status === 'draft';
+    const matchesStatus = 
+      filterStatus === 'All' ? true :
+      filterStatus === 'Published' ? !isDraft :
+      isDraft;
+    return matchesSearch && matchesCat && matchesStatus;
   });
+
+  const handleSingleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingTargetId) return;
+
+    try {
+      const compressedDataUrl = await compressImageFile(file, 600, 600, 0.82);
+      const targetProduct = state.products.find(p => p.id === uploadingTargetId);
+      if (targetProduct) {
+        editProduct({
+          ...targetProduct,
+          image: compressedDataUrl,
+          status: 'published',
+          isDraft: false
+        });
+      }
+    } catch (err) {
+      console.error('Error optimizing single image:', err);
+    } finally {
+      setUploadingTargetId(null);
+      if (singleImageInputRef.current) {
+        singleImageInputRef.current.value = '';
+      }
+    }
+  };
 
   const [barcodeProduct, setBarcodeProduct] = useState<Product | null>(null);
   const [barcodeDisplayPrice, setBarcodeDisplayPrice] = useState<'Retail' | 'Wholesale' | 'Both' | 'None'>('Retail');
@@ -91,34 +132,93 @@ export const Products: React.FC = () => {
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-xs transition-all cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            ورود دسته‌جمعی با اکسل
+            ورود دسته‌جمعی با اکسل و عکس
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute right-3 top-2.5 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="جستجوی نام کالا یا بارکد..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
-          />
-        </div>
-        <div className="flex items-center gap-2 min-w-[200px]">
-          <Filter className="w-5 h-5 text-slate-400" />
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-[#D4AF37]"
+      {/* Hidden input for single item photo upload */}
+      <input 
+        type="file"
+        ref={singleImageInputRef}
+        accept="image/*"
+        onChange={handleSingleImageSelect}
+        className="hidden"
+      />
+
+      {/* Filters and Status Tabs */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+        {/* Status Tabs */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-3">
+          <button
+            onClick={() => setFilterStatus('All')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+              filterStatus === 'All'
+                ? 'bg-[#0B1F3A] text-white shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+            }`}
           >
-            {categoriesList.map(cat => (
-              <option key={cat} value={cat}>{cat === 'All' ? 'همه دسته‌بندی‌ها' : cat}</option>
-            ))}
-          </select>
+            همه محصولات
+            <span className="bg-white/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-mono">
+              {state.products.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterStatus('Published')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+              filterStatus === 'Published'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            منتشر شده در فروشگاه
+            <span className="bg-emerald-200/50 text-current text-[10px] px-1.5 py-0.5 rounded-full font-mono">
+              {publishedCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterStatus('Draft')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+              filterStatus === 'Draft'
+                ? 'bg-amber-500 text-white shadow-xs'
+                : 'bg-amber-50 hover:bg-amber-100 text-amber-900'
+            }`}
+          >
+            <Archive className="w-3.5 h-3.5" />
+            پیش‌نویس / بایگانی (بدون عکس)
+            <span className="bg-amber-200/50 text-current text-[10px] px-1.5 py-0.5 rounded-full font-mono">
+              {draftCount}
+            </span>
+          </button>
+        </div>
+
+        {/* Search & Category Filter */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-2.5 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="جستجوی نام کالا یا بارکد..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pr-10 pl-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]"
+            />
+          </div>
+          <div className="flex items-center gap-2 min-w-[200px]">
+            <Filter className="w-5 h-5 text-slate-400" />
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:border-[#D4AF37]"
+            >
+              {categoriesList.map(cat => (
+                <option key={cat} value={cat}>{cat === 'All' ? 'همه دسته‌بندی‌ها' : cat}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -130,48 +230,84 @@ export const Products: React.FC = () => {
             هیچ محصولی یافت نشد.
           </div>
         ) : (
-          filteredProducts.map(p => (
-            <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs space-y-3">
-              <div className="flex items-center gap-3">
-                <img src={p.image} alt={p.name} className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-850 text-sm truncate">{p.name}</h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded font-bold">{p.category}</span>
-                    <span className="font-mono text-[10px] text-slate-400" dir="ltr">{p.sku}</span>
+          filteredProducts.map(p => {
+            const isDraft = p.isDraft || p.status === 'draft';
+            return (
+              <div key={p.id} className={`bg-white p-4 rounded-2xl border shadow-xs space-y-3 ${isDraft ? 'border-amber-200 bg-amber-50/10' : 'border-slate-100'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img src={p.image} alt={p.name} className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0" />
+                    {isDraft && (
+                      <button
+                        onClick={() => {
+                          setUploadingTargetId(p.id);
+                          singleImageInputRef.current?.click();
+                        }}
+                        className="absolute inset-0 bg-black/40 text-white flex items-center justify-center rounded-xl text-[10px] font-bold opacity-90 hover:opacity-100"
+                        title="آپلود عکس و انتشار"
+                      >
+                        + عکس
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="font-bold text-slate-850 text-sm truncate">{p.name}</h3>
+                      {isDraft && (
+                        <span className="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-black flex items-center gap-0.5">
+                          <Archive className="w-2.5 h-2.5" /> پیش‌نویس
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded font-bold">{p.category}</span>
+                      <span className="font-mono text-[10px] text-slate-400" dir="ltr">{p.sku}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-center">
-                <div className="bg-slate-50 p-2 rounded-lg">
-                  <span className="text-[10px] text-slate-500 block">نرخ عمده:</span>
-                  <span className="font-bold text-[#0B1F3A] text-xs">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</span>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-center">
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <span className="text-[10px] text-slate-500 block">نرخ عمده:</span>
+                    <span className="font-bold text-[#0B1F3A] text-xs">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</span>
+                  </div>
+                  <div className="bg-emerald-50/60 p-2 rounded-lg border border-emerald-100">
+                    <span className="text-[10px] text-emerald-700 font-bold block">نرخ پرچون:</span>
+                    <span className="font-black text-[#2E7D5B] text-xs">{formatCurrency(p.retailPriceAFN, 'AFN')}</span>
+                  </div>
                 </div>
-                <div className="bg-emerald-50/60 p-2 rounded-lg border border-emerald-100">
-                  <span className="text-[10px] text-emerald-700 font-bold block">نرخ پرچون:</span>
-                  <span className="font-black text-[#2E7D5B] text-xs">{formatCurrency(p.retailPriceAFN, 'AFN')}</span>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button 
-                  onClick={() => setBarcodeProduct(p)} 
-                  className="flex-1 py-1.5 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
-                >
-                  <Barcode className="w-4 h-4" />
-                  چاپ بارکد
-                </button>
-                <button 
-                  onClick={() => setProductToDelete(p)} 
-                  className="py-1.5 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  حذف
-                </button>
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  {isDraft && (
+                    <button
+                      onClick={() => {
+                        setUploadingTargetId(p.id);
+                        singleImageInputRef.current?.click();
+                      }}
+                      className="flex-1 py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-black flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      آپلود عکس و انتشار
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => setBarcodeProduct(p)} 
+                    className="flex-1 py-1.5 px-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <Barcode className="w-4 h-4" />
+                    چاپ بارکد
+                  </button>
+                  <button 
+                    onClick={() => setProductToDelete(p)} 
+                    className="py-1.5 px-3 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -182,6 +318,7 @@ export const Products: React.FC = () => {
             <thead className="bg-[#0B1F3A] text-white text-xs uppercase">
               <tr>
                 <th className="px-4 py-4 rounded-tr-2xl">کالا</th>
+                <th className="px-4 py-4">وضعیت</th>
                 <th className="px-4 py-4">دسته‌بندی</th>
                 <th className="px-4 py-4">بارکد (SKU)</th>
                 <th className="px-4 py-4">نرخ عمده</th>
@@ -192,33 +329,72 @@ export const Products: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500 font-medium">هیچ محصولی یافت نشد.</td>
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500 font-medium">هیچ محصولی یافت نشد.</td>
                 </tr>
               ) : (
-                filteredProducts.map(p => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
-                        <span className="font-bold text-slate-800">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{p.category}</td>
-                    <td className="px-4 py-3 font-mono text-slate-500" dir="ltr">{p.sku}</td>
-                    <td className="px-4 py-3 font-bold text-[#0B1F3A]">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</td>
-                    <td className="px-4 py-3 font-bold text-[#2E7D5B]">{formatCurrency(p.retailPriceAFN, 'AFN')}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center gap-2">
-                        <button onClick={() => setBarcodeProduct(p)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="چاپ بارکد">
-                          <Barcode className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setProductToDelete(p)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="حذف">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filteredProducts.map(p => {
+                  const isDraft = p.isDraft || p.status === 'draft';
+                  return (
+                    <tr key={p.id} className={`hover:bg-slate-50 transition-colors ${isDraft ? 'bg-amber-50/15' : ''}`}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative group">
+                            <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
+                            <button
+                              onClick={() => {
+                                setUploadingTargetId(p.id);
+                                singleImageInputRef.current?.click();
+                              }}
+                              className="absolute inset-0 bg-black/50 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="تغییر عکس"
+                            >
+                              <ImageIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <span className="font-bold text-slate-800">{p.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {isDraft ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-black text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">
+                            <Archive className="w-3 h-3" /> پیش‌نویس (بایگانی)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" /> منتشر شده
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{p.category}</td>
+                      <td className="px-4 py-3 font-mono text-slate-500" dir="ltr">{p.sku}</td>
+                      <td className="px-4 py-3 font-bold text-[#0B1F3A]">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</td>
+                      <td className="px-4 py-3 font-bold text-[#2E7D5B]">{formatCurrency(p.retailPriceAFN, 'AFN')}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-center items-center gap-2">
+                          {isDraft && (
+                            <button
+                              onClick={() => {
+                                setUploadingTargetId(p.id);
+                                singleImageInputRef.current?.click();
+                              }}
+                              className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-black transition-colors flex items-center gap-1"
+                              title="آپلود عکس و انتشار رسمی"
+                            >
+                              <Upload className="w-3.5 h-3.5" />
+                              آپلود عکس
+                            </button>
+                          )}
+                          <button onClick={() => setBarcodeProduct(p)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="چاپ بارکد">
+                            <Barcode className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setProductToDelete(p)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="حذف">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -276,6 +452,16 @@ export const Products: React.FC = () => {
         }}
         existingCategories={categoriesList}
         exchangeRate={state.exchangeRate}
+      />
+
+      {/* Standalone Bulk Image Upload by Barcode Modal */}
+      <BulkImageUploadModal
+        isOpen={isBulkImageModalOpen}
+        onClose={() => setIsBulkImageModalOpen(false)}
+        products={state.products}
+        onSaveImages={(updates) => {
+          bulkUpdateProducts(updates);
+        }}
       />
 
 

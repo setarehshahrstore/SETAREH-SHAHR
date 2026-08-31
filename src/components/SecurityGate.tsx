@@ -25,9 +25,24 @@ export const SecurityGateModal: React.FC<SecurityGateModalProps> = ({
     e.preventDefault();
     setErrorFlag(false);
 
-    // Prompt specifies: "باید کلید ادمین را بخواهد PASSWORD: Admin$" 
-    // We check if it matches "Admin$" or the user's registered admin password.
-    if (securityPassword === 'Admin$') {
+    // Prompt specifies: "نیاز به رمز تایید ادمین دارد که Admin$ است"
+    let isValid = securityPassword === 'Admin$';
+    if (!isValid) {
+      const savedUsers = localStorage.getItem('AFG_STORE_USERS');
+      if (savedUsers) {
+        try {
+          const parsed = JSON.parse(savedUsers);
+          if (Array.isArray(parsed)) {
+            const adminUser = parsed.find(u => u.role === 'Owner' || u.username?.toUpperCase() === 'ADMIN@STC.COM');
+            if (adminUser && adminUser.passwordHash === securityPassword) {
+              isValid = true;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (isValid) {
       setSecurityPassword('');
       onConfirm();
     } else {
@@ -36,7 +51,7 @@ export const SecurityGateModal: React.FC<SecurityGateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs text-right" dir="rtl">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs text-right" dir="rtl">
       <div className="bg-white border-2 border-amber-550 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4">
         
         {/* Close Button */}

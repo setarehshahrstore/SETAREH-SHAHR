@@ -52,6 +52,8 @@ export interface Product {
   isBestSeller?: boolean;   // Best-seller flag
   discountPercentage?: number; // Percentage discount (e.g. 10 for 10%)
   discountExpiry?: string;     // ISO date string for when the discount expires
+  status?: 'published' | 'draft' | 'archived'; // Product publication status
+  isDraft?: boolean;
 }
 
 export interface Customer {

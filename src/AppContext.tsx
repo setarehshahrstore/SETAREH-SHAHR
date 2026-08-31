@@ -57,6 +57,10 @@ interface AppContextType {
 
   addTransaction: (transaction: any) => void;
   addCapitalLog: (log: any) => void;
+  editCapitalLog: (log: any) => void;
+  deleteCapitalLog: (id: string) => void;
+  updateCashRegister: (balanceAFN: number, balanceUSD: number) => void;
+  resetFinancials: () => void;
 
   // Chat Methods
   addChatSession: (session: ChatSession) => void;
@@ -207,6 +211,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       capitalLogs: [...(prev.capitalLogs || []), log]
     };
   });
+
+  const editCapitalLog = (log: any) => setState(prev => ({
+    ...prev,
+    capitalLogs: (prev.capitalLogs || []).map((l: any) => l.id === log.id ? log : l)
+  }));
+
+  const deleteCapitalLog = (id: string) => setState(prev => ({
+    ...prev,
+    capitalLogs: (prev.capitalLogs || []).filter((l: any) => l.id !== id)
+  }));
+
+  const updateCashRegister = (balanceAFN: number, balanceUSD: number) => setState(prev => ({
+    ...prev,
+    cashRegister: { balanceAFN, balanceUSD }
+  }));
+
+  const resetFinancials = () => setState(prev => ({
+    ...prev,
+    cashRegister: { balanceAFN: 0, balanceUSD: 0 },
+    capitalLogs: [],
+    transactions: [],
+    expenses: []
+  }));
 
   const addChatSession = (session: ChatSession) => setState(prev => ({
     ...prev,
@@ -1005,6 +1032,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteExpense,
       addTransaction,
       addCapitalLog,
+      editCapitalLog,
+      deleteCapitalLog,
+      updateCashRegister,
+      resetFinancials,
       addChatSession,
       addChatMessage,
       updateChatStatus,

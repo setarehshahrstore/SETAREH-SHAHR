@@ -25,7 +25,8 @@ import { Product, Purchase, PurchaseItem } from '../types';
 import { LowStockReportModal } from './LowStockReportModal';
 import { PriceTagPrintingModal } from './PriceTagPrintingModal';
 import { ExcelImportModal } from './ExcelImportModal';
-import { FileSpreadsheet } from 'lucide-react';
+import { BulkImageUploadModal } from './BulkImageUploadModal';
+import { FileSpreadsheet, Images } from 'lucide-react';
 
 // High-quality image presets for diverse Afghan markets (sanitary, groceries, dry fruits, spices, carpets)
 const IMAGE_PRESETS = [
@@ -59,6 +60,7 @@ export const Inventory: React.FC = () => {
   const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
   const [isPriceTagModalOpen, setIsPriceTagModalOpen] = useState(false);
   const [isExcelImportModalOpen, setIsExcelImportModalOpen] = useState(false);
+  const [isBulkImageModalOpen, setIsBulkImageModalOpen] = useState(false);
 
   const location = useLocation();
 
@@ -575,7 +577,7 @@ export const Inventory: React.FC = () => {
             <button
               onClick={() => setIsExcelImportModalOpen(true)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 py-1.5 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-              title="ورود کالاها با فایل اکسل"
+              title="ورود کالاها با فایل اکسل و آپلود عکس‌ها"
             >
               <FileSpreadsheet className="w-4 h-4" />
               ورود با اکسل (Excel)
@@ -1573,6 +1575,16 @@ export const Inventory: React.FC = () => {
         }}
         existingCategories={categoriesList}
         exchangeRate={state.exchangeRate}
+      />
+
+      {/* Standalone Bulk Image Upload by Barcode Modal */}
+      <BulkImageUploadModal
+        isOpen={isBulkImageModalOpen}
+        onClose={() => setIsBulkImageModalOpen(false)}
+        products={state.products}
+        onSaveImages={(updates) => {
+          bulkUpdateProducts(updates);
+        }}
       />
 
     </div>
