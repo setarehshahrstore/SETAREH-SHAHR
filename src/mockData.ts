@@ -476,6 +476,57 @@ export const INITIAL_PAYMENTS: DebtPayment[] = [
   }
 ];
 
+export const INITIAL_CATEGORIES = [
+  {
+    id: 'cat-1',
+    name: 'مواد خوارکی',
+    description: 'روغن، برنج، چای، رب، شکر، مکرونی و حبوبات درجه یک',
+    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-2',
+    name: 'نوشیدنی‌ها',
+    description: 'آب انار قندهار، آب‌میوه‌ها، نوشابه، انرژی‌زا و چای اعلا',
+    imageUrl: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-3',
+    name: 'لوازم بهداشتی',
+    description: 'شامپو، صابون‌های لوکس، کرم‌ها، دستمال و مراقبت جلد',
+    imageUrl: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-4',
+    name: 'مواد پاککاری',
+    description: 'پودر لباسشویی، مایع ظرفشویی، جرم‌گیر و مایع دستشویی',
+    imageUrl: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-5',
+    name: 'میوه خشک و خسته‌باب',
+    description: 'بادام ستاربایی، کشمش سرخ پامیر، پسته هرات، چهارمغز و جلغوزه',
+    imageUrl: 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-6',
+    name: 'ادویه‌جات و گیاهان',
+    description: 'زعفران سوپر نگین هرات، هل، دارچین، زیره و مصالح دیگ',
+    imageUrl: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-7',
+    name: 'لوازم خانه',
+    description: 'ظروف آشپزخانه، پلاستیک‌جات، ترموز و وسایل کاربردی منزل',
+    imageUrl: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=600'
+  },
+  {
+    id: 'cat-8',
+    name: 'اجناس اطفال',
+    description: 'پمپر، شیر خشک، شامپو کودک، بیسکویت اطفال و اسباب‌بازی',
+    imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=600'
+  }
+];
+
 export const INITIAL_APP_STATE: AppState = {
   products: INITIAL_PRODUCTS,
   customers: INITIAL_CUSTOMERS,
@@ -486,6 +537,6 @@ export const INITIAL_APP_STATE: AppState = {
   cashRegister: { balanceUSD: 1500, balanceAFN: 105000 },
   exchangeRate: 71.5,
   inquiries: [],
-  categories: [],
+  categories: INITIAL_CATEGORIES,
   expenses: []
 };

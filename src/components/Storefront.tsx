@@ -2,109 +2,204 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppState } from '../AppContext';
 import { Product, SaleItem, Sale, Customer } from '../types';
 import { useAuth } from '../AuthContext';
-import { ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, Baby, Box, Printer, Trash2, Check } from 'lucide-react';
+import { 
+  ShoppingCart, Phone, Package, Tag, Star, Store, Truck, Search, X, 
+  CheckCircle, Clock, Plus, User, Users, ArrowLeft, Mail, MapPin, 
+  ShieldCheck, MessageCircle, ChevronLeft, Droplets, Coffee, Home, 
+  Baby, Box, Printer, Trash2, Check, Sparkles, ZoomIn, Eye, Heart,
+  Flame, Award, Layers, ShoppingBag, Shield
+} from 'lucide-react';
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
+import { CATEGORY_VISUALS, getCategoryImage, getCategoryVisual } from '../categoryData';
 
-const ProductCard = ({ product, addToCart, className = '' }: { product: Product & { originalRetailPriceAFN?: number, originalWholesalePriceAFN?: number }, addToCart: (p: Product, t: 'Retail' | 'Wholesale') => void, className?: string }) => (
-  <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-all group flex flex-col ${className}`}>
-    <div className="aspect-square bg-slate-50 relative overflow-hidden">
-      {product.image ? (
-        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-slate-300">
-          <Package className="w-12 h-12" />
+// --- Product Card Component with Visual Enhancements ---
+const ProductCard: React.FC<{ 
+  product: Product & { originalRetailPriceAFN?: number, originalWholesalePriceAFN?: number }, 
+  addToCart: (p: Product, t: 'Retail' | 'Wholesale') => void, 
+  onPreviewImage: (p: Product) => void,
+  className?: string 
+}> = ({ product, addToCart, onPreviewImage, className = '' }) => {
+  const [addedType, setAddedType] = useState<'Retail' | 'Wholesale' | null>(null);
+
+  const handleAdd = (type: 'Retail' | 'Wholesale') => {
+    addToCart(product, type);
+    setAddedType(type);
+    setTimeout(() => setAddedType(null), 1200);
+  };
+
+  const isLowStock = product.stockInBaseUnits > 0 && product.stockInBaseUnits <= 10;
+  const isOutOfStock = product.stockInBaseUnits <= 0;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3 }}
+      className={`bg-white rounded-3xl shadow-sm border border-slate-100/80 overflow-hidden hover:shadow-xl hover:border-amber-400/40 transition-all duration-300 group flex flex-col relative ${className}`}
+    >
+      {/* Product Image Section */}
+      <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden cursor-pointer" onClick={() => onPreviewImage(product)}>
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out" 
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-100">
+            <Package className="w-12 h-12 mb-1" />
+            <span className="text-[10px] text-slate-400">بدون عکس</span>
+          </div>
+        )}
+
+        {/* Quick View Button on Image */}
+        <button 
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreviewImage(product);
+          }}
+          className="absolute bottom-2.5 left-2.5 p-2 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white rounded-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg"
+          title="دیدن عکس بزرگ کالا"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+
+        {/* Out of stock overlay */}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-20">
+            <span className="bg-rose-500 text-white px-3.5 py-1.5 rounded-full text-xs font-black shadow-lg">تمام شد</span>
+          </div>
+        )}
+
+        {/* Badges & Tags */}
+        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1.5 z-10 pointer-events-none">
+          {product.discountPercentage && product.discountExpiry && new Date(product.discountExpiry) > new Date() && (
+            <span className="bg-gradient-to-l from-purple-600 to-indigo-600 text-white px-2.5 py-1 rounded-xl text-[10px] font-black shadow-md flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-300" /> {product.discountPercentage}٪ تخفیف
+            </span>
+          )}
+          {product.isDiscounted && (
+            <span className="bg-rose-600 text-white px-2.5 py-1 rounded-xl text-[10px] font-black shadow-md flex items-center gap-1">
+              <Flame className="w-3 h-3 text-amber-300 fill-amber-300" /> لیلام ویژه
+            </span>
+          )}
+          {product.isBestSeller && (
+            <span className="bg-amber-500 text-slate-950 px-2.5 py-1 rounded-xl text-[10px] font-black shadow-md flex items-center gap-1">
+              <Star className="w-3 h-3 fill-slate-950" /> پرفروش
+            </span>
+          )}
         </div>
-      )}
-      {product.stockInBaseUnits <= 0 && (
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
-          <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">تمام شد</span>
+      </div>
+
+      {/* Product Content Details */}
+      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Category Chip */}
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
+              {product.category}
+            </span>
+            {isLowStock ? (
+              <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">
+                فقط {product.stockInBaseUnits} {product.baseUnit} باقی‌مانده
+              </span>
+            ) : !isOutOfStock ? (
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+                <CheckCircle className="w-2.5 h-2.5" /> موجود
+              </span>
+            ) : null}
+          </div>
+
+          <h3 className="font-bold text-slate-900 text-sm md:text-base mb-2 leading-snug line-clamp-2" title={product.name}>
+            {product.name}
+          </h3>
         </div>
-      )}
-      <div className="absolute top-2 right-2 flex flex-col gap-1 z-20">
-        {product.discountPercentage && product.discountExpiry && new Date(product.discountExpiry) > new Date() && (
-          <span className="bg-purple-600 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
-            <Tag className="w-3 h-3" /> {product.discountPercentage}٪ تخفیف
-          </span>
-        )}
-        {product.isDiscounted && (
-          <span className="bg-rose-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
-            <Tag className="w-3 h-3" /> لیلام
-          </span>
-        )}
-        {product.isBestSeller && (
-          <span className="bg-amber-500 text-white px-2 py-0.5 rounded-md text-[10px] font-bold shadow-sm flex items-center gap-1">
-            <Star className="w-3 h-3" /> پرفروش
-          </span>
-        )}
-      </div>
-    </div>
-    <div className="p-4 flex-1 flex flex-col">
-      <p className="text-[10px] text-slate-400 font-bold mb-1">{product.category}</p>
-      <h3 className="font-bold text-slate-800 text-sm mb-2 leading-tight flex-1">{product.name}</h3>
-      
-      <div className="mb-3">
-        {product.stockInBaseUnits > 0 && product.stockInBaseUnits <= 10 ? (
-          <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md">
-            فقط {product.stockInBaseUnits} {product.baseUnit} باقی مانده
-          </span>
-        ) : product.stockInBaseUnits > 10 ? (
-          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-            موجود است
-          </span>
-        ) : null}
-      </div>
-      
-      <div className="space-y-2 mt-auto">
-        <div className="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100">
-          <span className="text-[10px] font-bold text-slate-500">قیمت پرچون</span>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col items-end">
-              {product.originalRetailPriceAFN && product.originalRetailPriceAFN !== product.retailPriceAFN && (
-                <span className="text-[10px] text-slate-400 line-through font-mono">{formatCurrency(product.originalRetailPriceAFN, 'AFN')}</span>
-              )}
-              <span className="font-black text-indigo-600 font-mono">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
+
+        {/* Pricing & Add to Cart Controls */}
+        <div className="space-y-2.5 pt-3 border-t border-slate-100">
+          {/* Retail Buy Section */}
+          <div className="flex justify-between items-center bg-slate-50/80 hover:bg-slate-100 p-2.5 rounded-2xl border border-slate-200/70 transition-colors">
+            <div>
+              <span className="text-[10px] font-bold text-slate-500 block">نرخ پرچون (تکی)</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-black text-[#0B1F3A] font-mono text-base">{formatCurrency(product.retailPriceAFN, 'AFN')}</span>
+                {product.originalRetailPriceAFN && product.originalRetailPriceAFN !== product.retailPriceAFN && (
+                  <span className="text-[10px] text-slate-400 line-through font-mono">{formatCurrency(product.originalRetailPriceAFN, 'AFN')}</span>
+                )}
+              </div>
             </div>
+
             <button 
-              disabled={product.stockInBaseUnits <= 0}
-              onClick={() => addToCart(product, 'Retail')}
-              className="bg-[#0B1F3A] text-white p-1.5 rounded-lg hover:bg-[#123B66] disabled:opacity-50"
+              disabled={isOutOfStock}
+              onClick={() => handleAdd('Retail')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm ${
+                addedType === 'Retail'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-[#0B1F3A] text-amber-300 hover:bg-[#15345d] disabled:opacity-40 disabled:cursor-not-allowed'
+              }`}
             >
-              <Plus className="w-3.5 h-3.5" />
+              {addedType === 'Retail' ? (
+                <>
+                  <Check className="w-3.5 h-3.5" /> افزوده شد
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3.5 h-3.5" /> خرید پرچون
+                </>
+              )}
             </button>
           </div>
-        </div>
-        
-        {(product.wholesalePriceAFN ?? 0) > 0 && (
-          <div className="flex justify-between items-center bg-amber-50 p-2 rounded-xl border border-amber-100 relative">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-amber-700">قیمت عمده</span>
-              {product.minWholesaleQty && product.minWholesaleQty > 1 && (
-                <span className="text-[9px] text-amber-600/80 mt-0.5">حداقل: {product.minWholesaleQty}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col items-end">
-                {product.originalWholesalePriceAFN && product.originalWholesalePriceAFN !== product.wholesalePriceAFN && (
-                  <span className="text-[10px] text-amber-700/50 line-through font-mono">{formatCurrency(product.originalWholesalePriceAFN, 'AFN')}</span>
-                )}
-                <span className="font-black text-amber-600 font-mono">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
+          
+          {/* Wholesale Buy Section */}
+          {(product.wholesalePriceAFN ?? 0) > 0 && (
+            <div className="flex justify-between items-center bg-amber-50/70 hover:bg-amber-50 p-2.5 rounded-2xl border border-amber-200/80 transition-colors">
+              <div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-amber-900 block">نرخ عمده (کارتن/بسته)</span>
+                  {product.minWholesaleQty && product.minWholesaleQty > 1 && (
+                    <span className="text-[9px] font-bold text-amber-700 bg-amber-200/60 px-1.5 py-0.2 rounded">
+                      حداقل: {product.minWholesaleQty}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-black text-amber-700 font-mono text-base">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
+                  {product.originalWholesalePriceAFN && product.originalWholesalePriceAFN !== product.wholesalePriceAFN && (
+                    <span className="text-[10px] text-amber-600/60 line-through font-mono">{formatCurrency(product.originalWholesalePriceAFN, 'AFN')}</span>
+                  )}
+                </div>
               </div>
+
               <button 
-                disabled={product.stockInBaseUnits <= 0}
-                onClick={() => addToCart(product, 'Wholesale')}
-                className="bg-amber-600 text-white p-1.5 rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                disabled={isOutOfStock}
+                onClick={() => handleAdd('Wholesale')}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm ${
+                  addedType === 'Wholesale'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-40 disabled:cursor-not-allowed'
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" />
+                {addedType === 'Wholesale' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" /> افزوده شد
+                  </>
+                ) : (
+                  <>
+                    <Truck className="w-3.5 h-3.5" /> خرید عمده
+                  </>
+                )}
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  </div>
-);
+    </motion.div>
+  );
+};
 
 export const Storefront: React.FC = () => {
   const { state, addSale, addCustomer, cart, setCart, isCartOpen, setIsCartOpen, addInquiry } = useAppState();
@@ -113,7 +208,7 @@ export const Storefront: React.FC = () => {
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Checkout Form State
@@ -212,7 +307,26 @@ export const Storefront: React.FC = () => {
     });
   }, [state.products, state.sales]);
 
-  const categories = ['All', 'تخفیف‌های ویژه', 'پرفروش‌ترین‌ها', ...Array.from(new Set(activeProducts.map(p => p.category)))];
+  // Derived list of distinct categories from products and registered categories
+  const categoriesList = useMemo(() => {
+    const fromProducts = Array.from(new Set(activeProducts.map(p => p.category))).filter(Boolean);
+    const fromRegistered = (state.categories || []).map(c => c.name).filter(Boolean);
+    const set = new Set([...fromRegistered, ...fromProducts]);
+    return Array.from(set);
+  }, [activeProducts, state.categories]);
+
+  const categories = useMemo(() => {
+    return ['All', 'تخفیف‌های ویژه', 'پرفروش‌ترین‌ها', ...categoriesList];
+  }, [categoriesList]);
+
+  // Quick live search matching items
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return activeProducts.filter(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5);
+  }, [activeProducts, searchQuery]);
 
   const filteredProducts = useMemo(() => {
     return activeProducts.filter(p => {
@@ -222,7 +336,7 @@ export const Storefront: React.FC = () => {
       else if (activeCategory === 'پرفروش‌ترین‌ها') matchesCat = !!p.isBestSeller;
       else matchesCat = p.category === activeCategory;
 
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.category.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCat && matchesSearch;
     });
   }, [activeProducts, activeCategory, searchQuery]);
@@ -300,7 +414,7 @@ export const Storefront: React.FC = () => {
           id: customerId,
           name: customerName,
           phone: customerPhone,
-          city: 'کابل',
+          city: 'مزار شریف / کابل',
           debtUSD: 0,
           debtAFN: 0,
           creditLimitUSD: 0
@@ -351,7 +465,7 @@ export const Storefront: React.FC = () => {
       exchangeRate: state.exchangeRate,
       status: 'Pending Delivery',
       deliveryAddress: customerAddress,
-      deliveryCity: 'کابل',
+      deliveryCity: 'مرکز',
       cashierName: user?.fullName || 'ثبت آنلاین'
     };
 
@@ -361,314 +475,662 @@ export const Storefront: React.FC = () => {
     setSuccessfulOrder(newSale);
   };
 
+  // Helper to count products for a given category name
+  const getCategoryCount = (catName: string) => {
+    if (catName === 'All') return activeProducts.length;
+    if (catName === 'تخفیف‌های ویژه') return activeProducts.filter(p => p.isDiscounted || (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date())).length;
+    if (catName === 'پرفروش‌ترین‌ها') return activeProducts.filter(p => p.isBestSeller).length;
+    return activeProducts.filter(p => p.category === catName).length;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans print:bg-white" dir="rtl">
-      {/* --- 2. Hero Section --- */}
-      <section className="relative bg-brand-blue text-white overflow-hidden py-16 md:py-24 lg:py-32">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-navy rounded-full blur-[100px] opacity-60 -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-brand-gold/10 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/4"></div>
+    <div className="min-h-screen bg-slate-50/50 font-sans print:bg-white" dir="rtl">
+      
+      {/* --- 1. Hero Section with Engaging Visuals & Floating Feature Chips --- */}
+      <section className="relative bg-gradient-to-b from-[#0B1F3A] via-[#0E284D] to-[#0B1F3A] text-white overflow-hidden py-16 md:py-24 lg:py-28">
+        {/* Ambient Glows */}
+        <div className="absolute top-0 right-0 w-[550px] h-[550px] bg-[#D4AF37]/15 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-emerald-500/10 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid lg:grid-cols-12 gap-12 items-center">
+          
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="lg:col-span-7 text-right"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-navy border border-brand-gold/30 rounded-full text-sm font-medium text-brand-lightgold mb-6 shadow-inner">
-              <Star className="w-4 h-4 fill-brand-gold text-brand-gold" />
-              انتخاب اول خانواده‌ها و دکانداران
+            {/* Top pill badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-amber-400/30 rounded-full text-xs md:text-sm font-bold text-amber-300 mb-6 shadow-inner">
+              <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span>بزرگترین مرکز توزیع مواد غذایی و مصرفی در افغانستان</span>
             </div>
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black mb-4 leading-[1.15]">
-              فروشگاه <span className="text-transparent bg-clip-text bg-gradient-to-l from-brand-gold to-brand-lightgold">ستاره شهر</span>
-            </h2>
-            <h3 className="text-xl md:text-2xl lg:text-3xl font-light text-slate-300 mb-6">
-              عمده و پرچون انواع اجناس مورد نیاز شما
-            </h3>
-            <p className="text-base md:text-lg text-slate-400 mb-10 leading-relaxed max-w-xl">
-              در فروشگاه ستاره شهر، انواع مواد خوارکی، نوشیدنی، لوازم بهداشتی، مواد پاککاری، لوازم خانه و اجناس عمومی را با قیمت مناسب و کیفیت قابل اعتماد تهیه کنید.
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-5 leading-[1.2] tracking-tight">
+              فروشگاه <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#F5D76E] via-[#D4AF37] to-amber-200 drop-shadow-sm">ستاره شهر</span>
+            </h1>
+
+            <p className="text-lg sm:text-xl font-medium text-amber-100/90 mb-4">
+              خرید آسان و مطمین با <span className="underline decoration-amber-400 underline-offset-8">عکس‌های شفاف</span> اجناس، بدون نیاز به سواد یا زحمت!
+            </p>
+
+            <p className="text-sm sm:text-base text-slate-300 mb-8 leading-relaxed max-w-2xl">
+              تأمین‌کننده دست‌اول انواع مواد خوراکی تازه، نوشیدنی‌ها، لوازم بهداشتی، پاک‌کاری، خشکبار اعلا و ضروریات خانه با نرخ‌های رقابتی عمده برای دکانداران و پرچون برای خانواده‌های گرامی.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button onClick={() => scrollTo('products')} className="bg-gradient-to-l from-brand-gold to-brand-lightgold text-brand-blue px-8 py-4 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
-                <Store className="w-5 h-5" />
-                دیدن محصولات
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap gap-4 mb-10">
+              <button 
+                onClick={() => scrollTo('categories-section')} 
+                className="bg-gradient-to-l from-[#D4AF37] to-[#F5D76E] text-[#0B1F3A] px-7 py-4 rounded-2xl font-black hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-2.5 text-base shadow-lg"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                دیدن دسته‌بندی‌ها و عکس‌ها
               </button>
-              <button onClick={() => scrollTo('wholesale')} className="bg-transparent text-white border border-brand-gold/50 px-8 py-4 rounded-xl font-bold hover:bg-brand-navy transition-all flex items-center justify-center gap-2 hover:-translate-y-1">
-                <Package className="w-5 h-5" />
-                سفارش عمده
+              <button 
+                onClick={() => scrollTo('wholesale-section')} 
+                className="bg-white/10 hover:bg-white/20 text-white border border-amber-400/40 px-6 py-4 rounded-2xl font-bold backdrop-blur-md transition-all flex items-center gap-2 text-base active:scale-95"
+              >
+                <Truck className="w-5 h-5 text-amber-400" />
+                سفارش و استعلام عمده
               </button>
+            </div>
+
+            {/* Feature Badges Row */}
+            <div className="grid grid-cols-3 gap-3 pt-6 border-t border-white/10 max-w-xl">
+              <div className="flex items-center gap-2.5 bg-white/5 p-2.5 rounded-xl border border-white/5">
+                <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-white">ضمانت کیفیت</p>
+                  <p className="text-[10px] text-slate-400">کالای اصل و تاریخ‌دار</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 bg-white/5 p-2.5 rounded-xl border border-white/5">
+                <Truck className="w-6 h-6 text-amber-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-white">ارسال سریع</p>
+                  <p className="text-[10px] text-slate-400">درب مغازه و منزل</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 bg-white/5 p-2.5 rounded-xl border border-white/5">
+                <Tag className="w-6 h-6 text-rose-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-white">نرخ عمده‌فروشی</p>
+                  <p className="text-[10px] text-slate-400">مستقیم از واردکننده</p>
+                </div>
+              </div>
             </div>
           </motion.div>
           
+          {/* Hero Visual Card / Logo Display */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="hidden lg:flex justify-center relative"
+            className="lg:col-span-5 flex justify-center relative"
           >
-            <div className="absolute inset-0 bg-brand-gold/20 rounded-full blur-[60px] transform scale-75"></div>
-            <img src="/logo.png" alt="ستاره شهر" className="w-[450px] h-[450px] object-contain relative z-10 drop-shadow-2xl" />
+            <div className="relative w-full max-w-md">
+              {/* Decorative Frame */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/30 to-emerald-500/20 rounded-[2.5rem] blur-2xl transform rotate-3 scale-95"></div>
+              
+              <div className="relative bg-gradient-to-b from-[#132c52] to-[#0c1e38] p-8 rounded-[2.5rem] border border-amber-500/30 shadow-2xl text-center backdrop-blur-xl">
+                <div className="w-32 h-32 mx-auto bg-white rounded-3xl p-4 shadow-xl border-2 border-amber-400 mb-6 flex items-center justify-center">
+                  <img src="/logo.png" alt="ستاره شهر" className="w-full h-full object-contain" />
+                </div>
+                
+                <div className="inline-block px-3 py-1 bg-amber-400/20 border border-amber-400/40 rounded-full text-amber-300 text-xs font-black mb-3">
+                  تضمین کمترین نرخ و بالاترین کیفیت
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2">سوپرمارکت و عمده‌فروشی ستاره شهر</h3>
+                <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                  ارائه‌دهنده بیش از هزاران قلم کالای معتبر با قابلیت مشاهده عکس واقعی و ثبت سفارش ۲۴ ساعته
+                </p>
+
+                {/* Floating mini stats */}
+                <div className="grid grid-cols-2 gap-3 bg-black/30 p-3 rounded-2xl border border-white/5">
+                  <div className="text-center">
+                    <span className="text-xl font-black text-amber-400 font-mono">100%</span>
+                    <p className="text-[10px] text-slate-300">اصالت و سلامت کالا</p>
+                  </div>
+                  <div className="text-center border-r border-white/10">
+                    <span className="text-xl font-black text-emerald-400 font-mono">24/7</span>
+                    <p className="text-[10px] text-slate-300">پشتیبانی و سفارش</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* --- 3. Product Categories --- */}
-      <section id="categories" className="py-24 bg-white relative">
+      {/* --- 2. PHOTOGRAPHIC CATEGORIES SECTION (دسته‌بندی‌ها با تصاویر جذاب و واضح برای همه مشتریان) --- */}
+      <section id="categories-section" className="py-20 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">دسته‌بندی‌های اجناس</h2>
-            <div className="w-20 h-1.5 bg-brand-gold mx-auto rounded-full"></div>
+          
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-800 mb-3">
+              <Layers className="w-4 h-4 text-amber-600" />
+              <span>انتخاب آسان و تصویری اجناس</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0B1F3A] tracking-tight mb-4">
+              دسته‌بندی‌های تصویری کالاها
+            </h2>
+            <div className="w-24 h-1.5 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto rounded-full mb-4"></div>
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              با کلیک روی عکس هر گروه، تمام اجناس مربوط به همان گروه نمایش داده می‌شوند. حتی بدون خواندن متن، تصویر کالاها راهنمای شماست!
+            </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {[
-              { name: 'مواد خوارکی', icon: <Coffee className="w-8 h-8" /> },
-              { name: 'نوشیدنی‌ها', icon: <Droplets className="w-8 h-8" /> },
-              { name: 'لوازم بهداشتی', icon: <ShieldCheck className="w-8 h-8" /> },
-              { name: 'مواد پاککاری', icon: <Star className="w-8 h-8" /> },
-              { name: 'لوازم خانه', icon: <Home className="w-8 h-8" /> },
-              { name: 'اجناس اطفال', icon: <Baby className="w-8 h-8" /> },
-              { name: 'اجناس عمومی', icon: <Box className="w-8 h-8" /> },
-              { name: 'تخفیف‌های ویژه', icon: <Tag className="w-8 h-8" /> }
-            ].map((cat, i) => (
-              <div 
-                key={i} 
-                onClick={() => {
-                  setActiveCategory(cat.name);
-                  scrollTo('products');
-                }}
-                className="bg-brand-lightbg border border-slate-100 rounded-2xl p-6 text-center hover:bg-white hover:shadow-[0_10px_40px_rgba(11,31,58,0.06)] hover:border-brand-gold/30 transition-all cursor-pointer group hover:-translate-y-1 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-full h-1 bg-brand-gold transform scale-x-0 group-hover:scale-x-100 transition-transform origin-right duration-300"></div>
-                <div className="w-16 h-16 mx-auto bg-brand-blue/5 rounded-2xl flex items-center justify-center text-brand-blue mb-4 group-hover:scale-110 group-hover:bg-brand-blue group-hover:text-brand-gold transition-all duration-300">
-                  {cat.icon}
-                </div>
-                <h3 className="font-bold text-brand-darktext text-sm md:text-base">{cat.name}</h3>
-              </div>
-            ))}
+          {/* Photographic Categories Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {CATEGORY_VISUALS.map((cat, idx) => {
+              const count = getCategoryCount(cat.name);
+              const isActive = activeCategory === cat.name;
+
+              return (
+                <motion.div 
+                  key={idx}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setActiveCategory(cat.name);
+                    scrollTo('products-section');
+                  }}
+                  className={`group relative rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-300 border-2 aspect-[4/3] sm:aspect-square flex flex-col justify-end p-4 sm:p-5 ${
+                    isActive ? 'border-amber-500 ring-4 ring-amber-500/20' : 'border-slate-100 hover:border-amber-400'
+                  }`}
+                >
+                  {/* Category Vivid Photo */}
+                  <img 
+                    src={cat.image} 
+                    alt={cat.name} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-115 transition-transform duration-700 ease-out" 
+                  />
+
+                  {/* Dark Vignette / Gradient Overlay for optimal legibility */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent group-hover:from-slate-950/90 transition-all duration-300"></div>
+
+                  {/* Floating Tag at Top */}
+                  <div className="absolute top-3 right-3 z-10">
+                    <span className="bg-black/60 backdrop-blur-md text-amber-300 border border-amber-400/40 text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      {cat.badge}
+                    </span>
+                  </div>
+
+                  {/* Item count badge at top left */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="bg-white/20 backdrop-blur-md text-white text-[10px] sm:text-xs font-mono font-bold px-2.5 py-1 rounded-full shadow-sm">
+                      {count > 0 ? `${count} جنس` : 'موجود'}
+                    </span>
+                  </div>
+
+                  {/* Category Title & Dari Subtitle */}
+                  <div className="relative z-10 text-right">
+                    <h3 className="font-black text-white text-base sm:text-xl drop-shadow-md leading-tight mb-1 group-hover:text-amber-300 transition-colors">
+                      {cat.name}
+                    </h3>
+                    <p className="text-[11px] sm:text-xs text-slate-200/90 font-medium line-clamp-1 mb-2">
+                      {cat.dariName}
+                    </p>
+                    
+                    {/* View items button hint */}
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span>دیدن همه اجناس</span>
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* --- 5. Wholesale & Retail System --- */}
-      <section className="py-24 bg-brand-blue text-white relative overflow-hidden">
-        {/* Premium Abstract Background */}
+      {/* --- 3. DUAL STORE SYSTEM BANNER (فروش عمده و پرچون) --- */}
+      <section className="py-20 bg-[#0B1F3A] text-white relative overflow-hidden">
+        {/* Background Gradients */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:20px_20px]"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold opacity-5 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-green opacity-10 rounded-full blur-[100px]"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37] opacity-10 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-600 opacity-10 rounded-full blur-[100px]"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black mb-4">سیستم فروش دوگانه</h2>
-            <div className="w-20 h-1.5 bg-brand-gold mx-auto rounded-full"></div>
-            <p className="text-slate-300 mt-6 max-w-2xl mx-auto text-lg">ما برای هر دو گروه از مشتریان خود خدمات تخصصی و قیمت‌های رقابتی ارائه می‌دهیم.</p>
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <h2 className="text-3xl sm:text-4xl font-black mb-3">سیستم خدمات و قیمت‌گذاری دوگانه</h2>
+            <div className="w-20 h-1.5 bg-[#D4AF37] mx-auto rounded-full mb-4"></div>
+            <p className="text-slate-300 text-sm sm:text-base">خدمات اختصاصی با بالاترین تخفیف برای دکانداران و تازه‌ترین کالاها برای خانواده‌ها</p>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+          <div className="grid md:grid-cols-2 gap-8">
             {/* Retail Card */}
-            <div className="bg-brand-navy/50 border border-brand-navy p-8 md:p-10 rounded-[2rem] backdrop-blur-md hover:bg-brand-navy/80 hover:border-brand-gold/30 transition-all group">
-              <div className="w-20 h-20 bg-brand-blue rounded-2xl flex items-center justify-center mb-8 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
-                <Users className="w-10 h-10 text-white" />
+            <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-md hover:border-amber-400/40 transition-all group">
+              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-400 group-hover:text-slate-900 transition-all text-amber-300">
+                <Users className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">فروش پرچون</h3>
-              <p className="text-brand-lightgold text-sm font-bold mb-4 uppercase tracking-wider">برای خانواده‌ها</p>
-              <p className="text-slate-300 leading-relaxed text-lg">
-                مشتریان عزیز می‌توانند تمامی اجناس ضروری و روزمره منزل خود را به صورت دانه یا بسته‌بندی کوچک با مناسب‌ترین قیمت‌های بازار از فروشگاه ستاره شهر تهیه کنند. ما تضمین کیفیت و تازگی را به شما می‌دهیم.
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-amber-300 bg-amber-400/20 px-2.5 py-1 rounded-full">برای منازل و فامیل‌ها</span>
+              </div>
+              <h3 className="text-2xl font-black mb-3 text-white">فروش پرچون (تکی و بسته‌ای)</h3>
+              <p className="text-slate-300 leading-relaxed text-sm">
+                هر مقدار که نیاز دارید، از ۱ دانه روغن، ۱ قطی چای یا ۱ عدد شامپو با قیمت مناسب‌تر از بازار محلی خریداری فرمایید و درب منزل تحویل بگیرید.
               </p>
             </div>
             
             {/* Wholesale Card */}
-            <div className="bg-gradient-to-br from-brand-gold/10 to-transparent border border-brand-gold/20 p-8 md:p-10 rounded-[2rem] backdrop-blur-md hover:bg-brand-gold/10 hover:border-brand-gold/50 transition-all group relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 rounded-full blur-2xl"></div>
-              <div className="w-20 h-20 bg-brand-gold rounded-2xl flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(212,175,55,0.3)] group-hover:scale-110 transition-transform">
-                <Truck className="w-10 h-10 text-brand-blue" />
+            <div className="bg-gradient-to-br from-amber-500/15 to-white/5 border border-amber-400/30 p-8 rounded-3xl backdrop-blur-md hover:border-amber-400 transition-all group relative overflow-hidden">
+              <div className="w-16 h-16 bg-amber-400 text-slate-950 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_25px_rgba(212,175,55,0.4)] group-hover:scale-110 transition-all">
+                <Truck className="w-8 h-8" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">فروش عمده</h3>
-              <p className="text-brand-lightgold text-sm font-bold mb-4 uppercase tracking-wider">برای دکانداران</p>
-              <p className="text-slate-300 leading-relaxed text-lg relative z-10">
-                دکانداران محترم و مشتریان تجارتی می‌توانند سفارشات کلان خود را در کارتن‌ها و بسته‌بندی‌های کلان با نازل‌ترین قیمت‌های عمده‌فروشی ثبت نمایند. ما آماده همکاری دوامدار با سوپرمارکت‌ها هستیم.
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-amber-950 bg-amber-300 px-2.5 py-1 rounded-full">مخصوص سوپرمارکت‌ها و دکانداران</span>
+              </div>
+              <h3 className="text-2xl font-black mb-3 text-white">فروش عمده (کارتن و تناژ)</h3>
+              <p className="text-slate-200 leading-relaxed text-sm">
+                دکانداران ولایات و کابل می‌توانند سفارش‌های عمده خود را به نرخ وارداتی بدون واسطه با فاکتور رسمی و ارسال مطمئن ثبت نمایند.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* --- 6. Why Choose Us --- */}
-      <section className="py-24 bg-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">چرا ستاره شهر؟</h2>
-            <div className="w-20 h-1.5 bg-brand-gold mx-auto rounded-full"></div>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {[
-              { title: 'قیمت مناسب', desc: 'تضمین بهترین قیمت در سطح بازار', icon: <Tag className="w-7 h-7" /> },
-              { title: 'فروش عمده و پرچون', desc: 'انعطاف پذیری در مقادیر خرید', icon: <Store className="w-7 h-7" /> },
-              { title: 'تنوع اجناس', desc: 'تامین تمامی نیازمندی‌های شما', icon: <Package className="w-7 h-7" /> },
-              { title: 'خدمات مطمئن', desc: 'کیفیت تضمین شده برای هر محصول', icon: <CheckCircle className="w-7 h-7" /> },
-              { title: 'خانواده‌ها و دکانداران', desc: 'خدمات رسانی به تمام اقشار', icon: <Users className="w-7 h-7" /> },
-              { title: 'پاسخگویی سریع', desc: 'رسیدگی فوری به سفارشات', icon: <Clock className="w-7 h-7" /> },
-            ].map((feature, i) => (
-              <div key={i} className="flex flex-col items-center text-center p-8 bg-brand-lightbg rounded-[2rem] border border-slate-100 hover:border-brand-gold/30 hover:shadow-[0_10px_40px_rgba(11,31,58,0.06)] transition-all group hover:-translate-y-2">
-                <div className="w-20 h-20 bg-white rounded-full shadow-sm flex items-center justify-center text-brand-blue mb-6 border border-slate-100 group-hover:bg-brand-blue group-hover:text-brand-gold transition-colors duration-300">
-                  {feature.icon}
+      {/* --- 4. MAIN PRODUCTS & VISUAL CATALOG SECTION --- */}
+      <main id="products-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        
+        {/* Receipt display if order just succeeded */}
+        {successfulOrder && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-6 sm:p-8 mb-12 flex flex-col items-center justify-center text-center shadow-md print:shadow-none print:border-black print:bg-white print:p-0">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4 print:hidden">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 print:hidden">سفارش شما با موفقیت در سیستم ثبت گردید!</h2>
+            <p className="text-slate-600 mb-6 print:hidden text-sm">همکاران بخش توزیع ستاره شهر به زودی جهت ارسال با شما تماس خواهند گرفت.</p>
+            
+            {/* The Printable Receipt */}
+            <div className="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm text-right print:border-none print:shadow-none print:p-0">
+              <div className="flex justify-between items-start mb-6 border-b pb-4">
+                <div>
+                  <h3 className="text-xl font-black text-[#0B1F3A]">رسید رسمی سفارش - فروشگاه ستاره شهر</h3>
+                  <p className="text-xs text-slate-500 mt-1 font-mono">شماره فاکتور: {successfulOrder.invoiceNo}</p>
                 </div>
-                <h4 className="font-bold text-xl text-brand-darktext mb-3">{feature.title}</h4>
-                <p className="text-brand-graytext text-sm">{feature.desc}</p>
+                <div className="text-left text-xs text-slate-500">
+                  <p>تاریخ: {new Date().toLocaleDateString('fa-IR')}</p>
+                  <p className="font-bold text-slate-800 mt-1">مشتری: {successfulOrder.customerName}</p>
+                  <p dir="ltr">{successfulOrder.customerPhone || '---'}</p>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- 7. About Us --- */}
-      <section id="about" className="py-24 bg-brand-lightbg">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-brand-gold rounded-full mb-8 shadow-[0_0_30px_rgba(212,175,55,0.4)]">
-            <Star className="w-10 h-10 text-brand-blue fill-brand-blue" />
-          </div>
-          <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-10">درباره فروشگاه ستاره شهر</h2>
-          
-          <div className="bg-white p-10 md:p-16 rounded-[3rem] shadow-[0_20px_60px_rgba(11,31,58,0.04)] border border-slate-100 relative">
-            <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 w-32 h-2 bg-gradient-to-r from-transparent via-brand-gold to-transparent"></div>
-            
-            <p className="text-lg md:text-2xl text-brand-darktext leading-[2] md:leading-[2] mb-8 font-medium">
-              فروشگاه <span className="text-brand-gold font-black">ستاره شهر</span> یک فروشگاه عمده و پرچون برای انواع اجناس ضروری و روزمره است. ما با هدف ارائه قیمت مناسب، کیفیت خوب و خدمات مطمئن فعالیت می‌کنیم.
-            </p>
-            
-            <div className="w-12 h-1 bg-brand-navy/10 mx-auto mb-8 rounded-full"></div>
-            
-            <p className="text-base md:text-lg text-brand-graytext leading-relaxed">
-              در فروشگاه ما، مشتریان می‌توانند اجناس مورد نیاز خود را به شکل پرچون تهیه کنند و دکانداران یا مشتریان تجارتی می‌توانند سفارش‌های عمده خود را با نازل‌ترین قیمت ثبت کنند. اعتبار ما، اعتماد شماست.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* --- 8. Contact & Wholesale Form --- */}
-      <section id="wholesale" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-start">
-            
-            {/* Contact Info Side */}
-            <div className="lg:col-span-5 lg:sticky lg:top-32">
-              <h2 className="text-3xl md:text-4xl font-black text-brand-blue mb-4">ارتباط با ما</h2>
-              <div className="w-20 h-1.5 bg-brand-gold mb-8 rounded-full"></div>
               
-              <p className="text-lg text-brand-graytext mb-10 leading-relaxed">
-                برای سفارش، معلومات قیمت، خرید عمده یا همکاری تجارتی مستقیماً با ما در تماس شوید.
-              </p>
+              <table className="w-full text-xs sm:text-sm mb-6">
+                <thead className="bg-slate-50 border-b">
+                  <tr>
+                    <th className="py-2.5 px-3 text-right">نام کالا</th>
+                    <th className="py-2.5 px-3 text-center">تعداد</th>
+                    <th className="py-2.5 px-3 text-left">مجموع (افغانی)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {successfulOrder.items.map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="py-3 px-3 text-right font-bold text-slate-800">{item.productName}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold">{item.quantity} {item.selectedUnit || 'دانه'}</td>
+                      <td className="py-3 px-3 text-left font-mono font-black text-indigo-700">{formatCurrency(item.totalAFN, 'AFN')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               
-              <div className="space-y-4">
-                {[
-                  { 
-                    title: 'شماره تماس و واتساپ', 
-                    val: (
-                      <div className="flex flex-col items-start gap-1">
-                        <a href="tel:+93796626004" className="hover:text-brand-gold transition-colors block text-left" dir="ltr">+93 796 626 004</a>
-                        <a href="https://wa.me/93796626004" target="_blank" rel="noreferrer" className="text-emerald-500 hover:text-emerald-600 block text-[13px] font-bold text-left" dir="ltr">WhatsApp (+93 796 626 004)</a>
-                      </div>
-                    ), 
-                    icon: <Phone className="w-6 h-6" /> 
-                  },
-                  { title: 'آدرس فروشگاه', val: 'شهر مزار شریف مرکز', icon: <MapPin className="w-6 h-6" /> },
-                  { title: 'ساعات کاری', val: '۸ صبح الی ۸ شب (همه‌روزه)', icon: <Clock className="w-6 h-6" /> },
-                  { title: 'بخش خرید عمده', val: 'ارسال فرم سفارش در کنار', icon: <Package className="w-6 h-6" /> }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-5 p-5 bg-brand-lightbg rounded-2xl border border-slate-100 hover:border-brand-gold/30 hover:bg-white transition-colors group">
-                    <div className="bg-brand-blue/5 text-brand-blue p-4 rounded-xl group-hover:bg-brand-blue group-hover:text-brand-gold transition-colors">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="text-xs text-brand-graytext font-medium mb-1">{item.title}</p>
-                      <p className="font-bold text-lg text-brand-darktext" dir="rtl">{item.val}</p>
+              <div className="flex justify-between items-center border-t pt-4">
+                <span className="font-bold text-slate-700">مجموع قابل پرداخت:</span>
+                <span className="text-2xl font-black text-emerald-600 font-mono">{formatCurrency(successfulOrder.totalAFN, 'AFN')}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap justify-center gap-3 print:hidden">
+              <button onClick={() => window.print()} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 flex items-center gap-2 shadow-sm text-sm">
+                <Printer className="w-4 h-4" /> چاپ یا ذخیره PDF
+              </button>
+              <Link to="/tracking" className="bg-[#0B1F3A] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#15345d] text-sm">
+                پیگیری آنلاین سفارش
+              </Link>
+              <button onClick={() => setSuccessfulOrder(null)} className="bg-slate-200 text-slate-700 px-6 py-3 rounded-2xl font-bold hover:bg-slate-300 text-sm">
+                خرید بیشتر
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Section Heading & Live Search Header */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#0B1F3A] tracking-tight">لیست کالاها و خرید آنلاین</h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">با کلیک روی دسته‌های تصویری زیر، اجناس مورد نظر خود را فیلتر کنید</p>
+          </div>
+
+          {/* Interactive Search with Thumbnail Dropdown */}
+          <div className="relative w-full md:w-80">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-2 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
+              <Search className="w-5 h-5 text-slate-400 shrink-0 mr-1" />
+              <input 
+                type="text" 
+                placeholder="جستجوی نام یا عکس کالا..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent border-none focus:outline-none text-sm font-medium"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Instant search preview dropdown */}
+            {searchResults.length > 0 && searchQuery && (
+              <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-30 p-2 space-y-1">
+                {searchResults.map(p => (
+                  <div 
+                    key={p.id}
+                    onClick={() => {
+                      setPreviewProduct(p);
+                      setSearchQuery('');
+                    }}
+                    className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
+                  >
+                    <img src={p.image || getCategoryImage(p.category)} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">{p.name}</p>
+                      <p className="text-[10px] text-amber-600 font-mono">{formatCurrency(p.retailPriceAFN, 'AFN')}</p>
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* --- HORIZONTAL VISUAL CATEGORY SELECTOR CAROUSEL --- */}
+        <div className="mb-10 overflow-x-auto pb-3 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center gap-3 min-w-max">
+            {categories.map(cat => {
+              const isActive = activeCategory === cat;
+              const visual = getCategoryVisual(cat);
+              const count = getCategoryCount(cat);
+
+              let iconImg = visual.image;
+              if (cat === 'All') iconImg = 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&q=80&w=200';
+              if (cat === 'تخفیف‌های ویژه') iconImg = 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=200';
+              if (cat === 'پرفروش‌ترین‌ها') iconImg = 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&q=80&w=200';
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-200 shrink-0 shadow-sm border ${
+                    isActive 
+                      ? 'bg-[#0B1F3A] text-amber-300 border-amber-400 shadow-md ring-2 ring-amber-400/30' 
+                      : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-100 hover:border-slate-300'
+                  }`}
+                >
+                  <img src={iconImg} alt={cat} className="w-8 h-8 rounded-full object-cover border border-white/40 shadow-xs" />
+                  <span>{cat === 'All' ? 'همه کالاها' : cat}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                    isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* --- Featured Row 1: Special Discounts Carousel --- */}
+        {activeCategory === 'All' && state.products.some(p => p.isDiscounted || (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date())) && (
+          <div className="mb-14">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
+                  <Flame className="w-5 h-5 fill-rose-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-rose-600">اجناس لیلام و تخفیف‌دار روزانه</h3>
+                  <p className="text-xs text-slate-500">قیمت‌های استثنایی با مدت محدود</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setActiveCategory('تخفیف‌های ویژه')}
+                className="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1"
+              >
+                دیدن همه تخفیف‌ها <ChevronLeft className="w-4 h-4" />
+              </button>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {state.products.filter(p => p.isDiscounted || (p.discountPercentage && p.discountExpiry && new Date(p.discountExpiry) > new Date())).slice(0, 4).map(product => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  addToCart={addToCart} 
+                  onPreviewImage={setPreviewProduct}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* --- Featured Row 2: Best Sellers Row --- */}
+        {activeCategory === 'All' && state.products.some(p => p.isBestSeller) && (
+          <div className="mb-14">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-amber-700">پرفروش‌ترین‌های منتخب ستاره شهر</h3>
+                  <p className="text-xs text-slate-500">محبوب‌ترین اقلام از نگاه خریداران</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setActiveCategory('پرفروش‌ترین‌ها')}
+                className="text-xs font-bold text-amber-700 hover:underline flex items-center gap-1"
+              >
+                دیدن همه پرفروش‌ها <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {state.products.filter(p => p.isBestSeller).slice(0, 4).map(product => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  addToCart={addToCart} 
+                  onPreviewImage={setPreviewProduct}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* --- Main Filtered Products Grid --- */}
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-black text-slate-800">
+            {activeCategory === 'All' ? 'تمامی کالاهای موجود' : `کالاهای دسته‌بندی: ${activeCategory}`}
+          </h3>
+          <span className="text-xs font-bold text-slate-500 font-mono">
+            تعداد: {filteredProducts.length} قلم کالا
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {filteredProducts.map(product => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              addToCart={addToCart} 
+              onPreviewImage={setPreviewProduct}
+            />
+          ))}
+
+          {filteredProducts.length === 0 && (
+            <div className="col-span-full py-24 text-center bg-white rounded-3xl border border-slate-100">
+              <Package className="w-16 h-16 mx-auto mb-3 text-slate-300" />
+              <h4 className="font-black text-lg text-slate-700 mb-1">هیچ جنسی در این گروه یافت نشد!</h4>
+              <p className="text-xs text-slate-400 mb-4">می‌توانید سایر دسته‌بندی‌های تصویری را بررسی کنید.</p>
+              <button 
+                onClick={() => { setActiveCategory('All'); setSearchQuery(''); }}
+                className="px-5 py-2.5 bg-[#0B1F3A] text-amber-300 rounded-xl font-bold text-xs"
+              >
+                نمایش تمام کالاها
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* --- 5. WHOLESALE & BULK INQUIRY SECTION (فرم سفارش عمده) --- */}
+      <section id="wholesale-section" className="py-20 bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-12 gap-10 items-start">
             
-            {/* Wholesale Form Side */}
-            <div className="lg:col-span-7 bg-brand-blue p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden" id="contact">
-              {/* Form decor */}
-              <div className="absolute top-0 left-0 w-64 h-64 bg-brand-navy rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2"></div>
-              
+            {/* Contact Details Column */}
+            <div className="lg:col-span-5 space-y-6">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-xs font-bold text-amber-800 mb-3">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>تماس و سفارش فوری</span>
+                </div>
+                <h2 className="text-3xl font-black text-[#0B1F3A] mb-3">مرکز ارتباط و هماهنگی</h2>
+                <div className="w-16 h-1.5 bg-amber-500 rounded-full mb-4"></div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  جهت خرید تناژ، استعلام نرخ روز، عقد قرارداد تأمین سوپرمارکت‌ها یا ارسال به سایر ولایات، از طریق شماره‌ها یا فرم کنار با ما در ارتباط شوید.
+                </p>
+              </div>
+
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Phone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-bold">شماره تماس مستقیم و واتساپ</p>
+                    <a href="tel:+93796626004" className="font-mono font-black text-slate-900 hover:text-amber-600 text-base" dir="ltr">+93 796 626 004</a>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <MapPin className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-bold">آدرس گدام و فروشگاه مرکزی</p>
+                    <p className="font-bold text-slate-800 text-sm">مزار شریف، مرکز شهر، انبار مرکزی ستاره شهر</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-md">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-bold">ساعات فعالیت و پاسخگویی</p>
+                    <p className="font-bold text-slate-800 text-sm">همه‌روزه از ساعت ۸:۰۰ صبح الی ۸:۰۰ شب</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Wholesale Form Column */}
+            <div className="lg:col-span-7 bg-[#0B1F3A] text-white p-8 sm:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
               <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="bg-brand-gold p-3 rounded-xl"><Package className="w-6 h-6 text-brand-blue" /></div>
-                  <h3 className="text-2xl font-bold text-white">فرم سفارش عمده و تماس</h3>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-amber-400 text-slate-950 p-2.5 rounded-xl">
+                    <Package className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white">فرم آنلاین سفارش عمده و استعلام</h3>
+                    <p className="text-xs text-amber-200/80">پاسخگویی سریع توسط مدیریت فروش</p>
+                  </div>
                 </div>
                 
-                <form onSubmit={handleInquirySubmit} className="space-y-5">
+                <form onSubmit={handleInquirySubmit} className="space-y-4">
                   {inquirySuccess ? (
-                    <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 p-6 rounded-2xl text-center">
-                      <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Check className="w-8 h-8 text-emerald-500" />
-                      </div>
-                      <h4 className="text-xl font-bold mb-2 text-white">درخواست شما با موفقیت ثبت شد!</h4>
-                      <p className="text-sm leading-relaxed">همکاران ما به زودترین فرصت با شما به تماس خواهند شد.</p>
+                    <div className="bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 p-8 rounded-2xl text-center">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-400" />
+                      <h4 className="text-lg font-black text-white mb-1">درخواست شما با موفقیت ثبت شد!</h4>
+                      <p className="text-xs leading-relaxed text-slate-300">مسوول فروش عمده به زودی با شماره تماس شما هماهنگ خواهد شد.</p>
                     </div>
                   ) : (
                     <>
-                      <div className="grid md:grid-cols-2 gap-5">
+                      <div className="grid sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">نام / نام شرکت</label>
+                          <label className="block text-xs font-bold text-slate-300 mb-1">نام یا عنوان دکان / سوپرمارکت <span className="text-rose-400">*</span></label>
                           <input 
                             required
                             type="text" 
                             value={inquiryName}
                             onChange={(e) => setInquiryName(e.target.value)}
-                            className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" 
-                            placeholder="نام شما..." 
+                            className="w-full p-3.5 rounded-xl bg-white/10 border border-white/10 focus:border-amber-400 text-white outline-none text-sm transition-all" 
+                            placeholder="مثلاً: سوپرمارکت آریا..." 
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-2">شماره تماس</label>
+                          <label className="block text-xs font-bold text-slate-300 mb-1">شماره تماس فعال (واتساپ) <span className="text-rose-400">*</span></label>
                           <input 
                             required
                             type="tel" 
                             value={inquiryPhone}
                             onChange={(e) => setInquiryPhone(e.target.value)}
-                            className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500" 
+                            className="w-full p-3.5 rounded-xl bg-white/10 border border-white/10 focus:border-amber-400 text-white outline-none text-sm font-mono text-right transition-all" 
                             placeholder="07XXXXXXXX" 
                             dir="ltr" 
                           />
                         </div>
                       </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">نوعیت درخواست</label>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">نوع تقاضا</label>
                         <select 
                           value={inquiryType}
                           onChange={(e) => setInquiryType(e.target.value)}
-                          className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all appearance-none cursor-pointer"
+                          className="w-full p-3.5 rounded-xl bg-[#0E284D] border border-white/10 focus:border-amber-400 text-white outline-none text-sm cursor-pointer"
                         >
-                          <option>خرید عمده (دکانداران)</option>
-                          <option>معلومات قیمت‌ها</option>
+                          <option>خرید عمده (کارتن و باربری برای دکانداران)</option>
+                          <option>استعلام قیمت روز مواد غذایی و روغن</option>
+                          <option>قرارداد تأمین برای هوتل‌ها و رستورانت‌ها</option>
                           <option>سایر موارد</option>
                         </select>
                       </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">لیست سفارش یا پیام شما</label>
+                        <label className="block text-xs font-bold text-slate-300 mb-1">لیست اقلام مورد نیاز یا پیام شما <span className="text-rose-400">*</span></label>
                         <textarea 
                           required
-                          rows={5} 
+                          rows={4} 
                           value={inquiryMessage}
                           onChange={(e) => setInquiryMessage(e.target.value)}
-                          className="w-full p-4 rounded-xl bg-brand-navy border border-transparent focus:bg-brand-blue focus:border-brand-gold text-white outline-none transition-all placeholder:text-slate-500 resize-none" 
-                          placeholder="لطفاً لیست اجناس مورد نیاز یا پیام خود را اینجا بنویسید..."
+                          className="w-full p-3.5 rounded-xl bg-white/10 border border-white/10 focus:border-amber-400 text-white outline-none text-sm transition-all resize-none" 
+                          placeholder="تعداد کارتن، نام اجناس یا ولایت مقصد خود را بنویسید..."
                         ></textarea>
                       </div>
+
                       <button 
                         type="submit" 
                         disabled={isInquirySubmitting}
-                        className="w-full bg-gradient-to-l from-brand-gold to-brand-lightgold text-brand-blue text-lg font-bold py-4 rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                        className="w-full bg-gradient-to-l from-[#D4AF37] to-[#F5D76E] text-[#0B1F3A] text-base font-black py-4 rounded-2xl hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
                       >
                         {isInquirySubmitting ? (
-                          <div className="w-6 h-6 border-2 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-5 h-5 border-2 border-[#0B1F3A] border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                          'ارسال درخواست'
+                          <>
+                            <Package className="w-5 h-5" />
+                            ارسال سفارش عمده
+                          </>
                         )}
                       </button>
                     </>
@@ -680,217 +1142,156 @@ export const Storefront: React.FC = () => {
         </div>
       </section>
 
-      
-      {/* Main Catalog */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        
-        {successfulOrder && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-8 flex flex-col items-center justify-center text-center shadow-sm print:shadow-none print:border-black print:bg-white print:p-0">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-4 print:hidden">
-              <CheckCircle className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-black text-slate-800 mb-2 print:hidden">سفارش شما با موفقیت ثبت شد!</h2>
-            <p className="text-slate-600 mb-4 print:hidden">همکاران ما به زودی با شما تماس خواهند گرفت.</p>
-            
-            {/* The Printable Receipt */}
-            <div className="w-full max-w-2xl bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-right print:border-none print:shadow-none print:p-0">
-              <div className="flex justify-between items-start mb-8 border-b pb-4">
-                <div>
-                  <h3 className="text-xl font-black text-[#0B1F3A]">رسید سفارش (فروشگاه ستاره شهر)</h3>
-                  <p className="text-sm text-slate-500 mt-1">شماره سفارش: {successfulOrder.invoiceNo}</p>
+      {/* --- 6. PRODUCT IMAGE PREVIEW / QUICK-VIEW MODAL --- */}
+      <AnimatePresence>
+        {previewProduct && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+              dir="rtl"
+            >
+              {/* Modal Header */}
+              <div className="p-4 bg-[#0B1F3A] text-white flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-amber-400/20 text-amber-300 rounded-lg">
+                    <Eye className="w-4 h-4" />
+                  </span>
+                  <h3 className="font-bold text-sm">مشاهده دقیق عکس و اطلاعات کالا</h3>
                 </div>
-                <div className="text-left">
-                  <p className="text-sm text-slate-500">تاریخ: {new Date().toLocaleDateString('fa-IR')}</p>
-                  <p className="text-sm text-slate-500">مشتری: {successfulOrder.customerName}</p>
-                  <p className="text-sm text-slate-500" dir="ltr">{successfulOrder.customerPhone || '---'}</p>
-                  {successfulOrder.cashierName && (
-                    <p className="text-sm text-slate-500 mt-1">خدمت شده توسط: {successfulOrder.cashierName}</p>
+                <button onClick={() => setPreviewProduct(null)} className="p-1 text-slate-400 hover:text-white rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Big Photographic Showcase */}
+              <div className="relative aspect-video sm:aspect-[16/10] bg-slate-900 overflow-hidden">
+                <img 
+                  src={previewProduct.image || getCategoryImage(previewProduct.category)} 
+                  alt={previewProduct.name} 
+                  className="w-full h-full object-contain"
+                />
+                <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-md font-bold">
+                  {previewProduct.category}
+                </div>
+              </div>
+
+              {/* Product Info & Action */}
+              <div className="p-6 space-y-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 mb-1">{previewProduct.name}</h2>
+                  <p className="text-xs text-slate-500 font-mono">کد کالا (SKU): {previewProduct.sku}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div>
+                    <span className="text-[11px] text-slate-500 font-bold block">نرخ پرچون:</span>
+                    <span className="text-lg font-black text-indigo-700 font-mono">{formatCurrency(previewProduct.retailPriceAFN, 'AFN')}</span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-amber-800 font-bold block">نرخ عمده‌فروشی:</span>
+                    <span className="text-lg font-black text-amber-700 font-mono">{formatCurrency(previewProduct.wholesalePriceAFN || 0, 'AFN')}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    onClick={() => {
+                      addToCart(previewProduct, 'Retail');
+                      setPreviewProduct(null);
+                    }}
+                    className="flex-1 bg-[#0B1F3A] text-amber-300 py-3.5 rounded-2xl font-black text-sm hover:bg-[#15345d] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" /> افزودن پرچون به سبد
+                  </button>
+
+                  {(previewProduct.wholesalePriceAFN ?? 0) > 0 && (
+                    <button 
+                      onClick={() => {
+                        addToCart(previewProduct, 'Wholesale');
+                        setPreviewProduct(null);
+                      }}
+                      className="flex-1 bg-amber-600 text-white py-3.5 rounded-2xl font-black text-sm hover:bg-amber-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <Truck className="w-4 h-4" /> افزودن عمده به سبد
+                    </button>
                   )}
                 </div>
               </div>
-              
-              <table className="w-full text-sm mb-6">
-                <thead className="bg-slate-50 border-b">
-                  <tr>
-                    <th className="py-2 px-4 text-right">محصول</th>
-                    <th className="py-2 px-4 text-center">تعداد</th>
-                    <th className="py-2 px-4 text-left">قیمت کل</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {successfulOrder.items.map((item: any, idx: number) => (
-                    <tr key={idx}>
-                      <td className="py-3 px-4 text-right font-bold">{item.productName}</td>
-                      <td className="py-3 px-4 text-center font-mono">{item.quantity} {item.unitType === 'piece' ? 'دانه' : (item.unitType === 'pack' ? 'بسته' : (item.unitType === 'box' ? 'قطی' : 'کارتن'))}</td>
-                      <td className="py-3 px-4 text-left font-mono">{formatCurrency(item.totalAFN, 'AFN')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              <div className="flex justify-between items-center border-t pt-4">
-                <span className="font-bold text-slate-700">مبلغ کل:</span>
-                <span className="text-xl font-black text-indigo-600 font-mono">{formatCurrency(successfulOrder.totalAFN, 'AFN')}</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-500 mt-4 print:hidden">لطفاً شماره سفارش خود را برای پیگیری یادداشت کنید.</p>
-            <div className="mt-6 flex flex-wrap justify-center gap-4 print:hidden">
-              <button onClick={() => window.print()} className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 flex items-center gap-2">
-                <Printer className="w-5 h-5" /> چاپ / ذخیره PDF
-              </button>
-              <Link to="/tracking" className="bg-[#0B1F3A] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-[#123B66]">پیگیری وضعیت سفارش</Link>
-              <button onClick={() => setSuccessfulOrder(null)} className="bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold hover:bg-slate-300">ادامه خرید</button>
-            </div>
+            </motion.div>
           </div>
         )}
+      </AnimatePresence>
 
-        <div className="flex flex-col md:flex-row gap-8 print:hidden">
-          {/* Categories Sidebar */}
-          <div className="w-full md:w-64 shrink-0" id="categories">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sticky top-24">
-              <h3 className="font-black text-slate-800 mb-4">دسته‌بندی‌ها</h3>
-              <div className="space-y-1">
-                {categories.map(cat => {
-                  let buttonClass = 'w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-between ';
-                  let icon = null;
-
-                  if (cat === 'تخفیف‌های ویژه') {
-                    buttonClass += activeCategory === cat ? 'bg-rose-500 text-white' : 'text-rose-600 hover:bg-rose-50';
-                    icon = <Tag className="w-4 h-4" />;
-                  } else if (cat === 'پرفروش‌ترین‌ها') {
-                    buttonClass += activeCategory === cat ? 'bg-amber-500 text-white' : 'text-amber-600 hover:bg-amber-50';
-                    icon = <Star className="w-4 h-4" />;
-                  } else {
-                    buttonClass += activeCategory === cat ? 'bg-[#0B1F3A] text-white' : 'text-slate-600 hover:bg-slate-50';
-                  }
-
-                  return (
-                    <button 
-                      key={cat}
-                      onClick={() => setActiveCategory(cat)}
-                      className={buttonClass}
-                    >
-                      <span>{cat === 'All' ? 'همه محصولات' : cat}</span>
-                      {icon}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Products Grid */}
-          <div className="flex-1" id="products">
-            <div id="wholesale"></div>
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-2 mb-6 flex items-center">
-              <Search className="w-5 h-5 text-slate-400 mx-3 shrink-0" />
-              <input 
-                type="text" 
-                placeholder="جستجوی نام محصول..." 
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-none py-2 focus:outline-none text-sm"
-              />
-            </div>
-
-            {activeCategory === 'All' && state.products.some(p => p.isDiscounted) && (
-              <div className="mb-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <Tag className="w-6 h-6 text-rose-500" />
-                  <h3 className="text-xl font-black text-rose-600">فرصت‌های طلایی - اجناس لیلام</h3>
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
-                  {state.products.filter(p => p.isDiscounted).map(product => (
-                    <ProductCard key={product.id} product={product} addToCart={addToCart} className="min-w-[260px] snap-start" />
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {activeCategory === 'All' && state.products.some(p => p.isBestSeller) && (
-              <div className="mb-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <Star className="w-6 h-6 text-amber-500" />
-                  <h3 className="text-xl font-black text-amber-600">پرفروش‌ترین‌های ستاره شهر</h3>
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
-                  {state.products.filter(p => p.isBestSeller).map(product => (
-                    <ProductCard key={product.id} product={product} addToCart={addToCart} className="min-w-[260px] snap-start" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} addToCart={addToCart} />
-              ))}
-              {filteredProducts.length === 0 && (
-                <div className="col-span-full py-20 text-center text-slate-400 font-bold">
-                  محصولی یافت نشد!
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Shopping Cart Drawer */}
+      {/* --- 7. SHOPPING CART DRAWER --- */}
       <AnimatePresence>
         {isCartOpen && (
           <>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsCartOpen(false)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 print:hidden"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 print:hidden"
             />
             <motion.div 
               initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
-              className="fixed top-0 left-0 bottom-0 w-full sm:w-96 bg-white z-50 shadow-2xl flex flex-col print:hidden"
+              className="fixed top-0 left-0 bottom-0 w-full sm:w-[420px] bg-white z-50 shadow-2xl flex flex-col print:hidden"
               dir="rtl"
             >
-              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h2 className="font-black text-[#0B1F3A] flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" /> سبد خرید شما
-                </h2>
-                <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+              <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-[#0B1F3A] text-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-400 text-[#0B1F3A] flex items-center justify-center font-bold">
+                    <ShoppingCart className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="font-black text-base">سبد خرید شما</h2>
+                    <p className="text-[10px] text-amber-200">{cart.length} قلم کالا انتخاب شده</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors text-slate-300 hover:text-white">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {cart.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                    <ShoppingCart className="w-16 h-16 mb-4 opacity-20" />
-                    <p className="font-bold">سبد خرید شما خالی است</p>
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                      <ShoppingCart className="w-10 h-10" />
+                    </div>
+                    <p className="font-bold text-slate-700 text-base mb-1">سبد خرید شما خالی است</p>
+                    <p className="text-xs text-slate-400">می‌توانید از روی عکس‌های اجناس کالا به سبد اضافه کنید.</p>
                   </div>
                 ) : (
                   cart.map((item, idx) => {
                     const price = item.type === 'Retail' ? item.product.retailPriceAFN : (item.product.wholesalePriceAFN || item.product.retailPriceAFN);
                     return (
-                        <div key={idx} className="flex gap-3 bg-white border border-slate-100 p-3 rounded-2xl shadow-sm relative">
-                          <button onClick={() => removeFromCart(idx)} className="absolute top-2 left-2 p-1.5 text-rose-500 hover:bg-rose-100 bg-rose-50 rounded-lg transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <div className="w-16 h-16 bg-slate-50 rounded-xl overflow-hidden shrink-0">
+                      <div key={idx} className="flex gap-3 bg-white border border-slate-100 p-3 rounded-2xl shadow-sm relative group hover:border-slate-200">
+                        <button onClick={() => removeFromCart(idx)} className="absolute top-2.5 left-2.5 p-1 text-rose-500 hover:bg-rose-100 bg-rose-50 rounded-lg transition-colors" title="حذف">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        
+                        <div className="w-16 h-16 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100">
                           {item.product.image ? (
-                            <img src={item.product.image} className="w-full h-full object-cover" />
+                            <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
                           ) : (
                             <Package className="w-full h-full p-4 text-slate-300" />
                           )}
                         </div>
-                        <div className="flex-1">
-                          <h4 className="text-xs font-bold text-slate-800 leading-tight mb-1 pr-4">{item.product.name}</h4>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${item.type === 'Retail' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {item.type === 'Retail' ? 'پرچون' : 'عمده'}
+
+                        <div className="flex-1 min-w-0 pr-1">
+                          <h4 className="text-xs font-bold text-slate-800 truncate mb-1 pl-6">{item.product.name}</h4>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${item.type === 'Retail' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'}`}>
+                            {item.type === 'Retail' ? 'پرچون (تکی)' : 'عمده‌فروشی'}
                           </span>
+                          
                           <div className="flex justify-between items-end mt-2">
                             <span className="font-black text-[#0B1F3A] font-mono text-sm">{formatCurrency(price, 'AFN')}</span>
-                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-0.5">
-                              <button onClick={() => updateCartQty(idx, -1)} className="w-6 h-6 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-600 font-bold">-</button>
-                              <span className="w-4 text-center text-xs font-bold font-mono">{item.quantity}</span>
-                              <button onClick={() => updateCartQty(idx, 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-600 font-bold">+</button>
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5">
+                              <button onClick={() => updateCartQty(idx, -1)} className="w-6 h-6 flex items-center justify-center bg-white rounded-lg shadow-xs text-slate-700 font-bold hover:bg-slate-50">-</button>
+                              <span className="w-6 text-center text-xs font-bold font-mono">{item.quantity}</span>
+                              <button onClick={() => updateCartQty(idx, 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded-lg shadow-xs text-slate-700 font-bold hover:bg-slate-50">+</button>
                             </div>
                           </div>
                         </div>
@@ -901,16 +1302,16 @@ export const Storefront: React.FC = () => {
               </div>
 
               {cart.length > 0 && (
-                <div className="p-6 bg-slate-50 border-t border-slate-200">
-                  <div className="flex justify-between items-center mb-6">
-                    <span className="font-bold text-slate-600">مجموع قابل پرداخت:</span>
-                    <span className="text-2xl font-black text-[#0B1F3A] font-mono">{formatCurrency(cartTotalAFN, 'AFN')}</span>
+                <div className="p-5 bg-slate-50 border-t border-slate-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-bold text-slate-600 text-sm">مجموع قابل پرداخت:</span>
+                    <span className="text-2xl font-black text-emerald-600 font-mono">{formatCurrency(cartTotalAFN, 'AFN')}</span>
                   </div>
                   <button 
                     onClick={() => { setIsCartOpen(false); setIsCheckoutOpen(true); }}
-                    className="w-full bg-[#0B1F3A] text-[#D4AF37] py-4 rounded-xl font-black text-lg hover:bg-[#123B66] shadow-xl hover:shadow-2xl transition-all"
+                    className="w-full bg-gradient-to-l from-[#D4AF37] to-[#F5D76E] text-[#0B1F3A] py-4 rounded-2xl font-black text-base hover:shadow-xl transition-all shadow-md active:scale-95"
                   >
-                    ثبت نهایی و پرداخت
+                    تکمیل اطلاعات و ثبت نهایی سفارش
                   </button>
                 </div>
               )}
@@ -919,84 +1320,95 @@ export const Storefront: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Checkout Modal */}
+      {/* --- 8. CHECKOUT MODAL --- */}
       <AnimatePresence>
         {isCheckoutOpen && (
-          <>
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[110] flex items-center justify-center p-4 print:hidden">
             <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden"
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+              dir="rtl"
             >
-              <motion.div 
-                initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
-                dir="rtl"
-              >
-                <div className="p-6 bg-[#0B1F3A] text-white flex justify-between items-center">
-                  <h2 className="text-xl font-black flex items-center gap-2"><Truck className="w-5 h-5" /> اطلاعات ارسال</h2>
-                  <button onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+              <div className="p-6 bg-[#0B1F3A] text-white flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-amber-400" />
+                  <h2 className="text-lg font-black">اطلاعات تحویل و ثبت سفارش</h2>
                 </div>
-                
-                <form onSubmit={handleCheckout} className="p-6 space-y-4">
-                  {user?.role === 'Customer' ? (
-                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                      <p className="text-sm font-bold text-slate-800 mb-1">سفارش با حساب کاربری:</p>
-                      <p className="text-slate-600 text-sm font-mono">{user.fullName}</p>
+                <button onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleCheckout} className="p-6 space-y-4">
+                {user?.role === 'Customer' ? (
+                  <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                    <p className="text-xs font-bold text-amber-900 mb-0.5">سفارش با حساب کاربری مشتری:</p>
+                    <p className="text-slate-800 font-black text-sm">{user.fullName}</p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">نام و تخلص خریدار <span className="text-rose-500">*</span></label>
+                      <input 
+                        required 
+                        type="text" 
+                        placeholder="نام شما یا نام دکان..."
+                        value={checkoutForm.name} 
+                        onChange={e => setCheckoutForm({...checkoutForm, name: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-amber-500 outline-none"
+                      />
                     </div>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">نام کامل <span className="text-rose-500">*</span></label>
-                        <input 
-                          required type="text" 
-                          value={checkoutForm.name} onChange={e => setCheckoutForm({...checkoutForm, name: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس <span className="text-rose-500">*</span></label>
-                        <input 
-                          required type="tel" dir="ltr"
-                          value={checkoutForm.phone} onChange={e => setCheckoutForm({...checkoutForm, phone: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none text-right"
-                        />
-                      </div>
-                    </>
-                  )}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-600 mb-1">آدرس دقیق تحویل</label>
-                    <textarea 
-                      rows={3}
-                      value={checkoutForm.address} onChange={e => setCheckoutForm({...checkoutForm, address: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                    ></textarea>
-                  </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">شماره تماس (جهت هماهنگی تحویل) <span className="text-rose-500">*</span></label>
+                      <input 
+                        required 
+                        type="tel" 
+                        dir="ltr"
+                        placeholder="07XXXXXXXX"
+                        value={checkoutForm.phone} 
+                        onChange={e => setCheckoutForm({...checkoutForm, phone: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-mono text-right focus:border-amber-500 outline-none"
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">آدرس دقیق جهت ارسال</label>
+                  <textarea 
+                    rows={2}
+                    placeholder="شهر، ناحیه، گذر، آدرس دقیق..."
+                    value={checkoutForm.address} 
+                    onChange={e => setCheckoutForm({...checkoutForm, address: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:border-amber-500 outline-none resize-none"
+                  ></textarea>
+                </div>
 
-                  <div className="bg-emerald-50 text-emerald-800 p-4 rounded-xl flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <p className="text-xs font-bold">پرداخت در زمان تحویل درب منزل / مغازه انجام می‌شود.</p>
-                  </div>
+                <div className="bg-emerald-50 text-emerald-800 p-3.5 rounded-2xl flex items-center gap-3 border border-emerald-100">
+                  <Clock className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <p className="text-xs font-bold">پرداخت وجه هنگام تحویل کالا (نقدی یا حواله) صورت می‌گیرد.</p>
+                </div>
 
-                  <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-lg hover:bg-emerald-700 shadow-lg mt-6">
-                    تایید و ثبت سفارش
-                  </button>
-                </form>
-              </motion.div>
+                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-base shadow-lg transition-all active:scale-95 mt-2">
+                  تایید نهایی و دریافت فاکتور
+                </button>
+              </form>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Announcement Popup */}
+      {/* --- 9. ANNOUNCEMENT POPUP MODAL --- */}
       <AnimatePresence>
         {isAnnouncementOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 print:hidden"
-          >
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[120] flex items-center justify-center p-4 print:hidden">
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative text-center p-8"
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl relative text-center p-8 border border-amber-200"
               dir="rtl"
             >
               <button 
@@ -1006,29 +1418,30 @@ export const Storefront: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
               
-              <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Tag className="w-10 h-10" />
+              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-inner">
+                <Flame className="w-10 h-10 fill-rose-600" />
               </div>
               
-              <h2 className="text-2xl font-black text-slate-800 mb-3">فرصت‌های طلایی تخفیف!</h2>
-              <p className="text-slate-600 mb-8 leading-relaxed">
-                مشتری گرامی، محصولات لیلام شده و دارای تخفیف‌های ویژه هم‌اکنون در فروشگاه ستاره شهر موجود است. همین حالا خرید کنید!
+              <h2 className="text-2xl font-black text-slate-900 mb-2">تخفیف‌های ویژه و اجناس لیلام!</h2>
+              <p className="text-slate-600 mb-6 text-sm leading-relaxed">
+                مشتری گرامی، اجناس دارای تخفیف فوق‌العاده با قیمت‌های ارزان‌تر از عمده‌فروشی در فروشگاه موجود است.
               </p>
               
               <button 
                 onClick={() => {
                   setIsAnnouncementOpen(false);
                   setActiveCategory('تخفیف‌های ویژه');
-                  scrollTo('products');
+                  scrollTo('products-section');
                 }}
-                className="w-full bg-rose-600 text-white py-4 rounded-xl font-black text-lg hover:bg-rose-700 shadow-lg shadow-rose-600/30 transition-all"
+                className="w-full bg-rose-600 text-white py-3.5 rounded-2xl font-black text-base hover:bg-rose-700 shadow-lg shadow-rose-600/30 transition-all active:scale-95"
               >
                 مشاهده اجناس تخفیف‌دار
               </button>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

@@ -1,0 +1,6 @@
+{
+  "name": "Setareh Shahr Store",
+  "description": "Comprehensive ERP, inventory management, and online storefront for Setareh Shahr Store.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

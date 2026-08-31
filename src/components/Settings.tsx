@@ -2,25 +2,36 @@ import React, { useState } from 'react';
 import { useAppState } from '../AppContext';
 import { SecurityGateModal } from './SecurityGate';
 import { 
-  Settings as SettingsIcon, 
-  Save, 
-  Users, 
-  Database, 
+  Store, 
   Coins, 
   Percent, 
+  Users, 
+  Database, 
+  Save, 
   RefreshCw, 
-  Trash2, 
-  ShieldCheck, 
   Download, 
   Upload, 
-  Store,
-  UserPlus,
-  ShieldAlert,
-  Key,
-  Eye,
-  EyeOff
+  Trash2, 
+  ShieldAlert, 
+  UserPlus, 
+  Eye, 
+  EyeOff, 
+  Check, 
+  Image as ImageIcon,
+  Building2,
+  Phone,
+  MapPin,
+  Sparkles,
+  Calculator,
+  ShieldCheck,
+  UserCheck,
+  Lock,
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import { formatCurrency } from '../utils';
+import { motion, AnimatePresence } from 'motion/react';
+import { ExchangeRateDisplay } from './ExchangeRateDisplay';
 
 interface AppUser {
   username: string;
@@ -29,22 +40,30 @@ interface AppUser {
   role: 'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff';
 }
 
+type TabType = 'store' | 'pricing' | 'users' | 'backup';
+
 export const Settings: React.FC = () => {
   const { state, updateExchangeRate, resetState, editProduct } = useAppState();
 
+  // Active Tab State
+  const [activeTab, setActiveTab] = useState<TabType>('store');
+
   // Store Brand Settings & Monogram Custom Logo
-  const [storeName, setStoreName] = useState(() => localStorage.getItem('AFG_STORE_NAME') || 'فرشگاه ستاره شهر');
+  const [storeName, setStoreName] = useState(() => localStorage.getItem('AFG_STORE_NAME') || 'فروشگاه ستاره شهر');
   const [phone, setPhone] = useState(() => localStorage.getItem('AFG_STORE_PHONE') || '0799445566');
   const [city, setCity] = useState(() => localStorage.getItem('AFG_STORE_CITY') || 'کابل');
   const [address, setAddress] = useState(() => localStorage.getItem('AFG_STORE_ADDRESS') || 'چهارراهی پشتونستان، مرکز تجارتی ستاره');
   const [logoPreview, setLogoPreview] = useState(() => localStorage.getItem('AFG_STORE_LOGO') || '');
+  const [savedSuccess, setSavedSuccess] = useState(false);
 
   // Exchange rate setting
   const [rateInput, setRateInput] = useState(state.exchangeRate.toString());
+  const [rateUpdatedSuccess, setRateUpdatedSuccess] = useState(false);
 
   // Global Margin Markup
-  const [markupCostPercent, setMarkupCostPercent] = useState('25'); // 25% margin
+  const [markupCostPercent, setMarkupCostPercent] = useState('25');
   const [wholesaleMarkupPercent, setWholesaleMarkupPercent] = useState('15');
+  const [markupAppliedSuccess, setMarkupAppliedSuccess] = useState(false);
 
   // Security Gate parameters
   const [securityOpen, setSecurityOpen] = useState(false);
@@ -54,6 +73,7 @@ export const Settings: React.FC = () => {
 
   // Users Database & Inputs
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [usersList, setUsersList] = useState<AppUser[]>(() => {
     const saved = localStorage.getItem('AFG_STORE_USERS');
     if (saved) {
@@ -79,8 +99,7 @@ export const Settings: React.FC = () => {
   const [newFullName, setNewFullName] = useState('');
   const [newUserRole, setNewUserRole] = useState<'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff'>('Cashier');
 
-  // Active Cashier Shift Tracker (synchronous fallback to usersList names)
-  const [activeCashier, setActiveCashier] = useState(() => localStorage.getItem('AFG_STORE_CASHIER') || 'مدیر سیستم (ادمین)');
+  // Active Cashier Shift Tracker
   const [cashierList, setCashierList] = useState<string[]>(() => {
     const saved = localStorage.getItem('AFG_CASHIER_LIST');
     if (saved) {
@@ -114,8 +133,11 @@ export const Settings: React.FC = () => {
     localStorage.setItem('AFG_STORE_PHONE', phone);
     localStorage.setItem('AFG_STORE_CITY', city);
     localStorage.setItem('AFG_STORE_ADDRESS', address);
-    alert('تنظیمات برند و مونوگرام دکان با موفقیت ذخیره گردید.');
-    window.location.reload(); 
+    setSavedSuccess(true);
+    setTimeout(() => {
+      setSavedSuccess(false);
+      window.location.reload();
+    }, 1200);
   };
 
   const handleUpdateExchangeRateSubmit = (e: React.FormEvent) => {
@@ -127,11 +149,12 @@ export const Settings: React.FC = () => {
     }
 
     triggerSecureAction(
-      "اصلاح عمومی کسر نرخ تسعیر صرافی",
-      `آیا مایل هستید نرخ تبادل هر دالر را از ${state.exchangeRate} به ${parsed} افغانی تغییر دهید؟ کل موازنه دارایی به روز می‌شود.`,
+      "تغییر نرخ تسعیر اسعار (دالر به افغانی)",
+      `آیا مایل هستید نرخ تبادل هر دالر را از ${state.exchangeRate} به ${parsed} افغانی تغییر دهید؟ تمام محاسبات صندوق و فاکتورها متوازن خواهد شد.`,
       () => {
         updateExchangeRate(parsed);
-        alert(`تغییر نرخ صرافی با موفقیت متوازن و ثبت گردید: دالر = ${parsed} افغانی`);
+        setRateUpdatedSuccess(true);
+        setTimeout(() => setRateUpdatedSuccess(false), 3000);
       }
     );
   };
@@ -143,12 +166,12 @@ export const Settings: React.FC = () => {
     const fname = newFullName.trim();
 
     if (!uname || !pass || !fname) {
-      alert('لطفاً تمامی گزینه‌های راجستر کاربر جدید را با موازنه کامل پر کنید.');
+      alert('لطفاً تمامی گزینه‌های فرم را تکمیل فرمایید.');
       return;
     }
 
     if (usersList.some(u => u.username.toUpperCase() === uname)) {
-      alert('خطا! کاربری با این نام کاربری/ایمیل قبلاً در سیستم ثبت شده است.');
+      alert('این نام کاربری / ایمیل قبلاً در سیستم ثبت شده است.');
       return;
     }
 
@@ -160,22 +183,20 @@ export const Settings: React.FC = () => {
     };
 
     const roleLabels: Record<string, string> = {
-      Admin: 'مدیر',
-      Salesperson: 'فروشنده',
-      Assistant: 'دستیار',
-      Staff: 'کارمند'
+      Owner: 'مالک / مدیر کل',
+      Manager: 'مدیر داخلی',
+      Cashier: 'صندوق‌دار',
+      'Warehouse Staff': 'مسئول گدام'
     };
-    const resolvedLabel = roleLabels[newUserRole] || newUserRole;
 
     triggerSecureAction(
-      "اضافه کردن کاربر جدید با دسترسی سیستمی",
-      `آیا تایید صلاحیت می‌کنید که کاربر جدید [${fname}] با نقش [${resolvedLabel}] ثبت شود؟`,
+      "ایجاد حساب کاربری جدید",
+      `آیا تایید می‌فرمایید که کاربر [${fname}] با نقش [${roleLabels[newUserRole]}] ایجاد گردد؟`,
       () => {
         const updated = [...usersList, newUser];
         setUsersList(updated);
         localStorage.setItem('AFG_STORE_USERS', JSON.stringify(updated));
 
-        // Sync helper shifts list as well
         const updatedShifts = [...cashierList];
         if (!updatedShifts.includes(fname)) {
           updatedShifts.push(fname);
@@ -186,7 +207,7 @@ export const Settings: React.FC = () => {
         setNewUsername('');
         setNewPassword('');
         setNewFullName('');
-        alert(`کاربر جدید [${fname}] پس از احراز هویت با موفقیت راجستر دفتری شد.`);
+        setShowAddUserModal(false);
       }
     );
   };
@@ -194,13 +215,13 @@ export const Settings: React.FC = () => {
   const handleDeleteUserClick = (usernameToDelete: string, fullNameToDelete: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (usernameToDelete.toUpperCase() === 'ADMIN@STC.COM') {
-      alert('خطا! اکانت سوپر ادمین پیش‌فرض اصلی فروشگاه غیرقابل حذف است.');
+      alert('اکانت سوپر ادمین اصلی سیستم غیرقابل حذف است.');
       return;
     }
 
     triggerSecureAction(
-      "حذف و خلع نهایی دسترسی کاربر",
-      `آیا مطمئن هستید که می‌خواهید کاربر [ ${fullNameToDelete} ] را لغو صلاحیت نموده و از کل سیستم خارج کنید؟`,
+      "حذف حساب کاربری",
+      `آیا مطمئن هستید که می‌خواهید دسترسی [ ${fullNameToDelete} ] را به طور کامل از سیستم حذف کنید؟`,
       () => {
         const updated = usersList.filter(u => u.username !== usernameToDelete);
         setUsersList(updated);
@@ -210,7 +231,6 @@ export const Settings: React.FC = () => {
         setCashierList(updatedShifts);
         localStorage.setItem('AFG_CASHIER_LIST', JSON.stringify(updatedShifts));
 
-        // Check if deleted user is logged in
         const curUserRaw = localStorage.getItem('AFG_CURRENT_USER');
         if (curUserRaw) {
           try {
@@ -218,36 +238,27 @@ export const Settings: React.FC = () => {
             if (parsed.username === usernameToDelete) {
               localStorage.removeItem('AFG_CURRENT_USER');
               localStorage.setItem('AFG_STORE_CASHIER', 'مدیر کل سیستم (ادمین)');
-              alert('یوزر حذف گردید و جلسه جاری خاتمه یافت.');
               window.location.reload();
               return;
             }
           } catch(err) {}
         }
-        alert('کاربر با موفقیت و پس از تایید رمز عبور ادمین حذف شد.');
       }
     );
   };
 
-  const handleSelectCashier = (cashierName: string) => {
-    setActiveCashier(cashierName);
-    localStorage.setItem('AFG_STORE_CASHIER', cashierName);
-    alert(`کاربر فعال صندوق چرخشی به [${cashierName}] تغییر یافت.`);
-  };
-
-  // Pricing markup calculator changer
   const handleApplyGlobalMarkupSubmit = () => {
     const costPercent = parseFloat(markupCostPercent);
     const wholesalePercent = parseFloat(wholesaleMarkupPercent);
 
     if (isNaN(costPercent) || isNaN(wholesalePercent)) {
-      alert('لطفاً نرخ‌های مارک‌آپ را به صورت صحیح عددی مکتوب کنید.');
+      alert('لطفاً درصدهای سود را به درستی وارد کنید.');
       return;
     }
 
     triggerSecureAction(
-      "اعمال سراسری موازنه و بازنویسی قیمت‌های فروش",
-      `آیا مایل هستید قیمت‌های کل محصولات انبار را بر مبنای فرمول هزینه خرید + درصدهای سود بازنویسی کنید؟ پرچون: +${costPercent}% | عمده: +${wholesalePercent}%`,
+      "اعمال سراسری قیمت‌گذاری خودکار کالاها",
+      `آیا مایل هستید قیمت تمام کالاها بر اساس قیمت خرید محاسبه شود؟ (پرچون: +${costPercent}٪ | عمده: +${wholesalePercent}٪)`,
       () => {
         state.products.forEach(p => {
           const retailPriceUSD = p.costPriceUSD * (1 + costPercent / 100);
@@ -262,23 +273,22 @@ export const Settings: React.FC = () => {
           };
           editProduct(updatedProduct);
         });
-        alert('عملیات هوشمند موازنه قیمت کل اقلام گدام با موفقیت خاتمه یافت.');
+        setMarkupAppliedSuccess(true);
+        setTimeout(() => setMarkupAppliedSuccess(false), 3500);
       }
     );
   };
 
-  // Export database backup
   const handleExportBackup = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `STARA_SHAHAR_ERP_BACKUP_${new Date().toISOString().split('T')[0]}.json`);
+    downloadAnchor.setAttribute("download", `SETAREH_SHAHR_BACKUP_${new Date().toISOString().split('T')[0]}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
   };
 
-  // Import database backup
   const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileReader = new FileReader();
     if (e.target.files && e.target.files[0]) {
@@ -288,424 +298,644 @@ export const Settings: React.FC = () => {
           const parsed = JSON.parse(event.target?.result as string);
           if (parsed.products && parsed.customers && parsed.cashRegister) {
             localStorage.setItem('AFG_ERP_STATE', JSON.stringify(parsed));
-            alert('فایل پشتیبان با موفقیت بارگذاری گردید. به بازنشانی صفحه هدایت می‌شوید.');
+            alert('فایل پشتیبان با موفقیت بازیابی شد. صفحه مجدداً بارگذاری می‌شود.');
             window.location.reload();
           } else {
-            alert('خطا! قالب پرونده نامعتبر است.');
+            alert('قالب فایل پشتیبان نامعتبر است.');
           }
         } catch (err) {
-          alert('خطا در خواندن فایل!');
+          alert('خطا در خواندن فایل پشتیبان!');
         }
       };
     }
   };
 
-  // Clear system COMPLETELY to start from 0
   const handleResetSystemClick = () => {
     triggerSecureAction(
-      "پاکسازی کلی پایگاه داده دکان (شروع مجدد از صفر)",
-      "هشدار فوق حساس! این عمل کل سوابق فروش، پایگاه مشتریان قرضه، محصولات گدام انبار، فاکتورهای صادره، مونوگرام‌های فروشگاه و حساب‌های کاربری را برای همیشه حذف و سیستم را از صفر مطلق شروع می‌کند.",
+      "پاکسازی کلی و شروع مجدد از صفر",
+      "هشدار بسیار مهم! تمامی اجناس انبار، فاکتورهای فروش، حساب مشتریان، طلب‌ها، هزینه‌ها و تنظیمات پاک شده و برنامه به حالت خام اولیه بازمی‌گردد.",
       () => {
         resetState();
         localStorage.clear();
-        alert('پایگاه داده به طور کامل پاکسازی شد و سیستم به موازنه خام صفر درصد کارخانه بازگشت.');
+        alert('سیستم با موفقیت به حالت اولیه کارخانه بازگردانده شد.');
         window.location.reload();
       }
     );
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-right" dir="rtl">
+    <div className="max-w-6xl mx-auto space-y-6 text-right pb-12 font-sans" dir="rtl">
       
-      {/* Brand Profile Details Card */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-5">
-        <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2.5 uppercase">
-          <Store className="w-5 h-5 text-emerald-600" />
-          تنظیمات هویت تجاری و مونوگرام دکان / مارکت
-        </h3>
-
-        {/* Custom logo select panel */}
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 flex flex-col sm:flex-row items-center gap-4">
-          <div className="w-16 h-16 bg-white rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400 font-extrabold overflow-hidden shrink-0 shadow-xs">
-            {logoPreview ? (
-              <img 
-                src={logoPreview} 
-                alt="Shop Logo" 
-                className="w-full h-full object-cover" 
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <Store className="w-6 h-6 text-slate-400" />
-            )}
-          </div>
-          <div className="flex-1 text-center sm:text-right space-y-1.5 w-full">
-            <span className="block text-[11px] font-extrabold text-slate-700">مونوگرام و لوگوی چاپی فاکتورهای دکان:</span>
-            <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
-              <input 
-                type="file"
-                id="shop-logo-file-picker"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      if (typeof reader.result === 'string') {
-                        setLogoPreview(reader.result);
-                        localStorage.setItem('AFG_STORE_LOGO', reader.result);
-                        alert('لوگوی جدید با موفقیت بارگذاری شد و در سربرگ اعمال گردید.');
-                      }
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => document.getElementById('shop-logo-file-picker')?.click()}
-                className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-3 py-1.5 rounded-lg text-[10.5px] cursor-pointer"
-              >
-                آپلود لوگوی رسمی فروشگاه 📁
-              </button>
-              {logoPreview && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm('آیا مایلید لوگوی شخصی را پاک نموده و لوگوی پیش‌فرض لود شود؟')) {
-                      setLogoPreview('');
-                      localStorage.removeItem('AFG_STORE_LOGO');
-                      alert('لوگو برطرف گردید.');
-                    }
-                  }}
-                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3 py-1.5 rounded-lg text-[10.5px] cursor-pointer"
-                >
-                  حذف لوگوی جاری 🗑️
-                </button>
-              )}
+      {/* Header & Quick Summary Strip */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200/80 rounded-full text-xs font-bold text-amber-800 mb-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+              <span>مرکز کنترل و تنظیمات مدیریتی</span>
             </div>
-            <p className="text-[9.5px] text-slate-400 leading-normal">فرمت‌های تصویری استاندارد متناسب با فاکتورهای چاپی و پرینترهای حرارتی</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0B1F3A] tracking-tight">
+              تنظیمات جامع فروشگاه
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              مدیریت هویت سازمانی، نرخ روزانه ارز، فرمول قیمت‌گذاری، دسترسی پرسونل و پشتیبان‌گیری
+            </p>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-100/80 text-amber-700 flex items-center justify-center font-black">
+                <Coins className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 block">نرخ تبادل فعال</span>
+                <span className="text-xs sm:text-sm font-black text-slate-800 font-mono">1 USD = {state.exchangeRate} AFN</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-100/80 text-indigo-700 flex items-center justify-center font-black">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 block">پرسونل فعال</span>
+                <span className="text-xs sm:text-sm font-black text-slate-800 font-mono">{usersList.length} کاربر</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSaveBrand} className="space-y-4 text-xs text-slate-655">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">نام فروشگاه (برای هدر و اسناد):</label>
-              <input 
-                type="text" 
-                required
-                value={storeName} 
-                onChange={(e) => setStoreName(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-hidden text-right font-bold text-slate-800"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">نمبر تماس عمومی دکان:</label>
-              <input 
-                type="text" 
-                required
-                value={phone} 
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-hidden font-mono text-left text-slate-800"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">نام ولایت / زادگاه تجارتی:</label>
-              <input 
-                type="text" 
-                required
-                value={city} 
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-hidden text-right text-slate-800"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">آدرس فیزیکی دقیق:</label>
-              <input 
-                type="text" 
-                required
-                value={address} 
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:outline-hidden text-right text-slate-800"
-              />
-            </div>
-          </div>
-
-          <button 
-            type="submit"
-            className="w-full bg-slate-900 hover:bg-slate-805 text-white rounded-xl py-2.5 px-4 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+        {/* Tab Navigation Navigation */}
+        <div className="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-slate-100">
+          <button
+            onClick={() => setActiveTab('store')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+              activeTab === 'store'
+                ? 'bg-[#0B1F3A] text-amber-300 shadow-md ring-2 ring-amber-400/20'
+                : 'bg-slate-100/80 hover:bg-slate-200 text-slate-600'
+            }`}
           >
-            <Save className="w-4 h-4 text-emerald-400" />
-            ذخیره و ثبت مشخصات دکان
+            <Store className="w-4 h-4" />
+            مشخصات و برند فروشگاه
           </button>
-        </form>
 
-        {/* Currency exchanging with lock */}
-        <div className="pt-4 border-t border-slate-100 space-y-3">
-          <h4 className="font-extrabold text-slate-800 text-xs flex items-center gap-1.5">
-            <Coins className="w-4 h-4 text-yellow-500 animate-spin-slow" />
-            تغییر و تسعیر نرخ صرافی همکار (Secure exchange rate)
-          </h4>
-          <p className="text-[9.5px] text-slate-400 leading-normal leading-relaxed">
-            تغییر نرخ ارز یک عملیات عمده حاکمیتی است که دیون مطالبات مشتریان، ارزش گدام و صندوق مالی را به شکل زنده تحت تاثیر جدی قرار می‌دهد. برای امنیت سیستم از شما درخواست رمز خواهد شد.
-          </p>
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+              activeTab === 'pricing'
+                ? 'bg-[#0B1F3A] text-amber-300 shadow-md ring-2 ring-amber-400/20'
+                : 'bg-slate-100/80 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            <Coins className="w-4 h-4" />
+            نرخ ارز و فرمول قیمت‌گذاری
+          </button>
 
-          <form onSubmit={handleUpdateExchangeRateSubmit} className="flex gap-2 text-xs">
-            <div className="relative flex-1">
-              <span className="absolute left-3 top-2.5 text-[10px] text-slate-400 font-mono font-bold">1 USD =</span>
-              <input 
-                type="number" 
-                value={rateInput} 
-                onChange={(e) => setRateInput(e.target.value)}
-                step="0.05"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pr-3 pl-14 text-xs font-mono font-bold text-left focus:outline-hidden text-slate-900"
-              />
-              <span className="absolute right-3 top-2.5 text-[10px] text-slate-400 font-bold">افغانی</span>
-            </div>
-            <button 
-              type="submit"
-              className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl px-4 py-2.5 text-xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              به‌روزرسانی نرخ
-            </button>
-          </form>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+              activeTab === 'users'
+                ? 'bg-[#0B1F3A] text-amber-300 shadow-md ring-2 ring-amber-400/20'
+                : 'bg-slate-100/80 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            کاربران و سطوح دسترسی
+            <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full mr-1">
+              {usersList.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('backup')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
+              activeTab === 'backup'
+                ? 'bg-[#0B1F3A] text-amber-300 shadow-md ring-2 ring-amber-400/20'
+                : 'bg-slate-100/80 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            پشتیبان‌گیری و نگهداری داده‌ها
+          </button>
         </div>
       </div>
 
-      {/* Right Column modules */}
-      <div className="space-y-6">
-        
-        {/* Global Markup pricing formula */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2.5 uppercase">
-            <Percent className="w-5 h-5 text-emerald-600" />
-            فرمول هوشمند بازنویسی کلی قیمت‌های دکان (سراسری)
-          </h3>
-          <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-            با این گزینه قیمت خرید کل کالاها به طور سراسری ضرب در حاشیه سود شده و قیمت عمده و پرچون اتومات به دالر و افغانی متوازن می‌گردد. این کار نیاز به تاییدی ادمین دارد.
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 text-xs text-slate-700">
-            <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">مارک‌آپ سود تک‌فروشی (پرچون %):</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  value={markupCostPercent} 
-                  onChange={(e) => setMarkupCostPercent(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 focus:outline-hidden font-mono text-left pl-6 text-slate-800"
-                />
-                <span className="absolute left-2.5 top-2 text-[10.5px] text-slate-450">%</span>
-              </div>
+      {/* --- TAB CONTENT 1: STORE IDENTITY & BRAND --- */}
+      {activeTab === 'store' && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-8"
+        >
+          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
+              <Store className="w-5 h-5" />
             </div>
             <div>
-              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">مارک‌آپ سود عمده‌فروشی (%):</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  value={wholesaleMarkupPercent} 
-                  onChange={(e) => setWholesaleMarkupPercent(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded p-1.5 focus:outline-hidden font-mono text-left pl-6 text-slate-800"
+              <h2 className="text-lg font-black text-slate-900">هویت سازمانی و سربرگ فاکتورها</h2>
+              <p className="text-xs text-slate-500">اطلاعات وارد شده در سربرگ فاکتورهای چاپی، رسیدها و صفحه نخست فروشگاه درج می‌شود</p>
+            </div>
+          </div>
+
+          {/* Logo Upload Section */}
+          <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/70 flex flex-col sm:flex-row items-center gap-5">
+            <div className="w-24 h-24 bg-white rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative group">
+              {logoPreview ? (
+                <img 
+                  src={logoPreview} 
+                  alt="Shop Logo" 
+                  className="w-full h-full object-contain p-1" 
+                  referrerPolicy="no-referrer"
                 />
-                <span className="absolute left-2.5 top-2 text-[10.5px] text-slate-450">%</span>
+              ) : (
+                <div className="text-center p-2">
+                  <ImageIcon className="w-8 h-8 mx-auto text-slate-400 mb-1" />
+                  <span className="text-[10px] text-slate-400 font-bold">بدون لوگو</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 space-y-2 text-center sm:text-right">
+              <h3 className="text-sm font-black text-slate-800">مونوگرام و لوگوی رسمی فروشگاه</h3>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-lg">
+                تصویر آپلود شده به صورت خودکار بر روی فاکتورهای حرارتی A4 و رسیدهای چاپی مشتریان قرار می‌گیرد. (فرمت‌های PNG یا JPG)
+              </p>
+              
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                <input 
+                  type="file"
+                  id="shop-logo-file-picker"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        if (typeof reader.result === 'string') {
+                          setLogoPreview(reader.result);
+                          localStorage.setItem('AFG_STORE_LOGO', reader.result);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('shop-logo-file-picker')?.click()}
+                  className="bg-[#0B1F3A] hover:bg-[#15345d] text-amber-300 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  بارگذاری تصویر لوگو
+                </button>
+
+                {logoPreview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm('آیا می‌خواهید لوگوی بارگذاری شده حذف شود؟')) {
+                        setLogoPreview('');
+                        localStorage.removeItem('AFG_STORE_LOGO');
+                      }
+                    }}
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border border-rose-200"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    حذف لوگو
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
-          <button 
-            type="button"
-            onClick={handleApplyGlobalMarkupSubmit}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-2.5 px-4 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Percent className="w-4 h-4 text-emerald-400" />
-            اعمال و بازنویسی قیمت‌های کل گدام
-          </button>
-        </div>
-
-        {/* Custom Security Gated User Management System */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2.5 uppercase">
-            <Users className="w-5 h-5 text-indigo-650" />
-            ثبت کاربران و تعیین سطوح امنیتی پرسونل (Users Database)
-          </h3>
-
-          <p className="text-[10px] text-slate-400 leading-normal leading-relaxed">
-            نام کاربری و رمزهای عبور را برای همکاران دفتری یا صندوقداران تعریف کنید تا با هویت مستقل خود لاگین نموده و فاکتور فروش بزنند.
-          </p>
-
-          <form onSubmit={handleAddUserSubmit} className="space-y-2.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200/60 text-xs">
-            <span className="block text-[11px] font-black text-slate-700">➕ راجستر حساب کاربری مستقل جدید:</span>
-            
-            <div className="grid grid-cols-2 gap-2">
+          {/* Store Details Form */}
+          <form onSubmit={handleSaveBrand} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">نام و تخلص کارمند:</label>
+                <label className="block text-xs font-black text-slate-700 mb-2 flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-slate-400" />
+                  نام رسمی فروشگاه / مارکت
+                </label>
                 <input 
                   type="text" 
                   required
-                  placeholder="مثال: سهراب افغان"
-                  value={newFullName}
-                  onChange={(e) => setNewFullName(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-right text-xs"
+                  value={storeName} 
+                  onChange={(e) => setStoreName(e.target.value)}
+                  placeholder="مثال: فروشگاه عمده و پرچون ستاره شهر"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm font-bold text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">نوعیت سطح دسترسی:</label>
-                <select
-                  value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value as any)}
-                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-xs text-right font-bold"
-                >
-                  <option value="Owner">👑 مالک / مدیر کل</option>
-                  <option value="Manager">👮 مدیر (Manager)</option>
-                  <option value="Cashier">💵 صندوق‌دار (Cashier)</option>
-                  <option value="Warehouse Staff">📦 مسئول گدام (Warehouse)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">ایمیل / یوزرنیم لاگین (انگلیسی):</label>
+                <label className="block text-xs font-black text-slate-700 mb-2 flex items-center gap-1.5">
+                  <Phone className="w-4 h-4 text-slate-400" />
+                  شماره‌های تماس عمومی
+                </label>
                 <input 
                   type="text" 
                   required
-                  placeholder="SOHRAB@STC.COM"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-left font-mono text-xs"
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0799445566 / 0788112233"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm font-bold text-slate-900 font-mono text-left focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-hidden"
+                  dir="ltr"
                 />
               </div>
 
               <div>
-                <label className="block text-[9.5px] font-bold text-slate-400 mb-0.5">رمز ورود اختصاصی (Password):</label>
+                <label className="block text-xs font-black text-slate-700 mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  ولایت / شهر اصلی
+                </label>
                 <input 
                   type="text" 
                   required
-                  placeholder="مثال: Sohrab$99"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded p-1.5 text-left font-mono text-xs"
+                  value={city} 
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="مثال: کابل / مزار شریف"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm font-bold text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-slate-400" />
+                  آدرس دقیق دکان / انبار مرکزی
+                </label>
+                <input 
+                  type="text" 
+                  required
+                  value={address} 
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="مثال: چهارراهی پشتونستان، مرکز تجارتی ستاره، منزل اول"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm font-bold text-slate-900 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-hidden"
                 />
               </div>
             </div>
 
-            <button 
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-755 text-white font-extrabold rounded-lg py-1.5 mt-1 text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              کدگذاری و ایجاد حساب پرسونل جدید
-            </button>
-          </form>
-
-          {/* User profiles rendering list */}
-          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-            <span className="block text-[10.5px] font-bold text-slate-400 uppercase tracking-widest">فهرست دوسیه حساب‌های فعال:</span>
-            {usersList.map(u => (
-              <div 
-                key={u.username}
-                className="p-3 bg-white border border-slate-150 rounded-xl flex items-center justify-between text-xs font-semibold hover:border-slate-300 transition-colors"
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+              <button 
+                type="submit"
+                className="bg-gradient-to-l from-[#0B1F3A] to-[#15345d] text-amber-300 hover:text-white px-8 py-3.5 rounded-2xl text-sm font-black transition-all cursor-pointer flex items-center gap-2 shadow-md hover:shadow-lg active:scale-98"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-slate-100 text-slate-700 p-1.5 rounded-lg text-[10px] font-extrabold">
-                      {u.role === 'Owner' ? '👑 مالک' : u.role === 'Manager' ? '👮 مدیر' : u.role === 'Cashier' ? '💵 صندوق‌دار' : '📦 مسئول گدام'}
-                    </span>
-                    <span className="font-extrabold text-slate-800">{u.fullName}</span>
-                  </div>
-                  <div className="font-mono text-[9.5px] text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1 pr-1">
-                    <span>یوزرنیم: <strong className="text-slate-600 font-bold">{u.username}</strong></span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <span>پسورد:</span>
-                      <strong className="text-slate-600 font-bold select-none">
-                        {revealedPasswords[u.username] ? u.passwordHash : '••••••••'}
-                      </strong>
-                      <button
-                        type="button"
-                        onClick={() => setRevealedPasswords(prev => ({ ...prev, [u.username]: !prev[u.username] }))}
-                        className="p-0.5 text-slate-400 hover:text-slate-600 cursor-pointer flex items-center justify-center"
-                        title="نمایش/پنهان‌سازی رمز"
-                      >
-                        {revealedPasswords[u.username] ? (
-                          <EyeOff className="w-3 h-3" />
-                        ) : (
-                          <Eye className="w-3 h-3" />
-                        )}
-                      </button>
-                    </span>
+                {savedSuccess ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    تنظیمات با موفقیت ذخیره شد!
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 text-amber-400" />
+                    ذخیره تغییرات مشخصات فروشگاه
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      )}
+
+      {/* --- TAB CONTENT 2: EXCHANGE RATE & PRICING RULES --- */}
+      {activeTab === 'pricing' && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          {/* Live Google Exchange Rate with Buy (-0.50) and Sell (+0.50) */}
+          <ExchangeRateDisplay variant="full" />
+
+          {/* Smart Pricing Margin Calculator */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+            <div>
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                  <Percent className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-slate-900">فرمول هوشمند حاشیه سود کالاها</h2>
+                  <p className="text-xs text-slate-500">محاسبه سراسری قیمت فروش عمده و پرچون از روی قیمت خرید</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                با تعیین درصدهای سود زیر، قیمت تمام محصولات موجود در گدام بر اساس فرمول (قیمت خرید + درصد سود) به طور اتوماتیک بازنویسی می‌گردد:
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200">
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">سود تک‌فروشی (پرچون):</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      value={markupCostPercent} 
+                      onChange={(e) => setMarkupCostPercent(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono text-left pl-7 text-sm font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
+                    />
+                    <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-bold">٪</span>
                   </div>
                 </div>
 
-                {u.username.toUpperCase() !== 'ADMIN@STC.COM' ? (
-                  <button
-                    onClick={(e) => handleDeleteUserClick(u.username, u.fullName, e)}
-                    className="p-1 px-2 text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-150 rounded-md text-[9.5px] font-bold cursor-pointer"
-                    title="حذف دائمی یوزر عبور کارمند"
-                  >
-                    حذف حساب کاربری 🗑️
-                  </button>
-                ) : (
-                  <span className="text-[9.5px] text-emerald-700 font-black px-2 py-1 bg-emerald-50 rounded">غیر قابل حذف</span>
-                )}
+                <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200">
+                  <label className="block text-xs font-bold text-slate-600 mb-1.5">سود عمده‌فروشی (کارتن):</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      value={wholesaleMarkupPercent} 
+                      onChange={(e) => setWholesaleMarkupPercent(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono text-left pl-7 text-sm font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
+                    />
+                    <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-bold">٪</span>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Database backups and start from 0 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-100 pb-2.5 uppercase">
-            <Database className="w-5 h-5 text-indigo-505" />
-            سوابق پشتیبانی و موازنه بازیابی کارخانه
-          </h3>
+              {/* Real-time formula preview */}
+              <div className="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-3.5 space-y-1.5 text-xs text-indigo-950 mb-5">
+                <div className="flex items-center gap-1.5 font-black text-indigo-900">
+                  <Calculator className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>نمونه محاسبه برای کالای ۱۰ دالری:</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-indigo-800">
+                  <span>نرخ پرچون: <strong>${(10 * (1 + parseFloat(markupCostPercent || '0')/100)).toFixed(2)}</strong> ({formatCurrency(10 * (1 + parseFloat(markupCostPercent || '0')/100) * state.exchangeRate, 'AFN')})</span>
+                  <span>نرخ عمده: <strong>${(10 * (1 + parseFloat(wholesaleMarkupPercent || '0')/100)).toFixed(2)}</strong> ({formatCurrency(10 * (1 + parseFloat(wholesaleMarkupPercent || '0')/100) * state.exchangeRate, 'AFN')})</span>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <button 
-              onClick={handleExportBackup}
-              className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold rounded-xl text-xs cursor-pointer border border-slate-200"
-            >
-              <Download className="w-4 h-4 text-emerald-600 shrink-0" />
-              بارگیری کپی دیتابیس (Export)
-            </button>
+              <button 
+                type="button"
+                onClick={handleApplyGlobalMarkupSubmit}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 px-4 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                محاسبه و بازنویسی قیمت‌های کل گدام
+              </button>
 
-            <label className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold rounded-xl text-xs cursor-pointer border border-slate-200">
-              <Upload className="w-4 h-4 text-indigo-600 shrink-0" />
-              بارگذاری کپی دیتابیس (Import)
-              <input 
-                type="file" 
-                accept=".json" 
-                onChange={handleImportBackup} 
-                className="hidden" 
-              />
-            </label>
-          </div>
-
-          <div className="bg-rose-50 p-4 rounded-xl border-2 border-rose-100 space-y-2 text-xs">
-            <div className="text-rose-900 font-black flex items-center gap-1.5 uppercase text-[11px]">
-              <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-              پاکسازی زنده و دیسک کردن کل پایگاه مرکزی از صفر (Start from 0)
+              {markupAppliedSuccess && (
+                <p className="text-center text-xs font-bold text-emerald-600 bg-emerald-50 py-2 rounded-xl border border-emerald-200 flex items-center justify-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> تمام قیمت‌های گدام با فرمول جدید به‌روزرسانی شدند.
+                </p>
+              )}
             </div>
-            <p className="text-[9.5px] text-rose-700 leading-normal font-bold">
-              با تایید این عملیات، گدام انبار کالاها، مونوگرام پیست شده، فاکتورهای قرض مشتری، مانده صندوق‌های صرافی و حساب کاربری همکاران راه‌اندازی جدید (صفر مطلق) می‌گردد.
+          </div>
+        </motion.div>
+      )}
+
+      {/* --- TAB CONTENT 3: TEAM & ACCESS CONTROL --- */}
+      {activeTab === 'users' && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-900">مدیریت پرسونل و حساب‌های کاربری</h2>
+                <p className="text-xs text-slate-500">تعریف رمز ورود و نقش‌های دسترسی برای صندوقداران و مدیران</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAddUserModal(!showAddUserModal)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-sm self-start sm:self-auto"
+            >
+              <UserPlus className="w-4 h-4" />
+              {showAddUserModal ? 'بستن فرم' : 'افزودن کاربر جدید'}
+            </button>
+          </div>
+
+          {/* Expandable Add User Form */}
+          <AnimatePresence>
+            {showAddUserModal && (
+              <motion.form 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                onSubmit={handleAddUserSubmit}
+                className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4 overflow-hidden"
+              >
+                <h3 className="text-xs font-black text-slate-800 flex items-center gap-2">
+                  <UserPlus className="w-4 h-4 text-indigo-600" />
+                  مشخصات کاربر و کارمند جدید:
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">نام و تخلص:</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="مثال: سهراب افغان"
+                      value={newFullName}
+                      onChange={(e) => setNewFullName(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">سطح دسترسی و نقش:</label>
+                    <select
+                      value={newUserRole}
+                      onChange={(e) => setNewUserRole(e.target.value as any)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
+                    >
+                      <option value="Owner">👑 مالک / مدیر کل</option>
+                      <option value="Manager">👮 مدیر داخلی</option>
+                      <option value="Cashier">💵 صندوق‌دار</option>
+                      <option value="Warehouse Staff">📦 مسئول گدام</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">ایمیل یا یوزرنیم لاگین:</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="SOHRAB@STC.COM"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 outline-hidden text-left"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">رمز ورود (Password):</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="Sohrab$99"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 outline-hidden text-left"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button 
+                    type="submit"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Check className="w-4 h-4" />
+                    ثبت و ذخیره کاربر
+                  </button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          {/* User List Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {usersList.map(u => {
+              const isOwner = u.role === 'Owner';
+              const isManager = u.role === 'Manager';
+              const isCashier = u.role === 'Cashier';
+              const isWarehouse = u.role === 'Warehouse Staff';
+
+              const roleLabel = isOwner ? 'مالک / مدیر کل' : isManager ? 'مدیر داخلی' : isCashier ? 'صندوق‌دار' : 'مسئول گدام';
+              const roleBadgeColor = isOwner ? 'bg-amber-100 text-amber-800 border-amber-200' : isManager ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : isCashier ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-800 border-slate-200';
+
+              return (
+                <div 
+                  key={u.username}
+                  className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-black text-sm border border-slate-200">
+                        {u.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-slate-900 text-sm">{u.fullName}</h4>
+                        <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-md border mt-1 ${roleBadgeColor}`}>
+                          {roleLabel}
+                        </span>
+                      </div>
+                    </div>
+
+                    {u.username.toUpperCase() !== 'ADMIN@STC.COM' ? (
+                      <button
+                        onClick={(e) => handleDeleteUserClick(u.username, u.fullName, e)}
+                        className="text-rose-600 hover:bg-rose-50 p-2 rounded-xl transition-all cursor-pointer"
+                        title="حذف کاربر"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                        ادمین اصلی
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex items-center justify-between text-xs font-mono" dir="ltr">
+                    <span className="text-slate-600 font-bold">{u.username}</span>
+                    
+                    <div className="flex items-center gap-1.5 text-slate-500">
+                      <span>{revealedPasswords[u.username] ? u.passwordHash : '••••••••'}</span>
+                      <button
+                        type="button"
+                        onClick={() => setRevealedPasswords(prev => ({ ...prev, [u.username]: !prev[u.username] }))}
+                        className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                        title="نمایش / پنهان کردن رمز"
+                      >
+                        {revealedPasswords[u.username] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* --- TAB CONTENT 4: BACKUP & SYSTEM RESET --- */}
+      {activeTab === 'backup' && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        >
+          {/* Backup & Restore Box */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                <Database className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-900">پشتیبان‌گیری از اطلاعات (Backup)</h2>
+                <p className="text-xs text-slate-500">دانلود و بازیابی فایل کامل دیتابیس، فاکتورها و انبار</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              توصیه می‌شود به صورت هفتگی از دیتابیس فروشگاه نسخه پشتیبان دانلود کرده و روی فلش یا کامپیوتر خود نگهداری فرمایید.
             </p>
+
+            <div className="space-y-3">
+              <button 
+                onClick={handleExportBackup}
+                className="w-full flex items-center justify-center gap-2 p-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs transition-all cursor-pointer shadow-sm active:scale-98"
+              >
+                <Download className="w-4 h-4" />
+                دانلود فایل پشتیبان کامل دیتابیس (Export JSON)
+              </button>
+
+              <label className="w-full flex items-center justify-center gap-2 p-4 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-2xl font-black text-xs transition-all cursor-pointer border border-slate-200 active:scale-98">
+                <Upload className="w-4 h-4 text-indigo-600" />
+                بازیابی اطلاعات از فایل پشتیبان قبلی (Import JSON)
+                <input 
+                  type="file" 
+                  accept=".json" 
+                  onChange={handleImportBackup} 
+                  className="hidden" 
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Danger Zone: Factory Reset */}
+          <div className="bg-rose-50/60 rounded-3xl p-6 sm:p-8 border-2 border-rose-200/80 shadow-xs space-y-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 border-b border-rose-200/60 pb-4 mb-4">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-black">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-rose-950">منطقه حساس: راه‌اندازی مجدد از صفر</h2>
+                  <p className="text-xs text-rose-700 font-bold">پاکسازی کامل داده‌ها و بازگشت به موازنه اولیه</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-rose-800 leading-relaxed">
+                با اجرای این عملیات، تمامی محصولات گدام، فاکتورهای فروش، حساب و قرض مشتریان، سوابق صندوق صرافی و کاربران برای همیشه پاکسازی می‌گردد.
+              </p>
+            </div>
+
             <button 
               onClick={handleResetSystemClick}
-              className="w-full bg-rose-600 hover:bg-rose-700 text-white rounded-xl py-2.5 px-4 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-sm mt-1"
+              className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3.5 px-4 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
             >
-              <Trash2 className="w-4 h-4 shrink-0" />
-              حذف دائم اطلاعات و راه‌اندازی صفر موازنه تجاری
+              <Trash2 className="w-4 h-4" />
+              حذف دائمی تمام اطلاعات و ریست به حالت صفر کارخانه
             </button>
           </div>
-        </div>
-
-      </div>
+        </motion.div>
+      )}
 
       {/* Security Gate Verification Modal Popup */}
       <SecurityGateModal 

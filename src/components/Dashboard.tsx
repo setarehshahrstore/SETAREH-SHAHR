@@ -2,11 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
 import { formatCurrency } from '../utils';
 import { DateFilter, DateRange } from './DateFilter';
+import { ExchangeRateDisplay } from './ExchangeRateDisplay';
+import { LowStockReportModal } from './LowStockReportModal';
+import { PriceTagPrintingModal } from './PriceTagPrintingModal';
 import { Link } from 'react-router-dom';
 import { 
   TrendingUp, TrendingDown, AlertTriangle, DollarSign, Users, ShoppingCart, 
   Receipt, PackageX, Clock, PlusCircle, PackagePlus, FilePlus, UserPlus, 
-  CreditCard, Printer, Activity, CheckCircle, XCircle
+  CreditCard, Printer, Activity, CheckCircle, XCircle, Tag, FileText, Sparkles
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -23,6 +26,10 @@ export const Dashboard: React.FC = () => {
 
   const [rateInput, setRateInput] = useState<string>(state.exchangeRate.toString());
   const [isEditingRate, setIsEditingRate] = useState(false);
+  
+  // Modals for Low Stock and Smart Price Tag Printing
+  const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
+  const [isPriceTagModalOpen, setIsPriceTagModalOpen] = useState(false);
 
   const handleUpdateRate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,40 +128,25 @@ export const Dashboard: React.FC = () => {
     <div className="space-y-6 pb-20 font-sans" dir="rtl">
       
       {/* Top Welcome Section */}
-      <div className="bg-gradient-to-l from-[#0B1F3A] to-[#1A3A5F] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
+      <div className="bg-gradient-to-l from-[#0B1F3A] via-[#122b4d] to-[#1A3A5F] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
         <div className="relative z-10 space-y-2">
-          <h1 className="text-3xl font-black text-white flex items-center gap-3">
-            خوش آمدید، مالک فروشگاه <span className="text-2xl">👋</span>
+          <div className="flex items-center gap-2">
+            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[11px] font-black px-3 py-1 rounded-full flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              داشبورد جامع مدیریت بازرگانی
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
+            وقت شما بخیر، مدیریت محترم فروشگاه ستاره شهر
           </h1>
-          <p className="text-slate-300 text-sm max-w-lg leading-relaxed">
-            گزارش زنده فروش، سفارشات، موجودی و حساب‌های فروشگاه ستاره شهر. در اینجا می‌توانید نمای کلی از کسب و کار خود را مدیریت کنید.
+          <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
+            روز پربرکتی داشته باشید. گزارش زنده فروشات، حساب‌های اسعار، وضعیت موجودی گدام و طلبات مشتریان به شکل لحظه‌ای در دسترس شماست.
           </p>
         </div>
         
-        <div className="relative z-10 flex flex-col items-end gap-3 bg-white/10 p-4 rounded-2xl backdrop-blur-sm border border-white/10 w-full md:w-auto">
-          <div className="flex items-center gap-2 text-slate-200 text-sm font-medium">
-            <Clock className="w-4 h-4" />
-            <span>تاریخ امروز:</span>
-            <span className="font-bold text-white tracking-widest" dir="ltr">{todayDate}</span>
-          </div>
-          
-          <div className="flex items-center gap-3 bg-black/20 p-2.5 rounded-xl border border-white/5">
-            <span className="text-xs text-slate-300">نرخ امروز دالر:</span>
-            {isEditingRate ? (
-              <form onSubmit={handleUpdateRate} className="flex gap-2">
-                <input 
-                  type="number" step="0.01" value={rateInput} onChange={e => setRateInput(e.target.value)} 
-                  className="w-20 px-2 py-1 text-sm text-slate-900 font-bold rounded" dir="ltr" autoFocus
-                />
-                <button type="submit" className="bg-[#D4AF37] hover:bg-[#B8942E] text-white px-2 rounded text-xs font-bold">ثبت</button>
-              </form>
-            ) : (
-              <button onClick={() => setIsEditingRate(true)} className="font-black text-[#D4AF37] text-lg hover:underline flex items-center gap-1">
-                {state.exchangeRate} ؋ <span className="text-xs text-slate-400 font-normal">/ $1</span>
-              </button>
-            )}
-          </div>
+        <div className="relative z-10 w-full lg:w-auto">
+          <ExchangeRateDisplay variant="compact" showDate={true} />
         </div>
       </div>
 
@@ -167,19 +159,27 @@ export const Dashboard: React.FC = () => {
       />
 
       {/* Quick Action Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { to: '/admin/sales', icon: ShoppingCart, label: 'فروش جدید', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600' },
           { to: '/admin/inventory?add=true', icon: PackagePlus, label: 'افزودن محصول', color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600' },
-          { to: '/admin/purchases', icon: FilePlus, label: 'ثبت خرید', color: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600' },
+          { to: '/admin/purchases', icon: FilePlus, label: 'ثبت خرید گدام', color: 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600' },
           { to: '/admin/customers', icon: UserPlus, label: 'افزودن مشتری', color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
           { to: '/admin/finances', icon: CreditCard, label: 'ثبت پرداخت', color: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-600 hover:text-white hover:border-rose-600' },
-          { to: '/admin/reports', icon: Printer, label: 'چاپ گزارش', color: 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-700' }
+          { onClick: () => setIsPriceTagModalOpen(true), icon: Tag, label: 'چاپ اتیکت قیمت', color: 'bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-600 hover:text-white hover:border-amber-600' },
+          { onClick: () => setIsLowStockModalOpen(true), icon: AlertTriangle, label: 'لیست کسری کالا', color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-600 hover:text-white hover:border-rose-600' }
         ].map((btn, idx) => (
-          <Link key={idx} to={btn.to} className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300 group shadow-sm hover:shadow-md ${btn.color}`}>
-            <btn.icon className="w-6 h-6 mb-2 transition-transform group-hover:scale-110" />
-            <span className="text-xs font-bold">{btn.label}</span>
-          </Link>
+          btn.to ? (
+            <Link key={idx} to={btn.to} className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all duration-300 group shadow-xs hover:shadow-md ${btn.color}`}>
+              <btn.icon className="w-5 h-5 mb-1.5 transition-transform group-hover:scale-110" />
+              <span className="text-xs font-black">{btn.label}</span>
+            </Link>
+          ) : (
+            <button key={idx} type="button" onClick={btn.onClick} className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all duration-300 group shadow-xs hover:shadow-md cursor-pointer ${btn.color}`}>
+              <btn.icon className="w-5 h-5 mb-1.5 transition-transform group-hover:scale-110" />
+              <span className="text-xs font-black">{btn.label}</span>
+            </button>
+          )
         ))}
       </div>
 
@@ -311,21 +311,35 @@ export const Dashboard: React.FC = () => {
 
         {/* Low Stock */}
         <div className="bg-white border border-rose-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-rose-50 bg-rose-50/30 flex justify-between items-center">
-            <h3 className="font-black text-rose-700 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              محصولات با موجودی کم
+          <div className="p-4 sm:p-5 border-b border-rose-100 bg-rose-50/40 flex flex-wrap justify-between items-center gap-2">
+            <h3 className="font-black text-rose-700 flex items-center gap-2 text-sm">
+              <AlertTriangle className="w-4 h-4 text-rose-600" />
+              محصولات با موجودی کم ({lowStockProducts.length})
             </h3>
+            
+            <button
+              type="button"
+              onClick={() => setIsLowStockModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>چاپ و دانلود لیست کسری (PDF)</span>
+            </button>
           </div>
+          
           <div className="divide-y divide-slate-100 flex-1">
             {lowStockProducts.slice(0, 5).map(p => (
-              <div key={p.id} className="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
+              <div 
+                key={p.id} 
+                onClick={() => setIsLowStockModalOpen(true)}
+                className="p-3.5 sm:p-4 flex justify-between items-center hover:bg-rose-50/50 transition-colors cursor-pointer"
+              >
                 <div>
-                  <p className="font-bold text-slate-800 text-sm">{p.name}</p>
+                  <p className="font-bold text-slate-800 text-xs sm:text-sm hover:text-rose-600 transition-colors">{p.name}</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">حد هشدار: {p.minStockInBaseUnits} {p.baseUnit}</p>
                 </div>
-                <div className="text-center bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200">
-                  <span className="block font-black text-rose-700 text-sm" dir="ltr">{p.stockInBaseUnits}</span>
+                <div className="text-center bg-rose-100 px-3 py-1 rounded-xl border border-rose-200">
+                  <span className="block font-black text-rose-700 text-xs sm:text-sm font-mono" dir="ltr">{p.stockInBaseUnits}</span>
                 </div>
               </div>
             ))}
@@ -333,6 +347,18 @@ export const Dashboard: React.FC = () => {
               <div className="p-8 text-center text-slate-400 text-xs font-bold">موجودی انبار نرمال است 🎉</div>
             )}
           </div>
+
+          {lowStockProducts.length > 5 && (
+            <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                onClick={() => setIsLowStockModalOpen(true)}
+                className="text-xs font-bold text-rose-700 hover:underline cursor-pointer"
+              >
+                مشاهده همه {lowStockProducts.length} قلم کالای کسری و دانلود برگه خرید &larr;
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Best Selling Products */}
@@ -400,6 +426,22 @@ export const Dashboard: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Low Stock Report & PDF Print Modal */}
+      <LowStockReportModal 
+        isOpen={isLowStockModalOpen}
+        onClose={() => setIsLowStockModalOpen(false)}
+        products={state.products}
+        exchangeRate={state.exchangeRate}
+      />
+
+      {/* Smart Price Tag Printing Modal */}
+      <PriceTagPrintingModal 
+        isOpen={isPriceTagModalOpen}
+        onClose={() => setIsPriceTagModalOpen(false)}
+        products={state.products}
+        exchangeRate={state.exchangeRate}
+      />
     </div>
   );
 };

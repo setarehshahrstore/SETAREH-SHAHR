@@ -75,6 +75,8 @@ export interface Category {
   id: string;
   name: string;
   description?: string;
+  imageUrl?: string;
+  icon?: string;
 }
 
 export interface Supplier {

@@ -21,14 +21,19 @@ export const syncToFirebase = (prev: AppState, next: AppState) => {
         if (!oldItem || JSON.stringify(oldItem) !== JSON.stringify(item)) {
           // Remove undefined values to prevent Firebase "Unsupported field value: undefined" errors
           const cleanItem = JSON.parse(JSON.stringify(item));
-          setDoc(doc(db, col, item.id || Date.now().toString()), cleanItem).catch(e => console.error('Error writing to ' + col, e));
+          setDoc(doc(db, col, item.id || Date.now().toString()), cleanItem).catch(e => {
+            // Log as warning rather than breaking error if backend is temporarily offline
+            console.warn(`Firestore sync write notice for ${col}/${item.id}:`, e?.message || e);
+          });
         }
       });
       
       // Deleted
       prevArray.forEach(oldItem => {
         if (!nextArray.find(item => item.id === oldItem.id)) {
-          deleteDoc(doc(db, col, oldItem.id)).catch(e => console.error('Error deleting from ' + col, e));
+          deleteDoc(doc(db, col, oldItem.id)).catch(e => {
+            console.warn(`Firestore sync delete notice for ${col}/${oldItem.id}:`, e?.message || e);
+          });
         }
       });
     }
@@ -36,10 +41,14 @@ export const syncToFirebase = (prev: AppState, next: AppState) => {
 
   // Handle singletons
   if (prev.exchangeRate !== next.exchangeRate) {
-    setDoc(doc(db, 'singletons', 'exchangeRate'), { value: next.exchangeRate });
+    setDoc(doc(db, 'singletons', 'exchangeRate'), { value: next.exchangeRate }).catch(e => {
+      console.warn('Firestore exchangeRate sync notice:', e?.message || e);
+    });
   }
   if (prev.cashRegister !== next.cashRegister) {
-    setDoc(doc(db, 'singletons', 'cashRegister'), next.cashRegister);
+    setDoc(doc(db, 'singletons', 'cashRegister'), next.cashRegister).catch(e => {
+      console.warn('Firestore cashRegister sync notice:', e?.message || e);
+    });
   }
 };
 
@@ -47,30 +56,66 @@ export const startFirebaseListeners = (setState: React.Dispatch<React.SetStateAc
   const unsubscribers: (() => void)[] = [];
 
   collections.forEach(col => {
-    const unsub = onSnapshot(collection(db, col), (snapshot) => {
-      const data = snapshot.docs.map(d => d.data());
-      setState(prev => { 
-        return { ...prev, [col]: data, _fromFirebase: true } as AppState; 
-      });
-    });
-    unsubscribers.push(unsub);
-  });
-
-  const unsubExchange = onSnapshot(doc(db, 'singletons', 'exchangeRate'), (doc) => {
-    if (doc.exists()) {
-      setState(prev => ({ ...prev, exchangeRate: doc.data().value, _fromFirebase: true } as AppState));
+    try {
+      const unsub = onSnapshot(
+        collection(db, col),
+        (snapshot) => {
+          const data = snapshot.docs.map(d => d.data());
+          if (data.length > 0) {
+            setState(prev => { 
+              return { ...prev, [col]: data, _fromFirebase: true } as AppState; 
+            });
+          }
+        },
+        (error) => {
+          console.warn(`Firestore sync notification for '${col}':`, error.message);
+        }
+      );
+      unsubscribers.push(unsub);
+    } catch (e) {
+      console.warn(`Could not attach listener for '${col}':`, e);
     }
   });
-  unsubscribers.push(unsubExchange);
 
-  const unsubCash = onSnapshot(doc(db, 'singletons', 'cashRegister'), (doc) => {
-    if (doc.exists()) {
-      setState(prev => ({ ...prev, cashRegister: doc.data() as any, _fromFirebase: true } as AppState));
-    }
-  });
-  unsubscribers.push(unsubCash);
+  try {
+    const unsubExchange = onSnapshot(
+      doc(db, 'singletons', 'exchangeRate'),
+      (doc) => {
+        if (doc.exists()) {
+          setState(prev => ({ ...prev, exchangeRate: doc.data().value, _fromFirebase: true } as AppState));
+        }
+      },
+      (error) => {
+        console.warn("Firestore sync notification for 'singletons/exchangeRate':", error.message);
+      }
+    );
+    unsubscribers.push(unsubExchange);
+  } catch (e) {
+    console.warn("Could not attach listener for 'singletons/exchangeRate':", e);
+  }
+
+  try {
+    const unsubCash = onSnapshot(
+      doc(db, 'singletons', 'cashRegister'),
+      (doc) => {
+        if (doc.exists()) {
+          setState(prev => ({ ...prev, cashRegister: doc.data() as any, _fromFirebase: true } as AppState));
+        }
+      },
+      (error) => {
+        console.warn("Firestore sync notification for 'singletons/cashRegister':", error.message);
+      }
+    );
+    unsubscribers.push(unsubCash);
+  } catch (e) {
+    console.warn("Could not attach listener for 'singletons/cashRegister':", e);
+  }
 
   return () => {
-    unsubscribers.forEach(u => u());
+    unsubscribers.forEach(u => {
+      try {
+        u();
+      } catch (_) {}
+    });
   };
 };

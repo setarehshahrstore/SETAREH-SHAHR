@@ -22,6 +22,8 @@ import {
   Tag
 } from 'lucide-react';
 import { Product, Purchase, PurchaseItem } from '../types';
+import { LowStockReportModal } from './LowStockReportModal';
+import { PriceTagPrintingModal } from './PriceTagPrintingModal';
 
 // High-quality image presets for diverse Afghan markets (sanitary, groceries, dry fruits, spices, carpets)
 const IMAGE_PRESETS = [
@@ -50,6 +52,10 @@ export const Inventory: React.FC = () => {
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
   const [discountPercentage, setDiscountPercentage] = useState('');
   const [discountExpiryDays, setDiscountExpiryDays] = useState('7');
+
+  // Report & Tag Modals
+  const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
+  const [isPriceTagModalOpen, setIsPriceTagModalOpen] = useState(false);
 
   const location = useLocation();
 
@@ -557,6 +563,20 @@ export const Inventory: React.FC = () => {
                 </button>
               </>
             )}
+            <button
+              onClick={() => setIsPriceTagModalOpen(true)}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg px-3 py-1.5 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Tag className="w-4 h-4" />
+              چاپ اتیکت‌های قیمت
+            </button>
+            <button
+              onClick={() => setIsLowStockModalOpen(true)}
+              className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg px-3 py-1.5 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <AlertCircle className="w-4 h-4 text-rose-600" />
+              کسری انبار (PDF)
+            </button>
             <button
               onClick={() => setIsRestocking(!isRestocking)}
               className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
@@ -1281,6 +1301,22 @@ export const Inventory: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Low Stock Report & PDF Print Modal */}
+      <LowStockReportModal 
+        isOpen={isLowStockModalOpen}
+        onClose={() => setIsLowStockModalOpen(false)}
+        products={state.products}
+        exchangeRate={state.exchangeRate}
+      />
+
+      {/* Smart Price Tag Printing Modal */}
+      <PriceTagPrintingModal 
+        isOpen={isPriceTagModalOpen}
+        onClose={() => setIsPriceTagModalOpen(false)}
+        products={state.products}
+        exchangeRate={state.exchangeRate}
+      />
 
     </div>
   );
