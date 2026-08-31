@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppState } from '../AppContext';
 import { useAuth } from '../AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { FloatingAdminChat } from '../components/FloatingAdminChat';
 import { 
   LayoutDashboard, Package, Grid, ShoppingCart, Truck, ClipboardList, 
   Users, Building2, Warehouse, CreditCard, DollarSign, Receipt, 
@@ -41,68 +40,6 @@ export const AdminLayout: React.FC = () => {
   const newOrdersCount = (state.sales || []).filter(s => s.status !== 'Completed' && s.status !== 'Delivered' && s.status !== 'Cancelled').length;
 
   const totalNotifications = totalUnreadChats + totalPendingInquiries + newOrdersCount;
-  
-  const [prevUnreadChats, setPrevUnreadChats] = useState(totalUnreadChats);
-  const [prevPendingInquiries, setPrevPendingInquiries] = useState(totalPendingInquiries);
-  const [prevNewOrdersCount, setPrevNewOrdersCount] = useState(newOrdersCount);
-
-  // Floating Chat State
-  const [isFloatingChatOpen, setIsFloatingChatOpen] = useState(false);
-  const [floatingChatSessionId, setFloatingChatSessionId] = useState<string | null>(null);
-
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    // 1. New Order (Cha-Ching)
-    if (newOrdersCount > prevNewOrdersCount) {
-      try {
-        const audio = new Audio('https://actions.google.com/sounds/v1/foley/cash_register_kaching.ogg');
-        audio.play().catch(e => console.log('Audio error:', e));
-        
-        setToastMessage('یک سفارش جدید ثبت شد! (نیاز به بررسی)');
-        setTimeout(() => setToastMessage(null), 6000);
-      } catch (e) {
-        console.error("Audio play failed", e);
-      }
-    }
-
-    // 2. New Live Chat Message (Pop sound + floating window)
-    if (totalUnreadChats > prevUnreadChats) {
-      try {
-        const audio = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
-        audio.play().catch(e => console.log('Audio error:', e));
-        
-        // Find which session has unread messages and open floating window
-        const newlyUpdatedSession = state.chatSessions?.find(s => s.unreadByAdmin > 0);
-        if (newlyUpdatedSession && location.pathname !== '/admin/live-chat') {
-          setFloatingChatSessionId(newlyUpdatedSession.id);
-          setIsFloatingChatOpen(true);
-        }
-      } catch (e) {
-        console.error("Audio play failed", e);
-      }
-    }
-
-    // 3. New Call Inquiry (Desk phone ring)
-    if (totalPendingInquiries > prevPendingInquiries) {
-      try {
-        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/phone_ring.ogg');
-        audio.loop = true;
-        audio.play().catch(e => console.log('Audio error:', e));
-        
-        // Stop ringing after ~3 seconds
-        setTimeout(() => {
-          audio.pause();
-        }, 3000);
-      } catch (e) {
-        console.error("Audio play failed", e);
-      }
-    }
-
-    setPrevNewOrdersCount(newOrdersCount);
-    setPrevUnreadChats(totalUnreadChats);
-    setPrevPendingInquiries(totalPendingInquiries);
-  }, [newOrdersCount, totalUnreadChats, totalPendingInquiries, prevNewOrdersCount, prevUnreadChats, prevPendingInquiries, state.chatSessions, location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -179,21 +116,6 @@ export const AdminLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1F2937] font-sans flex print:block print:bg-white print:text-black" dir="rtl">
       
-      {/* Toast Notification for New Orders */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, x: '50%' }}
-            animate={{ opacity: 1, y: 0, x: '50%' }}
-            exit={{ opacity: 0, y: -20, x: '50%' }}
-            className="fixed top-6 right-1/2 translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-xl z-[100] font-black flex items-center gap-3"
-          >
-            <Bell className="w-5 h-5 animate-bounce" />
-            {toastMessage}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-64 fixed right-0 top-0 bottom-0 z-40 shadow-xl print:hidden">
         <SidebarContent />
@@ -311,12 +233,6 @@ export const AdminLayout: React.FC = () => {
         <div className="p-4 sm:p-6 flex-1 overflow-x-hidden print:overflow-visible print:p-0">
           <Outlet />
         </div>
-        
-        <FloatingAdminChat 
-          isOpen={isFloatingChatOpen} 
-          onClose={() => setIsFloatingChatOpen(false)} 
-          defaultSessionId={floatingChatSessionId} 
-        />
       </main>
 
     </div>

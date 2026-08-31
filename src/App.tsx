@@ -29,6 +29,7 @@ import { Login } from './components/Login';
 import { Finances } from './components/Finances';
 import { LiveChatAdmin } from './components/LiveChatAdmin';
 import { Inquiries } from './components/Inquiries';
+import { StaffAlerts } from './components/StaffAlerts';
 
 // Placeholder components for new pages
 const Placeholder = ({ title }: { title: string }) => (
@@ -70,6 +71,7 @@ export default function App() {
       <AuthProvider>
       <AppProvider>
         <BrowserRouter>
+          <StaffAlerts />
           <Routes>
             {/* Public Storefront Routes */}
             <Route path="/" element={<StorefrontLayout />}>
