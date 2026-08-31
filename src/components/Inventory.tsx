@@ -24,6 +24,8 @@ import {
 import { Product, Purchase, PurchaseItem } from '../types';
 import { LowStockReportModal } from './LowStockReportModal';
 import { PriceTagPrintingModal } from './PriceTagPrintingModal';
+import { ExcelImportModal } from './ExcelImportModal';
+import { FileSpreadsheet } from 'lucide-react';
 
 // High-quality image presets for diverse Afghan markets (sanitary, groceries, dry fruits, spices, carpets)
 const IMAGE_PRESETS = [
@@ -38,7 +40,7 @@ const IMAGE_PRESETS = [
 ];
 
 export const Inventory: React.FC = () => {
-  const { state, addProduct, editProduct, bulkUpdateProducts, deleteProduct, deleteProducts, addPurchase } = useAppState();
+  const { state, addProduct, addProducts, editProduct, bulkUpdateProducts, deleteProduct, deleteProducts, addPurchase } = useAppState();
   
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -56,6 +58,7 @@ export const Inventory: React.FC = () => {
   // Report & Tag Modals
   const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
   const [isPriceTagModalOpen, setIsPriceTagModalOpen] = useState(false);
+  const [isExcelImportModalOpen, setIsExcelImportModalOpen] = useState(false);
 
   const location = useLocation();
 
@@ -570,6 +573,14 @@ export const Inventory: React.FC = () => {
               </>
             )}
             <button
+              onClick={() => setIsExcelImportModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 py-1.5 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              title="ورود کالاها با فایل اکسل"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              ورود با اکسل (Excel)
+            </button>
+            <button
               onClick={() => setIsPriceTagModalOpen(true)}
               className="bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg px-3 py-1.5 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
             >
@@ -755,12 +766,20 @@ export const Inventory: React.FC = () => {
                 <h4 className="text-[#D4AF37] font-bold border-b border-slate-100 pb-2">اطلاعات اولیه و تصویر</h4>
                 
                 <div className="flex gap-4 items-start">
-                  <div className="w-24 h-24 shrink-0 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center overflow-hidden bg-slate-50 relative group cursor-pointer">
-                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ImageIcon className="text-white w-6 h-6" />
+                  <div className="flex flex-col items-center gap-1.5 shrink-0">
+                    <div className="w-28 h-28 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 flex flex-col items-center justify-center overflow-hidden bg-slate-50 relative group cursor-pointer shadow-xs transition-all">
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-2 text-center">
+                        <ImageIcon className="text-white w-6 h-6 mb-1" />
+                        <span className="text-[10px] text-white font-bold leading-tight">تغییر عکس از کامپیوتر</span>
+                      </div>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" title="آپلود عکس از کامپیوتر" />
                     </div>
-                    <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                    <label className="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg border border-emerald-200 cursor-pointer flex items-center gap-1">
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      انتخاب از کامپیوتر
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
                   </div>
                   
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1542,6 +1561,17 @@ export const Inventory: React.FC = () => {
         isOpen={isPriceTagModalOpen}
         onClose={() => setIsPriceTagModalOpen(false)}
         products={state.products}
+        exchangeRate={state.exchangeRate}
+      />
+
+      {/* Excel Bulk Import Modal */}
+      <ExcelImportModal
+        isOpen={isExcelImportModalOpen}
+        onClose={() => setIsExcelImportModalOpen(false)}
+        onImport={(importedProducts) => {
+          addProducts(importedProducts);
+        }}
+        existingCategories={categoriesList}
         exchangeRate={state.exchangeRate}
       />
 

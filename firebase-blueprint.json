@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "products": {
+      "title": "Products",
+      "description": "Store inventory products, stock levels, packaging units, and prices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "sku": { "type": "string" },
+        "baseUnit": { "type": "string" },
+        "costPriceUSD": { "type": "number" },
+        "costPriceAFN": { "type": "number" },
+        "wholesalePriceAFN": { "type": "number" },
+        "retailPriceAFN": { "type": "number" },
+        "stockInBaseUnits": { "type": "number" },
+        "minStockInBaseUnits": { "type": "number" },
+        "image": { "type": "string" },
+        "units": { "type": "array" }
+      },
+      "required": ["id", "name", "category", "baseUnit", "stockInBaseUnits"]
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Sales orders and customer invoices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "invoiceNo": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "date": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAFN": { "type": "number" },
+        "finalAFN": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "invoiceNo", "date", "status"]
+    },
+    "app_state": {
+      "title": "App State",
+      "description": "Global synchronized application store state and configurations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "data": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "data", "updatedAt"]
+    }
+  }
+}

@@ -23,6 +23,7 @@ interface AppContextType {
   updateProductStock: (productId: string, changeBaseQty: number) => void;
   updateExchangeRate: (rate: number) => void;
   addProduct: (product: Product) => void;
+  addProducts: (products: Product[]) => void;
   editProduct: (product: Product) => void;
   bulkUpdateProducts: (updates: Partial<Product> & { id: string }[]) => void;
   deleteProduct: (id: string) => void;
@@ -407,6 +408,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...prev,
       products: [...prev.products, product]
     }));
+  };
+
+  const addProducts = (newProducts: Product[]) => {
+    setState((prev) => {
+      // Merge or append products avoiding duplicate IDs
+      const existingIds = new Set(prev.products.map(p => p.id));
+      const filteredNew = newProducts.filter(p => !existingIds.has(p.id));
+      const updatedExisting = prev.products.map(p => {
+        const replaceWith = newProducts.find(np => np.id === p.id);
+        return replaceWith || p;
+      });
+      return {
+        ...prev,
+        products: [...updatedExisting, ...filteredNew]
+      };
+    });
   };
 
   const editProduct = (product: Product) => {
@@ -957,6 +974,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateProductStock,
       updateExchangeRate,
       addProduct,
+      addProducts,
       editProduct,
       bulkUpdateProducts,
       deleteProduct,

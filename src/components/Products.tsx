@@ -4,9 +4,10 @@ import { formatCurrency } from '../utils';
 import { Product } from '../types';
 import { 
   Package, Plus, Search, Filter, Edit, Trash2, Printer, 
-  Image as ImageIcon, X, AlertCircle, Barcode
+  Image as ImageIcon, X, AlertCircle, Barcode, FileSpreadsheet
 } from 'lucide-react';
 import { SecurityGateModal } from './SecurityGate';
+import { ExcelImportModal } from './ExcelImportModal';
 
 const IMAGE_PRESETS = [
   { name: 'آیتم عمومی', url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=250' },
@@ -16,11 +17,12 @@ const IMAGE_PRESETS = [
 ];
 
 export const Products: React.FC = () => {
-  const { state, addProduct, editProduct, deleteProduct } = useAppState();
+  const { state, addProduct, addProducts, editProduct, deleteProduct } = useAppState();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isExcelImportModalOpen, setIsExcelImportModalOpen] = useState(false);
   
   // Hardcoded categories list from earlier version
   const categoriesList: string[] = ['All', 'خواربار و مواد غذایی', 'نوشیدنی‌ها', 'مواد شوینده و بهداشتی', 'لبنیات', 'تنقلات و شیرینی‌جات', 'آرایشی', 'سایر'];
@@ -82,6 +84,15 @@ export const Products: React.FC = () => {
         <div>
           <h1 className="text-2xl font-black text-[#0B1F3A] tracking-tight">مدیریت محصولات</h1>
           <p className="text-xs text-slate-500 mt-1">لیست اجناس، قیمت‌گذاری و چاپ بارکد</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsExcelImportModalOpen(true)}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            ورود دسته‌جمعی با اکسل
+          </button>
         </div>
       </div>
 
@@ -255,6 +266,17 @@ export const Products: React.FC = () => {
           description={`آیا مطمئن هستید که می‌خواهید "${productToDelete.name}" را حذف کنید؟ این عمل غیرقابل بازگشت است و ممکن است روی گزارش‌های مالی تاثیر بگذارد.`}
         />
       )}
+
+      {/* Excel Bulk Import Modal */}
+      <ExcelImportModal
+        isOpen={isExcelImportModalOpen}
+        onClose={() => setIsExcelImportModalOpen(false)}
+        onImport={(importedProducts) => {
+          addProducts(importedProducts);
+        }}
+        existingCategories={categoriesList}
+        exchangeRate={state.exchangeRate}
+      />
 
 
 
