@@ -152,6 +152,20 @@
   .dark li {
     color: var(--text-primary) !important;
   }
+  
+  /* Global Button Styling to ensure they look interactive */
+  button {
+    @apply transition-all duration-200 active:scale-[0.97];
+  }
+  
+  /* Ensure flat buttons without backgrounds still feel like interactive buttons */
+  button:not([class*="bg-"]):not([class*="p-0"]) {
+    @apply hover:bg-slate-100 hover:shadow-sm border border-transparent hover:border-slate-200 rounded-lg;
+  }
+  
+  .dark button:not([class*="bg-"]):not([class*="p-0"]) {
+    @apply hover:bg-slate-800 hover:border-slate-700;
+  }
 }
 
 @media print { 

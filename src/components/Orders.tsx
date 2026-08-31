@@ -193,11 +193,14 @@ export const Orders: React.FC = () => {
                     <td className="px-4 py-3">
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${
                         order.status === 'Completed' || order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700 print:border print:border-emerald-300' :
+                        order.status === 'Pending Delivery' ? 'bg-blue-100 text-blue-700 print:border print:border-blue-300' :
                         order.status === 'Cancelled' ? 'bg-rose-100 text-rose-700 print:border print:border-rose-300' :
                         order.status === 'Requires Customer Approval' ? 'bg-amber-100 text-amber-700 print:border print:border-amber-300' :
                         'bg-indigo-100 text-indigo-700 print:border print:border-indigo-300'
                       }`}>
-                        {order.status === 'Completed' || order.status === 'Delivered' ? 'تکمیل شده' : 
+                        {order.status === 'Completed' ? 'تکمیل شده (حضوری)' :
+                         order.status === 'Delivered' ? 'ارسال شده' : 
+                         order.status === 'Pending Delivery' ? 'در انتظار ارسال (دلیوری)' : 
                          order.status === 'Cancelled' ? 'لغو شده' :
                          order.status === 'Requires Customer Approval' ? 'منتظر تایید مشتری' :
                          'در انتظار بررسی'}
@@ -356,12 +359,13 @@ export const Orders: React.FC = () => {
 
             {/* Admin Order Actions */}
             <div className="p-6 bg-slate-50 border-t border-slate-200 flex gap-4 print:hidden">
-              {selectedOrder.status !== 'Completed' && selectedOrder.status !== 'Cancelled' && (
+              {selectedOrder.status !== 'Completed' && selectedOrder.status !== 'Delivered' && selectedOrder.status !== 'Cancelled' && (
                 <button 
-                  onClick={() => handleUpdateStatus(selectedOrder.id, 'Completed')}
+                  onClick={() => handleUpdateStatus(selectedOrder.id, selectedOrder.status === 'Pending Delivery' ? 'Delivered' : 'Completed')}
                   className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black text-lg hover:bg-emerald-700 shadow-lg flex items-center justify-center gap-2"
                 >
-                  <Check className="w-5 h-5" /> تایید و ثبت نهایی سفارش
+                  <Check className="w-5 h-5" /> 
+                  {selectedOrder.status === 'Pending Delivery' ? 'تایید ارسال و تحویل به مشتری' : 'تایید و ثبت نهایی سفارش (حضوری)'}
                 </button>
               )}
               {selectedOrder.status !== 'Cancelled' && (

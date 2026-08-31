@@ -22,7 +22,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'نوشیدنی‌ها',
     dariName: 'نوشیدنی‌ها و جوس‌های طبیعی',
     description: 'آب انار قندهار، آب‌میوه‌ها، نوشابه، انرژی‌زا و چای اعلا',
-    image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=600',
+    image: '/drinks.jpg',
     gradient: 'from-rose-600/80 to-slate-900/90',
     badge: 'خنک و دلچسپ',
     keywords: ['نوشیدنی', 'جوس', 'آبمیوه', 'انار', 'نوشابه', 'انرژی', 'نوشیدنی‌ها']
@@ -31,7 +31,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'لوازم بهداشتی',
     dariName: 'لوازم بهداشتی و آرایشی',
     description: 'شامپو، صابون‌های لوکس، کرم‌ها، دستمال و مراقبت جلد',
-    image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&q=80&w=600',
+    image: '/hygiene.jpg',
     gradient: 'from-teal-600/80 to-slate-900/90',
     badge: 'صحی و معطر',
     keywords: ['بهداشتی', 'آرایشی', 'شامپو', 'صابون', 'کرم', 'لوازم بهداشتی']
@@ -40,7 +40,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'مواد پاککاری',
     dariName: 'مواد شوینده و پاک‌کننده',
     description: 'پودر لباسشویی، مایع ظرفشویی، جرم‌گیر و مایع دستشویی',
-    image: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?auto=format&fit=crop&q=80&w=600',
+    image: '/cleaning.jpg',
     gradient: 'from-cyan-600/80 to-slate-900/90',
     badge: 'درخشان و پاک',
     keywords: ['پاککاری', 'شوینده', 'پودر', 'مایع', 'تاید', 'وایتکس', 'مواد پاککاری']
@@ -49,7 +49,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'لوازم خانه',
     dariName: 'لوازم و ضروریات خانه',
     description: 'ظروف آشپزخانه، پلاستیک‌جات، ترموز و وسایل کاربردی منزل',
-    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=600',
+    image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=600',
     gradient: 'from-emerald-700/80 to-slate-900/90',
     badge: 'با دوام و زیبا',
     keywords: ['خانه', 'آشپزخانه', 'ظروف', 'ترموز', 'لوازم خانه']
@@ -58,7 +58,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'اجناس اطفال',
     dariName: 'ضروریات و مراقبت اطفال',
     description: 'پمپر، شیر خشک، شامپو کودک، بیسکویت اطفال و اسباب‌بازی',
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&q=80&w=600',
+    image: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=600',
     gradient: 'from-pink-600/80 to-slate-900/90',
     badge: 'مراقبت طفل',
     keywords: ['اطفال', 'کودک', 'نوزاد', 'پمپر', 'شیر خشک', 'اجناس اطفال']
@@ -67,7 +67,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'میوه خشک و خسته‌باب',
     dariName: 'میوه خشک و خسته‌باب وطنی',
     description: 'بادام ستاربایی، کشمش سرخ پامیر، پسته هرات، چهارمغز و جلغوزه',
-    image: 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&q=80&w=600',
+    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&q=80&w=600',
     gradient: 'from-amber-700/80 to-slate-900/90',
     badge: 'خالص و صادراتی',
     keywords: ['میوه خشک', 'خشکبار', 'بادام', 'کشمش', 'پسته', 'خسته‌باب', 'خسته']
@@ -76,7 +76,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'ادویه‌جات و گیاهان',
     dariName: 'زعفران و ادویه‌جات اصیل',
     description: 'زعفران سوپر نگین هرات، هل، دارچین، زیره و مصالح دیگ',
-    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=600',
+    image: '/spices.jpg',
     gradient: 'from-red-700/80 to-slate-900/90',
     badge: 'عطر و طعم اعلا',
     keywords: ['زعفران', 'ادویه', 'گیاهان', 'مصالحه', 'دارچین', 'هل', 'ادویه‌جات']
@@ -85,7 +85,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'تخفیف‌های ویژه',
     dariName: 'تخفیف‌های ویژه و حراجی',
     description: 'اجناس با قیمت استثنایی و تخفیف‌های فوق‌العاده روزانه',
-    image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&q=80&w=600',
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=600',
     gradient: 'from-purple-700/80 to-slate-900/90',
     badge: 'فرصت طلایی',
     keywords: ['تخفیف', 'لیلام', 'حراج', 'ارزان', 'آفر']
@@ -94,7 +94,7 @@ export const CATEGORY_VISUALS: CategoryVisual[] = [
     name: 'اجناس عمومی',
     dariName: 'اجناس عمومی و متفرقه',
     description: 'انواع اقلام ضروری و متنوع مصرفی با قیمت‌های عمده و پرچون',
-    image: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&q=80&w=600',
+    image: '/supermarket.jpg',
     gradient: 'from-blue-700/80 to-slate-900/90',
     badge: 'تنوع بی‌نظیر',
     keywords: ['عمومی', 'متفرقه', 'سایر', 'اجناس عمومی']

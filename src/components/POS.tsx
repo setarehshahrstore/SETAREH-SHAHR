@@ -80,6 +80,10 @@ export const POS: React.FC = () => {
   // Advanced touch grid filters
   const [posSearchQuery, setPosSearchQuery] = useState('');
   const [posFilterCat, setPosFilterCat] = useState('All');
+  
+  // Delivery states
+  const [deliveryMethod, setDeliveryMethod] = useState<'Pickup' | 'Delivery'>('Pickup');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
 
   // Mixed Currency checkout paid figures
   const [paidUSD, setPaidUSD] = useState<string>('0');
@@ -437,8 +441,10 @@ export const POS: React.FC = () => {
       changeAFN: changeDueInAFN > 0 ? changeDueInAFN : 0,
       paymentMethod: isCredit ? 'Credit' : 'Cash',
       exchangeRate: state.exchangeRate,
-      status: 'Completed',
-      cashierName: user?.fullName || 'سیستم'
+      status: deliveryMethod === 'Delivery' ? 'Pending Delivery' : 'Completed',
+      cashierName: user?.fullName || 'سیستم',
+      deliveryStatus: deliveryMethod === 'Delivery' ? 'Pending' : undefined,
+      deliveryAddress: deliveryMethod === 'Delivery' ? deliveryAddress : undefined
     };
 
     addSale(newSale);
@@ -447,6 +453,8 @@ export const POS: React.FC = () => {
     setPaidAFN('0');
     setPaidUSD('0');
     setDiscountValue('0');
+    setDeliveryMethod('Pickup');
+    setDeliveryAddress('');
   };
 
   // Filtered Products for the Touch Grid Lookup Panel
@@ -907,26 +915,57 @@ export const POS: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-100 flex gap-2 w-full mt-4">
-          <button
-            onClick={() => handlePOSCheckout('Cash')}
-            disabled={posItems.length === 0}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <CreditCard className="w-4 h-4" />
-            تصفیه نقدی صندوق (فروش نقده)
-          </button>
-
-          {customerId !== 'walk-in' && (
+        <div className="pt-4 border-t border-slate-100 mt-4 space-y-3">
+          <div className="flex bg-slate-100 rounded-lg p-1">
             <button
-              onClick={() => handlePOSCheckout('Credit')}
-              disabled={posItems.length === 0}
-              className="flex-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+              type="button"
+              onClick={() => setDeliveryMethod('Pickup')}
+              className={`flex-1 py-1.5 text-[11px] font-bold rounded-md transition-all ${deliveryMethod === 'Pickup' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              <DollarSign className="w-4 h-4 text-emerald-400" />
-              فاکتور قرضه (ثبت در لجر مشتری)
+              حضوری (تحویل در فروشگاه)
             </button>
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod('Delivery')}
+              className={`flex-1 py-1.5 text-[11px] font-bold rounded-md transition-all ${deliveryMethod === 'Delivery' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              ارسال (دلیوری)
+            </button>
+          </div>
+          
+          {deliveryMethod === 'Delivery' && (
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 mb-1">آدرس ارسال (دلیوری):</label>
+              <textarea
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                placeholder="آدرس دقیق گیرنده را وارد کنید..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs focus:outline-hidden focus:border-emerald-500 resize-none h-16"
+              />
+            </div>
           )}
+
+          <div className="flex gap-2 w-full pt-2">
+            <button
+              onClick={() => handlePOSCheckout('Cash')}
+              disabled={posItems.length === 0}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <CreditCard className="w-4 h-4" />
+              تصفیه نقدی
+            </button>
+
+            {customerId !== 'walk-in' && (
+              <button
+                onClick={() => handlePOSCheckout('Credit')}
+                disabled={posItems.length === 0}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-extrabold text-xs py-3 px-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <DollarSign className="w-4 h-4 text-emerald-400" />
+                فاکتور قرضه
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -101,10 +101,10 @@ export const LiveChatAdmin: React.FC = () => {
               const isActive = activeSessionId === session.id;
               
               return (
-                <button
+                <div
                   key={session.id}
                   onClick={() => setActiveSessionId(session.id)}
-                  className={`w-full text-right p-3 rounded-xl transition-all flex items-start gap-3 ${
+                  className={`w-full text-right p-3 rounded-xl transition-all flex items-start gap-3 cursor-pointer ${
                     isActive ? 'bg-[#0B1F3A] text-white shadow-md' : 'hover:bg-white text-slate-700'
                   }`}
                 >
@@ -142,7 +142,7 @@ export const LiveChatAdmin: React.FC = () => {
                       </p>
                     )}
                   </div>
-                </button>
+                </div>
               );
             })
           )}

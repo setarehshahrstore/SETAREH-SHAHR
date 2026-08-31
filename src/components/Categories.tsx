@@ -122,7 +122,7 @@ export const Categories: React.FC = () => {
                   {visual.badge}
                 </div>
 
-                <div className="absolute top-3 left-3 bg-white/20 backdrop-blur-md text-white px-2.5 py-1 rounded-full text-[11px] font-mono font-bold">
+                <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-[11px] font-mono font-bold shadow-sm border border-white/10">
                   {count} جنس موجود
                 </div>
 

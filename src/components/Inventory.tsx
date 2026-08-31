@@ -28,13 +28,13 @@ import { PriceTagPrintingModal } from './PriceTagPrintingModal';
 // High-quality image presets for diverse Afghan markets (sanitary, groceries, dry fruits, spices, carpets)
 const IMAGE_PRESETS = [
   { name: '🥫 مواد غذایی و کنسرواجات', url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=250' },
-  { name: '🥤 نوشابه‌ها و مایعات معطر', url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&q=80&w=250' },
-  { name: '🧼 شامپو و لوازم روانی بهداشتی', url: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&q=80&w=250' },
-  { name: '🥜 میوه جات خشک و خسته‌باب', url: 'https://images.unsplash.com/photo-1514986872470-76d747e29237?auto=format&fit=crop&q=80&w=250' },
-  { name: '🌶️ زعفران و ادویه‌جات تند', url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&q=80&w=250' },
+  { name: '🥤 نوشابه‌ها و مایعات معطر', url: '/drinks.jpg' },
+  { name: '🧼 شامپو و لوازم روانی بهداشتی', url: '/hygiene.jpg' },
+  { name: '🥜 میوه جات خشک و خسته‌باب', url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&q=80&w=250' },
+  { name: '🌶️ زعفران و ادویه‌جات تند', url: '/spices.jpg' },
   { name: '🌾 برنج باریک، حبوبات و غله', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=250' },
-  { name: '🧴 صابون و کرم‌های معطر سنتی', url: 'https://images.unsplash.com/photo-1607006342446-2c93fa80d0d8?auto=format&fit=crop&q=80&w=250' },
-  { name: '📦 کارتن و اجناس پکیج عمومی', url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=250' }
+  { name: '🧴 مواد شوینده و پاک‌کننده', url: '/cleaning.jpg' },
+  { name: '📦 کارتن و اجناس پکیج عمومی', url: '/supermarket.jpg' }
 ];
 
 export const Inventory: React.FC = () => {

@@ -354,7 +354,7 @@ export const Storefront: React.FC = () => {
       const initialQty = type === 'Wholesale' && product.minWholesaleQty ? product.minWholesaleQty : 1;
       return [...prev, { product, quantity: initialQty, type }];
     });
-    setIsCartOpen(true);
+    // setIsCartOpen(true); // Removed so cart does not open automatically on add
   };
 
   const removeFromCart = (index: number) => {
