@@ -118,7 +118,7 @@ export const ExchangeRateDisplay: React.FC<Props> = ({
             <div className="flex items-center gap-1">
               <button 
                 type="button"
-                onClick={handleFetchLive}
+                onClick={() => handleFetchLive()}
                 disabled={isLoading}
                 title="به‌روزرسانی نرخ آنلاین از گوگل / مارکت"
                 className="p-1 hover:bg-white/10 rounded-lg text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
@@ -227,7 +227,7 @@ export const ExchangeRateDisplay: React.FC<Props> = ({
 
         <button
           type="button"
-          onClick={handleFetchLive}
+          onClick={() => handleFetchLive()}
           disabled={isLoading}
           className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black transition-all cursor-pointer"
         >
