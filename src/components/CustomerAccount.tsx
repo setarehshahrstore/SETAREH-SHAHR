@@ -12,7 +12,7 @@ export const CustomerAccount: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'Overview' | 'Orders' | 'Finances' | 'Profile'>('Overview');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ phone: '', address: '', city: '', password: '' });
+  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phone: '', address: '', city: '', password: '' });
 
   const customer = useMemo(() => {
     return state.customers.find(c => c.username === user?.username || c.name === user?.fullName);
@@ -57,7 +57,7 @@ export const CustomerAccount: React.FC = () => {
 
   const handleEditProfile = () => {
     if (customer) {
-      setProfileForm({ phone: customer.phone || '', address: customer.address || '', city: customer.city || '', password: '' });
+      setProfileForm({ firstName: customer.name || '', lastName: customer.lastName || '', phone: customer.phone || '', address: customer.address || '', city: customer.city || '', password: '' });
       setIsEditingProfile(true);
     }
   };
@@ -67,7 +67,9 @@ export const CustomerAccount: React.FC = () => {
     if (customer) {
       editCustomer({
         ...customer,
-        phone: profileForm.phone,
+        name: profileForm.firstName,
+          lastName: profileForm.lastName,
+          phone: profileForm.phone,
         address: profileForm.address,
         city: profileForm.city,
         passwordHash: profileForm.password ? profileForm.password : customer.passwordHash
@@ -273,15 +275,15 @@ export const CustomerAccount: React.FC = () => {
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">شماره تماس</label>
-                  <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" dir="ltr" />
+                  <input type="text" required value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" dir="ltr" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">شهر</label>
-                  <input type="text" value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                  <input type="text" required value={profileForm.city} onChange={e => setProfileForm({...profileForm, city: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">آدرس کامل</label>
-                  <textarea value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows={3}></textarea>
+                  <textarea required value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows={3}></textarea>
                 </div>
                 <div className="pt-4 border-t border-slate-100 mt-4">
                   <label className="block text-sm font-bold text-slate-700 mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> تغییر رمز عبور (اختیاری)</label>
