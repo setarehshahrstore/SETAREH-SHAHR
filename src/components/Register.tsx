@@ -1,158 +1,160 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAppState } from '../AppContext';
-import { UserPlus, ArrowRight, ShieldCheck } from 'lucide-react';
-import { Customer } from '../types';
+import { Mail, Lock, AlertCircle, User as UserIcon } from 'lucide-react';
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup, GoogleAuthProvider, updateProfile } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export const Register: React.FC = () => {
-  const navigate = useNavigate();
-  const { state, addCustomer } = useAppState();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    lastName: '',
-    username: '',
-    email: '',
-    phone: '',
-    city: 'کابل',
-    address: '',
-    password: '',
-    confirmPassword: ''
-  });
-
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('رمز عبور و تکرار آن یکسان نیستند.');
+    if (password !== confirmPassword) {
+      setError('رمز عبور و تایید آن مطابقت ندارند.');
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (password.length < 6) {
       setError('رمز عبور باید حداقل ۶ کاراکتر باشد.');
       return;
     }
 
-    // Check if username or phone already exists
-    const existingCustomer = state.customers.find(
-      c => c.username?.toLowerCase() === formData.username.toLowerCase() || c.phone === formData.phone
-    );
+    setLoading(true);
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      
+      await updateProfile(userCred.user, { displayName: name });
+      await sendEmailVerification(userCred.user);
+      
+      await setDoc(doc(db, 'userRoles', userCred.user.uid), {
+        role: 'Customer',
+        fullName: name,
+        email: email
+      });
 
-    if (existingCustomer) {
-      setError('یک حساب با این نام کاربری یا شماره تماس از قبل وجود دارد.');
-      return;
+      setSuccess(true);
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('این ایمیل قبلاً ثبت شده است. لطفاً وارد شوید.');
+      } else {
+        setError('خطا در ثبت نام. لطفاً دوباره تلاش کنید.');
+      }
     }
+    setLoading(false);
+  };
 
-    const newCustomer: Customer = {
-      id: Date.now().toString(),
-      name: formData.name,
-      lastName: formData.lastName,
-      username: formData.username,
-      passwordHash: formData.password, // In a real app, hash this!
-      phone: formData.phone,
-      email: formData.email,
-      city: formData.city,
-      address: formData.address,
-      debtAFN: 0,
-      debtUSD: 0,
-      creditLimitUSD: 0
-    };
-
-    addCustomer(newCustomer);
-    setSuccess(true);
-    setTimeout(() => {
-      navigate('/login');
-    }, 3000);
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCred = await signInWithPopup(auth, provider);
+      
+      const roleDoc = await getDoc(doc(db, 'userRoles', userCred.user.uid));
+      if (!roleDoc.exists()) {
+        await setDoc(doc(db, 'userRoles', userCred.user.uid), {
+          role: 'Customer',
+          fullName: userCred.user.displayName || 'کاربر گوگل',
+          email: userCred.user.email
+        });
+      }
+      navigate('/');
+    } catch (err: any) {
+      console.error(err);
+      setError('ورود با گوگل با مشکل مواجه شد.');
+    }
+    setLoading(false);
   };
 
   if (success) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4" dir="rtl">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShieldCheck className="w-10 h-10" />
-          </div>
-          <h2 className="text-2xl font-black text-slate-800 mb-2">حساب شما با موفقیت ساخته شد!</h2>
-          <p className="text-slate-500 mb-6">در حال انتقال به صفحه ورود...</p>
+      <div className="min-h-[80vh] flex items-center justify-center p-4" dir="rtl">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center">
+          <h2 className="text-2xl font-black text-emerald-600 mb-4">ثبت‌نام موفق!</h2>
+          <p className="text-slate-600 mb-6">ایمیل تایید به آدرس شما ارسال شد. لطفاً صندوق پستی خود (و پوشه اسپم) را بررسی کرده و روی لینک تایید کلیک کنید.</p>
+          <Link to="/login" className="inline-block bg-[#0B1F3A] hover:bg-[#152e52] transition-colors text-white px-6 py-3 rounded-xl font-bold">رفتن به صفحه ورود</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4" dir="rtl">
-      <div className="bg-white max-w-xl w-full rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-        <div className="p-6 bg-[#0B1F3A] text-white relative">
-          <Link to="/login" className="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-1 text-sm font-bold">
-            <ArrowRight className="w-4 h-4" /> بازگشت
-          </Link>
-          <div className="flex items-center gap-3">
-            <UserPlus className="w-8 h-8 text-[#D4AF37]" />
-            <div>
-              <h2 className="text-xl font-black">ثبت‌نام مشتری جدید</h2>
-              <p className="text-xs text-slate-400 mt-1">ساخت حساب کاربری در ستاره شهر</p>
-            </div>
+    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 p-8">
+        <h2 className="text-2xl font-black text-[#0B1F3A] mb-6 text-center">ثبت‌نام مشتری جدید</h2>
+        
+        {error && (
+          <div className="mb-4 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
-        </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-4" autoComplete="off">
-          {error && (
-            <div className="bg-rose-50 text-rose-700 p-4 rounded-xl text-sm font-bold border border-rose-200">
-              {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">نام <span className="text-rose-500">*</span></label>
-              <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">نام خانوادگی <span className="text-rose-500">*</span></label>
-              <input required type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">نام کاربری (Username) <span className="text-rose-500">*</span></label>
-              <input required autoComplete="new-username" type="text" dir="ltr" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" placeholder="مثال: ali123" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">شماره تماس <span className="text-rose-500">*</span></label>
-              <input required type="tel" dir="ltr" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right font-mono" placeholder="07XXXXXXXX" />
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">نام کامل</label>
+            <div className="relative">
+              <UserIcon className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="نام و نام خانوادگی" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">ایمیل (اختیاری)</label>
-            <input type="email" dir="ltr" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
+            <label className="block text-sm font-bold text-slate-700 mb-2">ایمیل</label>
+            <div className="relative">
+              <Mail className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="example@gmail.com" dir="ltr" />
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">آدرس دقیق منزل/مغازه <span className="text-rose-500">*</span></label>
-            <textarea required rows={2} value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"></textarea>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">رمز عبور <span className="text-rose-500">*</span></label>
-              <input required autoComplete="new-password" type="password" dir="ltr" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">تکرار رمز عبور <span className="text-rose-500">*</span></label>
-              <input required autoComplete="new-password" type="password" dir="ltr" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 text-right" />
+            <label className="block text-sm font-bold text-slate-700 mb-2">رمز عبور</label>
+            <div className="relative">
+              <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="حداقل ۶ کاراکتر" dir="ltr" />
             </div>
           </div>
 
-          <button type="submit" className="w-full bg-[#0B1F3A] text-[#D4AF37] py-4 rounded-xl font-black text-lg hover:bg-[#123B66] transition-all shadow-xl mt-8">
-            ساخت حساب کاربری
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">تکرار رمز عبور</label>
+            <div className="relative">
+              <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="تکرار رمز..." dir="ltr" />
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full bg-[#0B1F3A] hover:bg-[#152e52] disabled:bg-slate-300 text-white py-3.5 rounded-xl text-sm font-black transition-all shadow-lg mt-2">
+            {loading ? 'در حال ثبت نام...' : 'ایجاد حساب کاربری'}
           </button>
         </form>
+
+        <div className="mt-6 flex items-center justify-center">
+          <span className="w-full border-t border-slate-200"></span>
+          <span className="bg-white px-3 text-xs text-slate-400 font-bold">یا</span>
+          <span className="w-full border-t border-slate-200"></span>
+        </div>
+
+        <button onClick={handleGoogleLogin} disabled={loading} className="mt-6 w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-[#D4AF37] hover:bg-slate-50 text-slate-700 py-3.5 rounded-xl text-sm font-bold transition-all">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+          ثبت‌نام با حساب گوگل
+        </button>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            قبلاً ثبت نام کرده‌اید؟ <Link to="/login" className="text-[#0B1F3A] font-bold hover:underline">وارد شوید</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

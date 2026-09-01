@@ -11,7 +11,10 @@ const firebaseConfig = {
   measurementId: "G-DXP3DVYPEH"
 };
 
+import { getAuth } from "firebase/auth";
+
 const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 
 // Initialize Firestore with auto-detect long polling and resilient cache settings
 export const db = initializeFirestore(app, {

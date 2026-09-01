@@ -1,116 +1,70 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, AlertCircle, Building2 } from 'lucide-react';
-import { useAuth, UserRole } from '../AuthContext';
-import { useAppState } from '../AppContext';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export const Login: React.FC = () => {
-  const { state, editCustomer } = useAppState();
-  const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [requireNewPasswordUser, setRequireNewPasswordUser] = useState<any | null>(null);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const storeName = state.storeConfig?.storeName || 'فروشگاه ستاره شهر';
-  const logoBase64 = state.storeConfig?.logoBase64;
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    const trimmedUser = username.trim().toLowerCase();
-    const trimmedPass = password.trim();
-
-    let usersList = state.users && state.users.length > 0 ? state.users : [
-      {
-        username: 'admin@stc.com',
-        passwordHash: 'Admin$',
-        fullName: 'مالک فروشگاه',
-        role: 'Owner'
-      },
-      {
-        username: 'admin',
-        passwordHash: 'admin',
-        fullName: 'مالک فروشگاه',
-        role: 'Owner'
-      },
-      {
-        username: 'manager',
-        passwordHash: 'manager',
-        fullName: 'مدیر کل',
-        role: 'Manager'
-      },
-      {
-        username: 'cashier',
-        passwordHash: 'cashier',
-        fullName: 'صندوق‌دار',
-        role: 'Cashier'
-      },
-      {
-        username: 'warehouse',
-        passwordHash: 'warehouse',
-        fullName: 'مسئول گدام',
-        role: 'Warehouse Staff'
+    setLoading(true);
+    try {
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      if (!userCred.user.emailVerified) {
+        setError('لطفاً ابتدا ایمیل خود را تایید کنید. (پوشه اسپم را نیز چک کنید)');
+        setLoading(false);
+        return;
       }
-    ];
-
-    const foundEmployee = usersList.find(
-      u => u.username.toLowerCase() === trimmedUser && u.passwordHash === trimmedPass
-    );
-
-    const foundCustomer = state.customers.find(
-      c => c.username?.toLowerCase() === trimmedUser && c.passwordHash === trimmedPass
-    );
-
-    if (foundEmployee || foundCustomer) {
-      if (foundCustomer) {
-        if (foundCustomer.requirePasswordChange) {
-          setRequireNewPasswordUser(foundCustomer);
-          setError('');
-          return;
-        }
-        login(foundCustomer.username || foundCustomer.name, 'Customer', foundCustomer.name);
-        alert(`خوش آمدید ${foundCustomer.name} عزیز!`);
-        navigate('/account', { replace: true });
-      } else if (foundEmployee) {
-        login(foundEmployee.username, foundEmployee.role as UserRole, foundEmployee.fullName);
-        alert(`خوش آمدید ${foundEmployee.fullName} عزیز!`);
-        if (foundEmployee.role === 'Cashier') {
-          navigate('/admin/sales', { replace: true });
-        } else if (foundEmployee.role === 'Warehouse Staff') {
-          navigate('/admin/inventory', { replace: true });
-        } else {
-          navigate('/admin/dashboard', { replace: true });
-        }
+      
+      const roleDoc = await getDoc(doc(db, 'userRoles', userCred.user.uid));
+      if (roleDoc.exists() && roleDoc.data().role !== 'Customer') {
+        navigate('/admin');
+      } else {
+        navigate('/');
       }
-    } else {
+    } catch (err: any) {
+      console.error(err);
       setError('ایمیل یا رمز عبور اشتباه است.');
     }
+    setLoading(false);
   };
 
-  const handleSetNewPassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPassword || newPassword.length < 4) {
-      setError('رمز عبور جدید باید حداقل ۴ کاراکتر باشد.');
-      return;
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCred = await signInWithPopup(auth, provider);
+      
+      const roleDoc = await getDoc(doc(db, 'userRoles', userCred.user.uid));
+      if (!roleDoc.exists()) {
+        await setDoc(doc(db, 'userRoles', userCred.user.uid), {
+          role: 'Customer',
+          fullName: userCred.user.displayName || 'کاربر گوگل',
+          email: userCred.user.email
+        });
+        navigate('/');
+      } else {
+        if (roleDoc.data().role !== 'Customer') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('ورود با گوگل با مشکل مواجه شد.');
     }
-    
-    // Update customer in state
-    editCustomer({
-      ...requireNewPasswordUser,
-      passwordHash: newPassword,
-      requirePasswordChange: false
-    });
-
-    // Log them in
-    login(requireNewPasswordUser.name, 'Customer');
-    alert(`خوش آمدید ${requireNewPasswordUser.name} عزیز!`);
-    navigate('/account', { replace: true });
+    setLoading(false);
   };
 
   return (
@@ -119,59 +73,16 @@ export const Login: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
           <div className="bg-[#0B1F3A] p-8 text-center relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#D4AF37] rounded-full blur-[80px] opacity-20"></div>
-            
             <div className="relative z-10 flex flex-col items-center">
               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg border-2 border-[#D4AF37] mb-4 overflow-hidden p-1">
-                {logoBase64 ? (
-                  <img src={logoBase64} alt="Logo" className="w-full h-full object-contain" />
-                ) : (
-                  <Building2 className="w-8 h-8 text-[#0B1F3A]" />
-                )}
+                <Building2 className="w-8 h-8 text-[#0B1F3A]" />
               </div>
-              <h2 className="text-2xl font-black text-white">{storeName}</h2>
-              <p className="text-[#D4AF37] text-sm mt-1 font-medium">ورود به سیستم</p>
+              <h2 className="text-2xl font-black text-white">ورود به سیستم</h2>
             </div>
           </div>
 
           <div className="p-8">
-            {requireNewPasswordUser ? (
-              <form onSubmit={handleSetNewPassword} className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-bold text-slate-800">تعیین رمز عبور جدید</h3>
-                  <p className="text-sm text-slate-500 mt-2">شما با رمز یکبار مصرف وارد شدید. لطفاً رمز عبور جدید خود را وارد کنید.</p>
-                </div>
-                {error && (
-                  <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2 animate-fade-in">
-                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                    <span>{error}</span>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">رمز عبور جدید</label>
-                  <div className="relative">
-                    <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                      placeholder="رمز جدید..."
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8942E] text-white py-3.5 rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-[#D4AF37]/40 hover:-translate-y-0.5"
-                >
-                  <ShieldCheck className="w-5 h-5" />
-                  ذخیره رمز و ورود
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleLogin} className="space-y-6">
-              
+            <form onSubmit={handleLogin} className="space-y-5">
               {error && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2 animate-fade-in">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -180,16 +91,16 @@ export const Login: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">نام کاربری / ایمیل</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">ایمیل</label>
                 <div className="relative">
                   <Mail className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
                   <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                    placeholder="admin"
+                    placeholder="example@gmail.com"
                     dir="ltr"
                   />
                 </div>
@@ -211,49 +122,35 @@ export const Login: React.FC = () => {
                 </div>
               </div>
 
+              <div className="flex justify-between items-center text-xs font-bold mt-1">
+                <Link to="/forgot-password" className="text-slate-500 hover:text-[#D4AF37] transition-colors">فراموشی رمز؟</Link>
+                <Link to="/register" className="text-slate-500 hover:text-[#0B1F3A] transition-colors">ثبت‌نام جدید</Link>
+              </div>
+
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8942E] text-white py-3.5 rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-[#D4AF37]/40 hover:-translate-y-0.5"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#B8942E] disabled:bg-slate-300 text-white py-3.5 rounded-xl text-sm font-black transition-all shadow-lg hover:shadow-[#D4AF37]/40 hover:-translate-y-0.5"
               >
                 <ShieldCheck className="w-5 h-5" />
-                {isLogin ? 'ورود امن' : 'ثبت نام مشتری'}
+                {loading ? 'در حال بررسی...' : 'ورود'}
               </button>
-
             </form>
-            )}
-            
-            <div className="flex items-center justify-between mt-6">
-              <button 
-                type="button" 
-                onClick={() => navigate('/forgot-password')} 
-                className="text-xs font-bold text-slate-400 hover:text-[#D4AF37] transition-colors"
-              >
-                فراموشی رمز عبور؟
-              </button>
-              <button 
-                type="button" 
-                onClick={() => navigate('/register')} 
-                className="text-xs font-bold text-slate-400 hover:text-[#D4AF37] transition-colors"
-              >
-                ساخت حساب جدید مشتری
-              </button>
+
+            <div className="mt-6 flex items-center justify-center">
+              <span className="w-full border-t border-slate-200"></span>
+              <span className="bg-white px-3 text-xs text-slate-400 font-bold">یا</span>
+              <span className="w-full border-t border-slate-200"></span>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-100 text-center space-y-4">
-              {isLogin ? (
-                <p className="text-sm text-slate-600">
-                  حساب کاربری ندارید؟ <button type="button" onClick={() => setIsLogin(false)} className="text-[#D4AF37] font-bold hover:underline">ثبت نام کنید</button>
-                </p>
-              ) : (
-                <p className="text-sm text-slate-600">
-                  قبلاً ثبت نام کرده‌اید؟ <button type="button" onClick={() => setIsLogin(true)} className="text-[#0B1F3A] font-bold hover:underline">وارد شوید</button>
-                </p>
-              )}
-              
-              <p className="text-xs text-slate-500 font-mono" dir="ltr">
-                AFG ERP System v2.0 &copy; 2026
-              </p>
-            </div>
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="mt-6 w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 hover:border-[#D4AF37] hover:bg-slate-50 text-slate-700 py-3.5 rounded-xl text-sm font-bold transition-all"
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+              ورود با حساب گوگل
+            </button>
           </div>
         </div>
       </div>
