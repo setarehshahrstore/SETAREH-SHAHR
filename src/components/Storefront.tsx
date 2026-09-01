@@ -168,9 +168,9 @@ const ProductCard: React.FC<{
                   )}
                 </div>
                 <div className="text-[9px] text-amber-700/80 mb-0.5 mt-0.5">
-                  {product.units?.carton ? کارتن:   : 
-                   product.units?.box ? بسته:   : 
-                   product.units?.dozen ? جین:   : ''}
+                  {product.units?.carton ? `کارتن: ${product.units.carton.multiplier} ${product.baseUnit}` : 
+                   product.units?.box ? `بسته: ${product.units.box.multiplier} ${product.baseUnit}` : 
+                   product.units?.dozen ? `جین: ${product.units.dozen.multiplier} ${product.baseUnit}` : ''}
                 </div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="font-black text-amber-700 font-mono text-base">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
