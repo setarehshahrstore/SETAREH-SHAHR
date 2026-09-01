@@ -1019,7 +1019,7 @@ export const Storefront: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-bold">شماره تماس مستقیم و واتساپ</p>
-                    <a href="tel:+93796626004" className="font-mono font-black text-slate-900 hover:text-amber-600 text-base" dir="ltr">+93 796 626 004</a>
+                    <a href={`tel:${state.storeConfig?.phone || "+93 796 626 004"}`} className="font-mono font-black text-slate-900 hover:text-amber-600 text-base" dir="ltr">{state.storeConfig?.phone || "+93 796 626 004"}</a>
                   </div>
                 </div>
 
@@ -1029,7 +1029,7 @@ export const Storefront: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 font-bold">آدرس گدام و فروشگاه مرکزی</p>
-                    <p className="font-bold text-slate-800 text-sm">مزار شریف، مرکز شهر، انبار مرکزی ستاره شهر</p>
+                    <p className="font-bold text-slate-800 text-sm">{state.storeConfig?.address || "مزار شریف، مرکز شهر، انبار مرکزی ستاره شهر"}</p>
                   </div>
                 </div>
 

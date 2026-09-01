@@ -75,7 +75,7 @@ export const StorefrontLayout: React.FC = () => {
                 تماس مستقیم
               </a>
               <a 
-                href="https://wa.me/93796626004" 
+                href={`https://wa.me/${(state.storeConfig?.phone || "93796626004").replace(/[^0-9]/g, "")}`} 
                 target="_blank" 
                 rel="noreferrer"
                 className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-brand-navy font-bold"

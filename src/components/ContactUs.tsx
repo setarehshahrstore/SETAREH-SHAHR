@@ -7,7 +7,7 @@ import { useAppState } from '../AppContext';
 import { motion } from 'motion/react';
 
 export const ContactUs: React.FC = () => {
-  const { addInquiry } = useAppState();
+  const { state, addInquiry } = useAppState();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -84,8 +84,8 @@ export const ContactUs: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-slate-800 text-sm">شماره تلفن و واتساپ</h3>
                   <p className="text-xs text-slate-500 mt-0.5 mb-1.5">پاسخگویی سریع جهت سفارشات عمده و پرچون</p>
-                  <a href="tel:+93796626004" className="text-base font-black font-mono text-emerald-700 hover:text-emerald-800" dir="ltr">
-                    +93 796 626 004
+                  <a href={`tel:${state.storeConfig?.phone || "+93 796 626 004"}`} className="text-base font-black font-mono text-emerald-700 hover:text-emerald-800" dir="ltr">
+                    {state.storeConfig?.phone || "+93 796 626 004"}
                   </a>
                 </div>
               </div>
@@ -97,7 +97,7 @@ export const ContactUs: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-slate-800 text-sm">نشانی گدام و فروشگاه مرکزی</h3>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    افغانستان، ولایت بلخ، شهر مزار شریف، مرکز تجاری شهر، انبار مرکزی ستاره شهر
+                    {state.storeConfig?.address || "افغانستان، ولایت بلخ، شهر مزار شریف، مرکز تجاری شهر، انبار مرکزی ستاره شهر"}
                   </p>
                 </div>
               </div>
