@@ -43,10 +43,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (roleDoc.data().fullName) {
               fullName = roleDoc.data().fullName;
             }
+            // Auto-upgrade the main admin email
+            if (fbUser.email === 'setarehshahrstore@gmail.com' && role !== 'Owner') {
+              role = 'Owner';
+              await setDoc(doc(db, 'userRoles', fbUser.uid), { role: 'Owner' }, { merge: true });
+            }
           } else {
-            // Auto-create customer role if not exists
+            // Auto-create role if not exists
+            const initialRole = fbUser.email === 'setarehshahrstore@gmail.com' ? 'Owner' : 'Customer';
+            role = initialRole;
             await setDoc(doc(db, 'userRoles', fbUser.uid), {
-              role: 'Customer',
+              role: initialRole,
               fullName,
               email: fbUser.email
             });

@@ -48,7 +48,7 @@ export const Login: React.FC = () => {
       const roleDoc = await getDoc(doc(db, 'userRoles', userCred.user.uid));
       if (!roleDoc.exists()) {
         await setDoc(doc(db, 'userRoles', userCred.user.uid), {
-          role: 'Customer',
+          role: userCred.user.email === 'setarehshahrstore@gmail.com' ? 'Owner' : 'Customer',
           fullName: userCred.user.displayName || 'کاربر گوگل',
           email: userCred.user.email
         });

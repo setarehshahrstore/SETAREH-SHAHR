@@ -37,7 +37,7 @@ export const Register: React.FC = () => {
       await sendEmailVerification(userCred.user);
       
       await setDoc(doc(db, 'userRoles', userCred.user.uid), {
-        role: 'Customer',
+        role: userCred.user.email === 'setarehshahrstore@gmail.com' ? 'Owner' : 'Customer',
         fullName: name,
         email: email
       });
@@ -64,7 +64,7 @@ export const Register: React.FC = () => {
       const roleDoc = await getDoc(doc(db, 'userRoles', userCred.user.uid));
       if (!roleDoc.exists()) {
         await setDoc(doc(db, 'userRoles', userCred.user.uid), {
-          role: 'Customer',
+          role: userCred.user.email === 'setarehshahrstore@gmail.com' ? 'Owner' : 'Customer',
           fullName: userCred.user.displayName || 'کاربر گوگل',
           email: userCred.user.email
         });
