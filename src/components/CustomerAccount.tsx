@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import { useAppState } from '../AppContext';
 import { LogOut, Package, MapPin, Clock, CheckCircle, XCircle, LayoutDashboard, CreditCard, UserCircle, Edit3, Save, Lock } from 'lucide-react';
@@ -7,7 +7,7 @@ import { formatCurrency } from '../utils';
 
 export const CustomerAccount: React.FC = () => {
   const { user, logout } = useAuth();
-  const { state, editCustomer } = useAppState();
+  const { state, editCustomer, addCustomer } = useAppState();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'Overview' | 'Orders' | 'Finances' | 'Profile'>('Overview');
@@ -15,8 +15,29 @@ export const CustomerAccount: React.FC = () => {
   const [profileForm, setProfileForm] = useState({ phone: '', address: '', city: '', password: '' });
 
   const customer = useMemo(() => {
-    return state.customers.find(c => c.name === user?.fullName);
+    return state.customers.find(c => c.username === user?.username || c.name === user?.fullName);
   }, [state.customers, user]);
+
+  useEffect(() => {
+    if (user && !customer && state.customers) {
+      // Auto-create customer profile if it doesn't exist in state.customers
+      const newCustomer = {
+        id: user.id,
+        name: user.fullName || 'کاربر جدید',
+        lastName: '',
+        phone: '',
+        address: '',
+        city: '',
+        type: 'retail' as const,
+        debtAFN: 0,
+        debtUSD: 0,
+        username: user.username,
+        passwordHash: '*** (Secured)'
+      };
+      // setTimeout to avoid updating state during render
+      setTimeout(() => addCustomer(newCustomer), 0);
+    }
+  }, [user, customer, state.customers, addCustomer]);
 
   const customerOrders = useMemo(() => {
     if (!customer) return [];

@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, AlertCircle, Building2 } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, AlertCircle, Building2, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ export const Login: React.FC = () => {
                 <div className="relative">
                   <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -119,6 +120,9 @@ export const Login: React.FC = () => {
                     placeholder="رمز عبور..."
                     dir="ltr"
                   />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-3.5 text-slate-400 hover:text-slate-600">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 

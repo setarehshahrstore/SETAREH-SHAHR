@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, AlertCircle, User as UserIcon } from 'lucide-react';
+import { Mail, Lock, AlertCircle, User as UserIcon, Eye, EyeOff } from 'lucide-react';
 import { createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup, GoogleAuthProvider, updateProfile } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -9,7 +9,9 @@ export const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -122,7 +124,10 @@ export const Register: React.FC = () => {
             <label className="block text-sm font-bold text-slate-700 mb-2">رمز عبور</label>
             <div className="relative">
               <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="حداقل ۶ کاراکتر" dir="ltr" />
+              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="حداقل ۶ کاراکتر" dir="ltr" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-3.5 text-slate-400 hover:text-slate-600">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
             </div>
           </div>
 
@@ -130,7 +135,10 @@ export const Register: React.FC = () => {
             <label className="block text-sm font-bold text-slate-700 mb-2">تکرار رمز عبور</label>
             <div className="relative">
               <Lock className="absolute right-3 top-3 w-5 h-5 text-slate-400" />
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="تکرار رمز..." dir="ltr" />
+              <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="w-full pl-3 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#D4AF37]" placeholder="تکرار رمز..." dir="ltr" />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute left-3 top-3.5 text-slate-400 hover:text-slate-600">
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
             </div>
           </div>
 
