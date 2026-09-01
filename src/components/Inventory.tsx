@@ -26,7 +26,9 @@ import { LowStockReportModal } from './LowStockReportModal';
 import { PriceTagPrintingModal } from './PriceTagPrintingModal';
 import { ExcelImportModal } from './ExcelImportModal';
 import { BulkImageUploadModal } from './BulkImageUploadModal';
-import { FileSpreadsheet, Images } from 'lucide-react';
+import { FileSpreadsheet, Images, Lock } from 'lucide-react';
+import { useAuth } from '../AuthContext';
+import { Permissions } from '../utils/permissions';
 
 // High-quality image presets for diverse Afghan markets (sanitary, groceries, dry fruits, spices, carpets)
 const IMAGE_PRESETS = [
@@ -42,6 +44,11 @@ const IMAGE_PRESETS = [
 
 export const Inventory: React.FC = () => {
   const { state, addProduct, addProducts, editProduct, bulkUpdateProducts, deleteProduct, deleteProducts, addPurchase } = useAppState();
+  const { user } = useAuth();
+  
+  const canViewCost = Permissions.canViewCostPrices(user?.role);
+  const canDelete = Permissions.canDeleteProducts(user?.role);
+  const canEditPrices = Permissions.canEditProductPrices(user?.role);
   
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -555,23 +562,27 @@ export const Inventory: React.FC = () => {
           <div className="flex gap-2 w-full sm:w-auto">
             {selectedProductIds.length > 0 && (
               <>
-                <button
-                  onClick={() => setIsDiscountModalOpen(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <Tag className="w-4 h-4" />
-                  اعمال تخفیف گروهی ({selectedProductIds.length})
-                </button>
-                <button
-                  onClick={() => {
-                    setIsBulkDeleting(true);
-                    setSecurityModalOpen(true);
-                  }}
-                  className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  حذف انتخاب شده‌ها ({selectedProductIds.length})
-                </button>
+                {canEditPrices && (
+                  <button
+                    onClick={() => setIsDiscountModalOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Tag className="w-4 h-4" />
+                    اعمال تخفیف گروهی ({selectedProductIds.length})
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => {
+                      setIsBulkDeleting(true);
+                      setSecurityModalOpen(true);
+                    }}
+                    className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف انتخاب شده‌ها ({selectedProductIds.length})
+                  </button>
+                )}
               </>
             )}
             <button
@@ -824,21 +835,29 @@ export const Inventory: React.FC = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Cost Price */}
-                  <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-3">
-                    <label className="block text-sm font-bold text-emerald-800">قیمت خرید (تمام شد)</label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold w-12 text-slate-500">دالر:</span>
-                      <input type="number" step="0.01" required value={formData.costPriceUSD} onChange={e => handleUSDChange('costPrice', e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                  {canViewCost ? (
+                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 space-y-3">
+                      <label className="block text-sm font-bold text-emerald-800">قیمت خرید (تمام شد)</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold w-12 text-slate-500">دالر:</span>
+                        <input type="number" step="0.01" required value={formData.costPriceUSD} onChange={e => handleUSDChange('costPrice', e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold w-12 text-slate-500">افغانی:</span>
+                        <input type="number" step="0.01" required value={formData.costPriceAFN} onChange={e => handleAFNChange('costPrice', e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                      </div>
+                      <div className="flex items-center gap-2 pt-2 border-t border-emerald-100/50">
+                        <span className="text-[10px] font-bold text-slate-500">کارتن (دالر):</span>
+                        <input type="number" step="0.01" required value={formData.costPriceCarton} onChange={e => handleCartonCostChange(e.target.value)} className="w-full p-1 border border-emerald-200 rounded text-xs bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold w-12 text-slate-500">افغانی:</span>
-                      <input type="number" step="0.01" required value={formData.costPriceAFN} onChange={e => handleAFNChange('costPrice', e.target.value)} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
+                  ) : (
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-center items-center text-center space-y-2">
+                      <Lock className="w-5 h-5 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-700">قیمت خرید محرمانه</span>
+                      <span className="text-[10px] text-slate-400">فقط مدیران و مالک دسترسی دارند</span>
                     </div>
-                    <div className="flex items-center gap-2 pt-2 border-t border-emerald-100/50">
-                      <span className="text-[10px] font-bold text-slate-500">کارتن (دالر):</span>
-                      <input type="number" step="0.01" required value={formData.costPriceCarton} onChange={e => handleCartonCostChange(e.target.value)} className="w-full p-1 border border-emerald-200 rounded text-xs bg-white font-mono text-left focus:border-emerald-500" dir="ltr" />
-                    </div>
-                  </div>
+                  )}
 
                   {/* Wholesale Price */}
                   <div className="bg-amber-50/50 p-4 rounded-xl border border-amber-100 space-y-3">
@@ -1169,7 +1188,11 @@ export const Inventory: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-center">
                   <div className="bg-slate-50/70 p-2 rounded-lg">
                     <span className="text-[10px] text-slate-500 block">خرید:</span>
-                    <span className="font-bold text-slate-800 text-xs font-mono">{formatCurrency(p.costPriceAFN, 'AFN')}</span>
+                    {canViewCost ? (
+                      <span className="font-bold text-slate-800 text-xs font-mono">{formatCurrency(p.costPriceAFN, 'AFN')}</span>
+                    ) : (
+                      <span className="font-bold text-slate-400 text-[10px]">محرمانه</span>
+                    )}
                   </div>
                   <div className="bg-slate-50/70 p-2 rounded-lg">
                     <span className="text-[10px] text-slate-500 block">عمده:</span>
@@ -1197,13 +1220,15 @@ export const Inventory: React.FC = () => {
                     <Edit className="w-3.5 h-3.5" />
                     ویرایش
                   </button>
-                  <button
-                    onClick={() => handleDeleteProductClick(p.id, p.name)}
-                    className="p-1.5 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors"
-                    title="حذف کالا"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canDelete && (
+                    <button
+                      onClick={() => handleDeleteProductClick(p.id, p.name)}
+                      className="p-1.5 bg-slate-100 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors"
+                      title="حذف کالا"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -1234,7 +1259,9 @@ export const Inventory: React.FC = () => {
               <th className="p-3.5 text-right">مشخصات کالا</th>
               <th className="p-3.5 text-right">صنف محصول</th>
               <th className="p-3.5 text-right">موجودی تفکیکی گدام</th>
-              <th className="p-3.5 text-left">قیمت خرید (افغانی)</th>
+              <th className="p-3.5 text-left">
+                {canViewCost ? 'قیمت خرید (افغانی)' : 'قیمت خرید (محرمانه)'}
+              </th>
               <th className="p-3.5 text-left">نرخ عمده‌فروشی</th>
               <th className="p-3.5 text-left">نرخ تک‌فروشی</th>
               <th className="p-3.5 text-center">وضعیت انبار</th>
@@ -1297,8 +1324,16 @@ export const Inventory: React.FC = () => {
                       <span className="text-[10px] text-slate-400 font-sans font-bold">مجموع کسرها: {p.stockInBaseUnits} {p.baseUnit}</span>
                     </td>
                     <td className="p-3.5 text-left font-semibold font-mono">
-                      <span className="block text-slate-705">{formatCurrency(p.costPriceAFN, 'AFN')}</span>
-                      <span className="block text-[10px] text-slate-400">${p.costPriceUSD.toFixed(2)}</span>
+                      {canViewCost ? (
+                        <>
+                          <span className="block text-slate-705">{formatCurrency(p.costPriceAFN, 'AFN')}</span>
+                          <span className="block text-[10px] text-slate-400">${p.costPriceUSD.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-400 text-xs flex items-center gap-1">
+                          <Lock className="w-3 h-3" /> محرمانه
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5 text-left font-semibold font-mono">
                       <span className="block text-slate-705">{formatCurrency(p.wholesalePriceAFN, 'AFN')}</span>
@@ -1336,13 +1371,15 @@ export const Inventory: React.FC = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteProductClick(p.id, p.name)}
-                          className="p-1.5 text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
-                          title="حذف دائمی کالا"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeleteProductClick(p.id, p.name)}
+                            className="p-1.5 text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                            title="حذف دائمی کالا"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

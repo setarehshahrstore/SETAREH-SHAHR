@@ -11,7 +11,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, role: UserRole) => void;
+  login: (username: string, role: UserRole, fullName?: string) => void;
   logout: () => void;
 }
 
@@ -34,8 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  const login = (username: string, role: UserRole) => {
-    setUser({ id: `usr-${Date.now()}`, username, fullName: username, role });
+  const login = (username: string, role: UserRole, fullName?: string) => {
+    setUser({ id: `usr-${Date.now()}`, username, fullName: fullName || username, role });
   };
 
   const logout = () => {

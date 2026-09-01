@@ -7,8 +7,10 @@ import {
   LayoutDashboard, Package, Grid, ShoppingCart, Truck, ClipboardList, 
   Users, Building2, Warehouse, CreditCard, DollarSign, Receipt, 
   BarChart3, UserCog, Settings, Bell, Search, Plus, Menu, X, LogOut,
-  Store, MessageCircle, PhoneCall
+  Store, MessageCircle, PhoneCall, Clock, Camera, QrCode, ShieldCheck
 } from 'lucide-react';
+import { AttendanceKioskModal } from '../components/AttendanceKioskModal';
+import { ROLE_CONFIGS } from '../utils/permissions';
 
 const MENU_ITEMS = [
   { path: '/admin/dashboard', name: 'صفحه اصلی', icon: LayoutDashboard, roles: ['Owner', 'Manager'] },
@@ -38,45 +40,99 @@ export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const [isClockedIn, setIsClockedIn] = useState(false);
   const [clockInTime, setClockInTime] = useState<string | null>(null);
+  const [isKioskOpen, setIsKioskOpen] = useState(false);
+
+  const DEFAULT_USERS_FALLBACK = [
+    { username: 'admin@stc.com', passwordHash: 'Admin$', fullName: 'مالک فروشگاه', role: 'Owner', status: 'Active', baseSalaryAFN: 0, payments: [], timeRecords: [] },
+    { username: 'admin', passwordHash: 'Admin$', fullName: 'مالک فروشگاه', role: 'Owner', status: 'Active', baseSalaryAFN: 0, payments: [], timeRecords: [] },
+    { username: 'manager', passwordHash: 'manager', fullName: 'مدیر کل', role: 'Manager', status: 'Active', baseSalaryAFN: 25000, payments: [], timeRecords: [] },
+    { username: 'cashier', passwordHash: 'cashier', fullName: 'صندوق‌دار', role: 'Cashier', status: 'Active', baseSalaryAFN: 15000, payments: [], timeRecords: [] },
+    { username: 'warehouse', passwordHash: 'warehouse', fullName: 'مسئول گدام', role: 'Warehouse Staff', status: 'Active', baseSalaryAFN: 12000, payments: [], timeRecords: [] }
+  ];
+
+  const getSystemUsers = (): any[] => {
+    const saved = localStorage.getItem('AFG_STORE_USERS');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return DEFAULT_USERS_FALLBACK;
+  };
 
   useEffect(() => {
     if (user) {
-      const savedUsers = localStorage.getItem('AFG_STORE_USERS');
-      if (savedUsers) {
-        const parsed = JSON.parse(savedUsers);
-        const currentUser = parsed.find((u: any) => u.username === user.username);
-        if (currentUser && currentUser.timeRecords && currentUser.timeRecords.length > 0) {
-          const lastRecord = currentUser.timeRecords[currentUser.timeRecords.length - 1];
-          if (!lastRecord.clockOutTime) {
-            setIsClockedIn(true);
-            setClockInTime(lastRecord.clockInTime);
-          } else {
-            setIsClockedIn(false);
-            setClockInTime(null);
-          }
+      const usersList = getSystemUsers();
+      const currentUser = usersList.find((u: any) => 
+        u.username?.toLowerCase() === user.username?.toLowerCase() ||
+        u.fullName?.toLowerCase() === user.fullName?.toLowerCase() ||
+        u.fullName?.toLowerCase() === user.username?.toLowerCase()
+      );
+      if (currentUser && currentUser.timeRecords && currentUser.timeRecords.length > 0) {
+        const lastRecord = currentUser.timeRecords[currentUser.timeRecords.length - 1];
+        if (!lastRecord.clockOutTime) {
+          setIsClockedIn(true);
+          setClockInTime(lastRecord.clockInTime);
+        } else {
+          setIsClockedIn(false);
+          setClockInTime(null);
         }
+      } else {
+        setIsClockedIn(false);
+        setClockInTime(null);
       }
     }
   }, [user]);
 
   const handleToggleClock = () => {
-    if (!user) return;
-    const savedUsers = localStorage.getItem('AFG_STORE_USERS');
-    if (!savedUsers) return;
-    const parsed = JSON.parse(savedUsers);
-    const userIndex = parsed.findIndex((u: any) => u.username === user.username);
-    if (userIndex === -1) return;
+    if (!user) {
+      alert('لطفاً ابتدا وارد حساب کاربری خود شوید.');
+      return;
+    }
+    const usersList = getSystemUsers();
+    let userIndex = usersList.findIndex((u: any) => 
+      u.username?.toLowerCase() === user.username?.toLowerCase() ||
+      u.fullName?.toLowerCase() === user.fullName?.toLowerCase() ||
+      u.fullName?.toLowerCase() === user.username?.toLowerCase()
+    );
+
+    // If user object not found in list (e.g. newly created role), create or append entry
+    if (userIndex === -1) {
+      const newEmpEntry = {
+        username: user.username,
+        passwordHash: '123456',
+        fullName: user.fullName || user.username,
+        role: user.role,
+        status: 'Active',
+        baseSalaryAFN: 0,
+        payments: [],
+        timeRecords: []
+      };
+      usersList.push(newEmpEntry);
+      userIndex = usersList.length - 1;
+    }
     
     const now = new Date().toISOString();
+    const formattedTime = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
     
     if (isClockedIn) {
       // Clock out
-      const timeRecords = parsed[userIndex].timeRecords || [];
-      if (timeRecords.length > 0) {
+      const timeRecords = usersList[userIndex].timeRecords || [];
+      if (timeRecords.length > 0 && !timeRecords[timeRecords.length - 1].clockOutTime) {
         timeRecords[timeRecords.length - 1].clockOutTime = now;
+      } else {
+        timeRecords.push({
+          id: `time-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          clockInTime: now,
+          clockOutTime: now
+        });
       }
+      usersList[userIndex].timeRecords = timeRecords;
       setIsClockedIn(false);
       setClockInTime(null);
+      alert(`پایان شیفت کاری و خروج شما در ساعت ${formattedTime} با موفقیت ثبت شد.`);
     } else {
       // Clock in
       const newRecord = {
@@ -84,15 +140,16 @@ export const AdminLayout: React.FC = () => {
         date: new Date().toISOString().split('T')[0],
         clockInTime: now
       };
-      if (!parsed[userIndex].timeRecords) {
-        parsed[userIndex].timeRecords = [];
+      if (!usersList[userIndex].timeRecords) {
+        usersList[userIndex].timeRecords = [];
       }
-      parsed[userIndex].timeRecords.push(newRecord);
+      usersList[userIndex].timeRecords.push(newRecord);
       setIsClockedIn(true);
       setClockInTime(now);
+      alert(`شروع شیفت کاری و ورود شما در ساعت ${formattedTime} با موفقیت ثبت شد.`);
     }
     
-    localStorage.setItem('AFG_STORE_USERS', JSON.stringify(parsed));
+    localStorage.setItem('AFG_STORE_USERS', JSON.stringify(usersList));
   };
 
   const totalUnreadChats = (state.chatSessions || []).reduce((sum, s) => sum + s.unreadByAdmin, 0);
@@ -141,22 +198,6 @@ export const AdminLayout: React.FC = () => {
               }`}
             >
               <div className="flex items-center gap-3">
-            <button 
-              onClick={handleToggleClock}
-              className={`hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${isClockedIn ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}
-            >
-              {isClockedIn ? (
-                <>
-                  <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></div>
-                  پایان کار (خروج)
-                </>
-              ) : (
-                <>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                  شروع کار (ورود)
-                </>
-              )}
-            </button>
                 <item.icon className={`w-5 h-5 ${isActive ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
                 {item.name}
               </div>
@@ -178,10 +219,12 @@ export const AdminLayout: React.FC = () => {
             </div>
             <div>
               <span className="text-xs font-bold block">{user?.fullName || 'کارمند'}</span>
-              <span className="text-[10px] text-slate-400 block">{user?.role || 'Admin'}</span>
+              <span className="text-[10px] text-amber-400 font-medium block">
+                {user?.role ? (ROLE_CONFIGS[user.role]?.titleFa || user.role) : 'ادمین'}
+              </span>
             </div>
           </div>
-          <button onClick={handleLogout} className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded-lg transition-colors">
+          <button onClick={handleLogout} className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded-lg transition-colors" title="خروج از حساب">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -212,14 +255,25 @@ export const AdminLayout: React.FC = () => {
         {/* Topbar */}
         <header className="bg-white border-b border-slate-200 sticky top-0 z-30 h-16 px-4 flex items-center justify-between print:hidden">
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button className="lg:hidden p-2 text-slate-500 hover:text-[#0B1F3A]" onClick={() => setIsMobileSidebarOpen(true)}>
               <Menu className="w-6 h-6" />
             </button>
             <span className="hidden sm:block text-xs font-medium text-slate-500">{currentDate}</span>
+
+            {/* Prominent Role Position Badge */}
+            {user?.role && ROLE_CONFIGS[user.role] && (
+              <div 
+                className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border shadow-xs ${ROLE_CONFIGS[user.role].badgeBg} ${ROLE_CONFIGS[user.role].badgeBorder} ${ROLE_CONFIGS[user.role].badgeText}`}
+                title={ROLE_CONFIGS[user.role].description}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>مقام: {ROLE_CONFIGS[user.role].titleFa}</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 max-w-xl mx-4 hidden md:block relative">
+          <div className="flex-1 max-w-md mx-4 hidden md:block relative">
             <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
             <input 
               type="text" 
@@ -228,15 +282,60 @@ export const AdminLayout: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link to="/admin/sales" className="hidden sm:flex items-center gap-1.5 bg-[#0B1F3A] hover:bg-[#123B66] text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
-              <ShoppingCart className="w-4 h-4" />
-              فروش جدید
-            </Link>
-            <Link to="/admin/inventory?add=true" className="hidden sm:flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#B8942E] text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors">
-              <Plus className="w-4 h-4" />
-              افزودن محصول
-            </Link>
+          <div className="flex items-center gap-2">
+            {/* Live Camera & QR Kiosk Punch Button */}
+            <button
+              onClick={() => setIsKioskOpen(true)}
+              title="کیوسک هوشمند حضور و غیاب (دوربین، اسکن QR و چهره)"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-[#0B1F3A] to-[#123B66] hover:from-[#123B66] hover:to-[#0B1F3A] text-white transition-all shadow-sm cursor-pointer border border-[#D4AF37]/30"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span className="hidden sm:inline">کیوسک تردد</span>
+            </button>
+
+            {/* Clock In / Out Quick Action */}
+            <button 
+              onClick={handleToggleClock}
+              title={isClockedIn ? 'پایان شیفت کاری' : 'شروع شیفت کاری'}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer border ${
+                isClockedIn 
+                  ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100' 
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+              }`}
+            >
+              <Clock className={`w-3.5 h-3.5 ${isClockedIn ? 'text-rose-600 animate-spin' : 'text-emerald-600'}`} />
+              <span className="hidden sm:inline">
+                {isClockedIn ? 'ثبت خروج (پایان کار)' : 'ثبت ورود (شروع کار)'}
+              </span>
+              <span className="sm:hidden">
+                {isClockedIn ? 'خروج' : 'ورود'}
+              </span>
+              {isClockedIn && (
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping mr-0.5"></span>
+              )}
+            </button>
+
+            {/* Role-Based Quick Buttons */}
+            {(user?.role === 'Owner' || user?.role === 'Manager' || user?.role === 'Cashier') && (
+              <Link to="/admin/sales" className="hidden sm:flex items-center gap-1.5 bg-[#0B1F3A] hover:bg-[#123B66] text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors">
+                <ShoppingCart className="w-3.5 h-3.5" />
+                فروش جدید
+              </Link>
+            )}
+
+            {(user?.role === 'Owner' || user?.role === 'Manager' || user?.role === 'Warehouse Staff') && (
+              <Link to="/admin/inventory?add=true" className="hidden sm:flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#B8942E] text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors">
+                <Plus className="w-3.5 h-3.5" />
+                افزودن کالا
+              </Link>
+            )}
+
+            {user?.role === 'Cashier' && (
+              <Link to="/admin/orders" className="hidden sm:flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-2 rounded-xl text-xs font-bold transition-colors">
+                <ClipboardList className="w-3.5 h-3.5" />
+                سفارشات
+              </Link>
+            )}
 
             <div className="relative">
               <button 
@@ -310,6 +409,32 @@ export const AdminLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* Live Attendance Kiosk Modal */}
+      <AttendanceKioskModal
+        isOpen={isKioskOpen}
+        onClose={() => setIsKioskOpen(false)}
+        onAttendanceRecorded={() => {
+          if (user) {
+            const usersList = getSystemUsers();
+            const currentUser = usersList.find((u: any) => 
+              u.username?.toLowerCase() === user.username?.toLowerCase() ||
+              u.fullName?.toLowerCase() === user.fullName?.toLowerCase() ||
+              u.fullName?.toLowerCase() === user.username?.toLowerCase()
+            );
+            if (currentUser && currentUser.timeRecords && currentUser.timeRecords.length > 0) {
+              const lastRecord = currentUser.timeRecords[currentUser.timeRecords.length - 1];
+              if (!lastRecord.clockOutTime) {
+                setIsClockedIn(true);
+                setClockInTime(lastRecord.clockInTime);
+              } else {
+                setIsClockedIn(false);
+                setClockInTime(null);
+              }
+            }
+          }
+        }}
+      />
 
     </div>
   );

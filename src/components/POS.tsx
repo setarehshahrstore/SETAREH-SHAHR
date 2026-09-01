@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../AppContext';
 import { useAuth } from '../AuthContext';
+import { Permissions } from '../utils/permissions';
 import { formatCurrency, getUnitOptions } from '../utils';
 import { 
   Scan, 
@@ -39,6 +40,9 @@ const QUICK_PRESETS = [
 export const POS: React.FC = () => {
   const { state, addSale, addProduct, editSale, deleteSale, deleteSales, addCustomer } = useAppState();
   const { user } = useAuth();
+  
+  const canDeleteInvoices = Permissions.canDeleteSales(user?.role);
+  const canEditInvoice = Permissions.canEditSalePrices(user?.role);
   
   const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
@@ -1021,7 +1025,7 @@ export const POS: React.FC = () => {
                   className="w-full text-xs pr-9 pl-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-emerald-500 text-right text-slate-705 dark:text-slate-200"
                 />
               </div>
-              {selectedSaleIds.length > 0 && (
+              {canDeleteInvoices && selectedSaleIds.length > 0 && (
                 <button
                   onClick={() => setIsBulkDeleting(true)}
                   className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg px-3 py-1.5 text-xs font-extrabold flex items-center justify-center gap-1 shrink-0 cursor-pointer"
@@ -1160,25 +1164,29 @@ export const POS: React.FC = () => {
                               🖨️ چاپ بل رسید
                             </button>
 
-                            <button
-                              onClick={() => {
-                                setEditingInvoice(JSON.parse(JSON.stringify(sale)));
-                              }}
-                              className="bg-indigo-50 hover:bg-indigo-150 dark:bg-indigo-950/20 dark:hover:bg-indigo-900/30 text-indigo-805 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 rounded-lg p-1.5 cursor-pointer transition-colors"
-                              title="ویرایش قلم‌ها و مقادیر فاکتور"
-                            >
-                              ✏️ ویرایش
-                            </button>
+                            {canEditInvoice && (
+                              <button
+                                onClick={() => {
+                                  setEditingInvoice(JSON.parse(JSON.stringify(sale)));
+                                }}
+                                className="bg-indigo-50 hover:bg-indigo-150 dark:bg-indigo-950/20 dark:hover:bg-indigo-900/30 text-indigo-805 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 rounded-lg p-1.5 cursor-pointer transition-colors"
+                                title="ویرایش قلم‌ها و مقادیر فاکتور"
+                              >
+                                ✏️ ویرایش
+                              </button>
+                            )}
 
-                            <button
-                              onClick={() => {
-                                setDeletingSale(sale);
-                              }}
-                              className="bg-rose-50 hover:bg-rose-150 dark:bg-rose-955/20 dark:hover:bg-rose-900/30 text-rose-805 dark:text-rose-400 border border-rose-100 dark:border-rose-900 rounded-lg p-1.5 cursor-pointer transition-colors"
-                              title="حذف و برگشت فاکتور"
-                            >
-                              🗑️ لغو و حذف
-                            </button>
+                            {canDeleteInvoices && (
+                              <button
+                                onClick={() => {
+                                  setDeletingSale(sale);
+                                }}
+                                className="bg-rose-50 hover:bg-rose-150 dark:bg-rose-955/20 dark:hover:bg-rose-900/30 text-rose-805 dark:text-rose-400 border border-rose-100 dark:border-rose-900 rounded-lg p-1.5 cursor-pointer transition-colors"
+                                title="حذف و برگشت فاکتور"
+                              >
+                                🗑️ لغو و حذف
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -70,6 +70,11 @@ interface AppContextType {
   markChatReadByCustomer: (sessionId: string) => void;
   deleteChatSession: (sessionId: string) => void;
 
+  // Leave & Day Off Requests
+  addLeaveRequest: (request: any) => void;
+  updateLeaveRequestStatus: (id: string, status: 'Pending' | 'Approved' | 'Rejected', reviewNote?: string, reviewedBy?: string) => void;
+  deleteLeaveRequest: (id: string) => void;
+
   resetState: () => void;
 }
 
@@ -94,6 +99,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!parsed.expenses) parsed.expenses = [];
         if (!parsed.transactions) parsed.transactions = []; // Ensure generic transactions exist if needed
         if (!parsed.chatSessions) parsed.chatSessions = [];
+        if (!parsed.leaveRequests) parsed.leaveRequests = [];
         if (!parsed.exchangeRate) parsed.exchangeRate = 72.5;
         return parsed;
       } catch (e) {
@@ -984,6 +990,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const addLeaveRequest = (request: any) => {
+    setState(prev => ({
+      ...prev,
+      leaveRequests: [request, ...(prev.leaveRequests || [])]
+    }));
+  };
+
+  const updateLeaveRequestStatus = (id: string, status: 'Pending' | 'Approved' | 'Rejected', reviewNote?: string, reviewedBy?: string) => {
+    setState(prev => ({
+      ...prev,
+      leaveRequests: (prev.leaveRequests || []).map(r => r.id === id ? {
+        ...r,
+        status,
+        reviewNote: reviewNote !== undefined ? reviewNote : r.reviewNote,
+        reviewedBy: reviewedBy !== undefined ? reviewedBy : r.reviewedBy,
+        reviewDate: new Date().toISOString()
+      } : r)
+    }));
+  };
+
+  const deleteLeaveRequest = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      leaveRequests: (prev.leaveRequests || []).filter(r => r.id !== id)
+    }));
+  };
+
   const resetState = () => {
     setState(INITIAL_APP_STATE);
   };
@@ -1042,6 +1075,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       markChatReadByAdmin,
       markChatReadByCustomer,
       deleteChatSession,
+      addLeaveRequest,
+      updateLeaveRequestStatus,
+      deleteLeaveRequest,
       resetState,
       cart,
       setCart,

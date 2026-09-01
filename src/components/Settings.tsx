@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAppState } from '../AppContext';
+import { useAuth } from '../AuthContext';
 import { SecurityGateModal } from './SecurityGate';
+import { Permissions, ROLE_CONFIGS } from '../utils/permissions';
 import { 
   Store, 
   Coins, 
@@ -44,6 +46,7 @@ type TabType = 'store' | 'pricing' | 'users' | 'backup';
 
 export const Settings: React.FC = () => {
   const { state, updateExchangeRate, resetState, editProduct } = useAppState();
+  const { user } = useAuth();
 
   // Active Tab State
   const [activeTab, setActiveTab] = useState<TabType>('store');
@@ -402,9 +405,14 @@ export const Settings: React.FC = () => {
           >
             <Users className="w-4 h-4" />
             کاربران و سطوح دسترسی
-            <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full mr-1">
-              {usersList.length}
-            </span>
+            {user?.role !== 'Owner' && (
+              <span className="text-[10px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full font-bold">محدود</span>
+            )}
+            {user?.role === 'Owner' && (
+              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full mr-1">
+                {usersList.length}
+              </span>
+            )}
           </button>
 
           <button
@@ -693,172 +701,186 @@ export const Settings: React.FC = () => {
           transition={{ duration: 0.25 }}
           className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
-                <Users className="w-5 h-5" />
+          {user?.role !== 'Owner' ? (
+            <div className="p-8 text-center bg-amber-50/70 border border-amber-200 rounded-3xl space-y-3">
+              <div className="w-12 h-12 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto">
+                <Lock className="w-6 h-6" />
               </div>
-              <div>
-                <h2 className="text-lg font-black text-slate-900">مدیریت پرسونل و حساب‌های کاربری</h2>
-                <p className="text-xs text-slate-500">تعریف رمز ورود و نقش‌های دسترسی برای صندوقداران و مدیران</p>
-              </div>
+              <h3 className="text-base font-black text-amber-950">دسترسی محرمانه سیستم (محدود به مالک)</h3>
+              <p className="text-xs text-amber-800 max-w-md mx-auto leading-relaxed">
+                مدیریت پرسونل، تغییر نقش‌ها و رمزهای عبور کاربران صرفاً در حیطه اختیارات <strong>مالک فروشگاه (Owner)</strong> می‌باشد. شما به عنوان <strong>{user?.role ? ROLE_CONFIGS[user.role]?.titleFa : 'مدیر'}</strong> امکان مشاهده و ویرایش کاربران را ندارید.
+              </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowAddUserModal(!showAddUserModal)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-sm self-start sm:self-auto"
-            >
-              <UserPlus className="w-4 h-4" />
-              {showAddUserModal ? 'بستن فرم' : 'افزودن کاربر جدید'}
-            </button>
-          </div>
-
-          {/* Expandable Add User Form */}
-          <AnimatePresence>
-            {showAddUserModal && (
-              <motion.form 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                onSubmit={handleAddUserSubmit}
-                className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4 overflow-hidden"
-              >
-                <h3 className="text-xs font-black text-slate-800 flex items-center gap-2">
-                  <UserPlus className="w-4 h-4 text-indigo-600" />
-                  مشخصات کاربر و کارمند جدید:
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">نام و تخلص:</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="مثال: سهراب افغان"
-                      value={newFullName}
-                      onChange={(e) => setNewFullName(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
-                    />
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                    <Users className="w-5 h-5" />
                   </div>
-
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">سطح دسترسی و نقش:</label>
-                    <select
-                      value={newUserRole}
-                      onChange={(e) => setNewUserRole(e.target.value as any)}
-                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
-                    >
-                      <option value="Owner">👑 مالک / مدیر کل</option>
-                      <option value="Manager">👮 مدیر داخلی</option>
-                      <option value="Cashier">💵 صندوق‌دار</option>
-                      <option value="Warehouse Staff">📦 مسئول گدام</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">ایمیل یا یوزرنیم لاگین:</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="SOHRAB@STC.COM"
-                      value={newUsername}
-                      onChange={(e) => setNewUsername(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 outline-hidden text-left"
-                      dir="ltr"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-600 mb-1">رمز ورود (Password):</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="Sohrab$99"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 outline-hidden text-left"
-                      dir="ltr"
-                    />
+                    <h2 className="text-lg font-black text-slate-900">مدیریت پرسونل و حساب‌های کاربری</h2>
+                    <p className="text-xs text-slate-500">تعریف رمز ورود و نقش‌های دسترسی برای صندوقداران و مدیران</p>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-2">
-                  <button 
-                    type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-                  >
-                    <Check className="w-4 h-4" />
-                    ثبت و ذخیره کاربر
-                  </button>
-                </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
-
-          {/* User List Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {usersList.map(u => {
-              const isOwner = u.role === 'Owner';
-              const isManager = u.role === 'Manager';
-              const isCashier = u.role === 'Cashier';
-              const isWarehouse = u.role === 'Warehouse Staff';
-
-              const roleLabel = isOwner ? 'مالک / مدیر کل' : isManager ? 'مدیر داخلی' : isCashier ? 'صندوق‌دار' : 'مسئول گدام';
-              const roleBadgeColor = isOwner ? 'bg-amber-100 text-amber-800 border-amber-200' : isManager ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : isCashier ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-800 border-slate-200';
-
-              return (
-                <div 
-                  key={u.username}
-                  className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-3"
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(!showAddUserModal)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-sm self-start sm:self-auto"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-black text-sm border border-slate-200">
-                        {u.fullName.charAt(0)}
-                      </div>
+                  <UserPlus className="w-4 h-4" />
+                  {showAddUserModal ? 'بستن فرم' : 'افزودن کاربر جدید'}
+                </button>
+              </div>
+
+              {/* Expandable Add User Form */}
+              <AnimatePresence>
+                {showAddUserModal && (
+                  <motion.form 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    onSubmit={handleAddUserSubmit}
+                    className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4 overflow-hidden"
+                  >
+                    <h3 className="text-xs font-black text-slate-800 flex items-center gap-2">
+                      <UserPlus className="w-4 h-4 text-indigo-600" />
+                      مشخصات کاربر و کارمند جدید:
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <h4 className="font-black text-slate-900 text-sm">{u.fullName}</h4>
-                        <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-md border mt-1 ${roleBadgeColor}`}>
-                          {roleLabel}
-                        </span>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">نام و تخلص:</label>
+                        <input 
+                          type="text" 
+                          required
+                          placeholder="مثال: سهراب افغان"
+                          value={newFullName}
+                          onChange={(e) => setNewFullName(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">سطح دسترسی و نقش:</label>
+                        <select
+                          value={newUserRole}
+                          onChange={(e) => setNewUserRole(e.target.value as any)}
+                          className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:border-indigo-500 outline-hidden"
+                        >
+                          <option value="Owner">👑 مالک / مدیر کل</option>
+                          <option value="Manager">👮 مدیر داخلی</option>
+                          <option value="Cashier">💵 صندوق‌دار</option>
+                          <option value="Warehouse Staff">📦 مسئول گدام</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">ایمیل یا یوزرنیم لاگین:</label>
+                        <input 
+                          type="text" 
+                          required
+                          placeholder="SOHRAB@STC.COM"
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 outline-hidden text-left"
+                          dir="ltr"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1">رمز ورود (Password):</label>
+                        <input 
+                          type="text" 
+                          required
+                          placeholder="Sohrab$99"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 outline-hidden text-left"
+                          dir="ltr"
+                        />
                       </div>
                     </div>
 
-                    {u.username.toUpperCase() !== 'ADMIN@STC.COM' ? (
-                      <button
-                        onClick={(e) => handleDeleteUserClick(u.username, u.fullName, e)}
-                        className="text-rose-600 hover:bg-rose-50 p-2 rounded-xl transition-all cursor-pointer"
-                        title="حذف کاربر"
+                    <div className="flex justify-end pt-2">
+                      <button 
+                        type="submit"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
-                        ادمین اصلی
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex items-center justify-between text-xs font-mono" dir="ltr">
-                    <span className="text-slate-600 font-bold">{u.username}</span>
-                    
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <span>{revealedPasswords[u.username] ? u.passwordHash : '••••••••'}</span>
-                      <button
-                        type="button"
-                        onClick={() => setRevealedPasswords(prev => ({ ...prev, [u.username]: !prev[u.username] }))}
-                        className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
-                        title="نمایش / پنهان کردن رمز"
-                      >
-                        {revealedPasswords[u.username] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        <Check className="w-4 h-4" />
+                        ثبت و ذخیره کاربر
                       </button>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+
+              {/* User List Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {usersList.map(u => {
+                  const isOwner = u.role === 'Owner';
+                  const isManager = u.role === 'Manager';
+                  const isCashier = u.role === 'Cashier';
+                  const isWarehouse = u.role === 'Warehouse Staff';
+
+                  const roleLabel = isOwner ? 'مالک / مدیر کل' : isManager ? 'مدیر داخلی' : isCashier ? 'صندوق‌دار' : 'مسئول گدام';
+                  const roleBadgeColor = isOwner ? 'bg-amber-100 text-amber-800 border-amber-200' : isManager ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : isCashier ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-800 border-slate-200';
+
+                  return (
+                    <div 
+                      key={u.username}
+                      className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-black text-sm border border-slate-200">
+                            {u.fullName.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="font-black text-slate-900 text-sm">{u.fullName}</h4>
+                            <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-md border mt-1 ${roleBadgeColor}`}>
+                              {roleLabel}
+                            </span>
+                          </div>
+                        </div>
+
+                        {u.username.toUpperCase() !== 'ADMIN@STC.COM' ? (
+                          <button
+                            onClick={(e) => handleDeleteUserClick(u.username, u.fullName, e)}
+                            className="text-rose-600 hover:bg-rose-50 p-2 rounded-xl transition-all cursor-pointer"
+                            title="حذف کاربر"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                            ادمین اصلی
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex items-center justify-between text-xs font-mono" dir="ltr">
+                        <span className="text-slate-600 font-bold">{u.username}</span>
+                        
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <span>{revealedPasswords[u.username] ? u.passwordHash : '••••••••'}</span>
+                          <button
+                            type="button"
+                            onClick={() => setRevealedPasswords(prev => ({ ...prev, [u.username]: !prev[u.username] }))}
+                            className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                            title="نمایش / پنهان کردن رمز"
+                          >
+                            {revealedPasswords[u.username] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </motion.div>
       )}
 
@@ -926,13 +948,19 @@ export const Settings: React.FC = () => {
               </p>
             </div>
 
-            <button 
-              onClick={handleResetSystemClick}
-              className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3.5 px-4 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
-            >
-              <Trash2 className="w-4 h-4" />
-              حذف دائمی تمام اطلاعات و ریست به حالت صفر کارخانه
-            </button>
+            {user?.role === 'Owner' ? (
+              <button 
+                onClick={handleResetSystemClick}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3.5 px-4 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
+              >
+                <Trash2 className="w-4 h-4" />
+                حذف دائمی تمام اطلاعات و ریست به حالت صفر کارخانه
+              </button>
+            ) : (
+              <div className="bg-rose-100/70 border border-rose-200 rounded-2xl p-3 text-center text-xs font-bold text-rose-800">
+                این عملیات حساس صرفاً با ورود مستقیم حساب کاربری مالک (Owner) امکان‌پذیر است.
+              </div>
+            )}
           </div>
         </motion.div>
       )}

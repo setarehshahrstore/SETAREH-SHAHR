@@ -230,6 +230,85 @@ export interface ChatSession {
   unreadByCustomer: number;
 }
 
+export interface DailyShift {
+  day: 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  dayNameFa: string; // شنبه، یکشنبه، ...
+  shiftType: 'Morning' | 'Evening' | 'FullDay' | 'Night' | 'Custom' | 'Off';
+  startTime: string; // HH:mm e.g. "08:00"
+  endTime: string;   // HH:mm e.g. "16:00"
+  isOff: boolean;
+  note?: string;
+}
+
+export type WeeklySchedule = {
+  Saturday: DailyShift;
+  Sunday: DailyShift;
+  Monday: DailyShift;
+  Tuesday: DailyShift;
+  Wednesday: DailyShift;
+  Thursday: DailyShift;
+  Friday: DailyShift;
+};
+
+export type LeaveType = 'Vacation' | 'Sick' | 'Emergency' | 'ShiftOff' | 'Hourly';
+
+export interface LeaveRequest {
+  id: string;
+  employeeUsername: string;
+  employeeName: string;
+  employeeCode: string;
+  type: LeaveType;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+  hours?: number;    // for hourly leave
+  reason: string;
+  requestDate: string; // ISO
+  status: 'Pending' | 'Approved' | 'Rejected';
+  reviewedBy?: string;
+  reviewNote?: string;
+  reviewDate?: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  currency: 'AFN' | 'USD';
+  note: string;
+}
+
+export interface TimeRecord {
+  id: string;
+  date: string; // YYYY-MM-DD
+  clockInTime: string; // ISO string
+  clockOutTime?: string; // ISO string
+  clockInPhoto?: string; // Base64 snapshot image
+  clockOutPhoto?: string; // Base64 snapshot image
+  clockInMethod?: 'QR_CODE' | 'FACE_SCAN' | 'EMPLOYEE_ID' | 'BULK_ADMIN' | 'MANUAL';
+  clockOutMethod?: 'QR_CODE' | 'FACE_SCAN' | 'EMPLOYEE_ID' | 'BULK_ADMIN' | 'MANUAL';
+  deviceInfo?: string;
+  note?: string;
+}
+
+export interface AppUser {
+  username: string;
+  passwordHash: string;
+  fullName: string;
+  role: 'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff' | 'Customer';
+  employeeCode: string; // STS + 4 digits e.g. "STS1001"
+  phone?: string;
+  avatar: string; // Required Photo URL / Base64 data
+  status?: 'Active' | 'Inactive';
+  baseSalaryAFN?: number;
+  department?: string;
+  nationalId?: string;
+  bloodGroup?: string;
+  hireDate?: string;
+  schedule?: WeeklySchedule;
+  payments?: PaymentRecord[];
+  timeRecords?: TimeRecord[];
+}
+
 export interface AppState {
   categories: Category[];
   products: Product[];
@@ -245,4 +324,6 @@ export interface AppState {
   cashRegister: CashRegister;
   exchangeRate: number; // 1 USD = X AFN (defaults to 71.5)
   inquiries?: CustomerInquiry[];
+  leaveRequests?: LeaveRequest[];
 }
+

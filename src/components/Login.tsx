@@ -93,11 +93,11 @@ export const Login: React.FC = () => {
           setError('');
           return;
         }
-        login(foundCustomer.name, 'Customer');
+        login(foundCustomer.username || foundCustomer.name, 'Customer', foundCustomer.name);
         alert(`خوش آمدید ${foundCustomer.name} عزیز!`);
         navigate('/account', { replace: true });
       } else if (foundEmployee) {
-        login(foundEmployee.fullName, foundEmployee.role as UserRole);
+        login(foundEmployee.username, foundEmployee.role as UserRole, foundEmployee.fullName);
         alert(`خوش آمدید ${foundEmployee.fullName} عزیز!`);
         if (foundEmployee.role === 'Cashier') {
           navigate('/admin/sales', { replace: true });

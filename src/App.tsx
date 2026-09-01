@@ -33,7 +33,16 @@ import { LiveChatAdmin } from './components/LiveChatAdmin';
 import { Inquiries } from './components/Inquiries';
 import { StaffAlerts } from './components/StaffAlerts';
 
-// Placeholder components for new pages
+import { useAuth } from './AuthContext';
+import { ROLE_CONFIGS } from './utils/permissions';
+
+const AdminIndexRedirect: React.FC = () => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  const home = ROLE_CONFIGS[user.role]?.homeRoute || '/admin/dashboard';
+  // Remove /admin/ prefix for relative nested route or use absolute
+  return <Navigate to={home} replace />;
+};
 const Placeholder = ({ title }: { title: string }) => (
   <div className="flex items-center justify-center h-64 text-slate-500 font-bold text-xl">
     {title} - در حال ساخت...
@@ -103,8 +112,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Default redirect handled in ProtectedRoute, but we add an index redirect */}
-              <Route index element={<Navigate to="dashboard" replace />} />
+              {/* Role-based index redirection */}
+              <Route index element={<AdminIndexRedirect />} />
               
               <Route path="dashboard" element={
                 <ProtectedRoute allowedRoles={['Owner', 'Manager']}>

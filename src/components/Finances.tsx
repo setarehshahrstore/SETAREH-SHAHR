@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppState } from '../AppContext';
+import { useAuth } from '../AuthContext';
+import { Permissions } from '../utils/permissions';
 import { DateFilter, DateRange } from './DateFilter';
 import { formatCurrency } from '../utils';
 import { Plus, Search, ArrowUpRight, ArrowDownRight, CreditCard, DollarSign, X, Printer, Edit2, RotateCcw, Trash2, CheckCircle2, ShieldCheck, Lock } from 'lucide-react';
@@ -8,6 +10,12 @@ import { SecurityGateModal } from './SecurityGate';
 
 export const Finances: React.FC = () => {
   const { state, addTransaction, addCapitalLog, deleteCapitalLog, updateCashRegister, resetFinancials } = useAppState();
+  const { user } = useAuth();
+
+  const canManageCapital = Permissions.canManageCapital(user?.role);
+  const canResetFinances = Permissions.canResetFinancials(user?.role);
+  const canEditCash = Permissions.canEditCashRegister(user?.role);
+  const canViewProfit = Permissions.canViewProfitMargins(user?.role);
   
   const todayDate = new Date().toISOString().split('T')[0];
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -277,38 +285,44 @@ export const Finances: React.FC = () => {
           <p className="text-xs text-slate-500 mt-1">مدیریت موجودی نقدی، سرمایه اولیه پرداختی (افغانی و دالر)، دریافت‌ها، پرداخت‌ها و ترازنامه</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button 
-            onClick={() => setIsResetConfirmOpen(true)}
-            className="flex items-center gap-1.5 bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border border-slate-200"
-            title="صفر کردن ارقام مالی صندوق و سرمایه"
-          >
-            <RotateCcw className="w-4 h-4" />
-            صفر کردن ارقام مالی
-          </button>
-          <button 
-            onClick={openCashEditor}
-            className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-sm"
-          >
-            <Edit2 className="w-4 h-4" />
-            ویرایش موجودی صندوق
-          </button>
+          {canResetFinances && (
+            <button 
+              onClick={() => setIsResetConfirmOpen(true)}
+              className="flex items-center gap-1.5 bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer"
+              title="صفر کردن ارقام مالی صندوق و سرمایه"
+            >
+              <RotateCcw className="w-4 h-4" />
+              صفر کردن ارقام مالی
+            </button>
+          )}
+          {canEditCash && (
+            <button 
+              onClick={openCashEditor}
+              className="flex items-center gap-2 bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-sm cursor-pointer"
+            >
+              <Edit2 className="w-4 h-4" />
+              ویرایش موجودی صندوق
+            </button>
+          )}
           <button 
             onClick={() => setIsShiftModalOpen(true)}
-            className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-sm"
+            className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-sm cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             بستن شیفت و راپور
           </button>
-          <button 
-            onClick={() => setIsCapitalModalOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            مدیریت سرمایه اولیه
-          </button>
+          {canManageCapital && (
+            <button 
+              onClick={() => setIsCapitalModalOpen(true)}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              مدیریت سرمایه اولیه
+            </button>
+          )}
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#D4AF37] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#B8942E] transition-all shadow-sm"
+            className="flex items-center gap-2 bg-[#D4AF37] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#B8942E] transition-all shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             ثبت تراکنش صندوق
@@ -322,13 +336,15 @@ export const Finances: React.FC = () => {
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between relative group hover:border-indigo-200 transition-all">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-slate-500 font-bold mb-1">سرمایه اولیه (افغانی)</p>
-            <button 
-              onClick={() => setIsCapitalModalOpen(true)}
-              className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold opacity-80 group-hover:opacity-100 flex items-center gap-0.5"
-              title="تنظیم سرمایه افغانی"
-            >
-              <Edit2 className="w-3 h-3" /> تنظیم
-            </button>
+            {canManageCapital && (
+              <button 
+                onClick={() => setIsCapitalModalOpen(true)}
+                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold opacity-80 group-hover:opacity-100 flex items-center gap-0.5 cursor-pointer"
+                title="تنظیم سرمایه افغانی"
+              >
+                <Edit2 className="w-3 h-3" /> تنظیم
+              </button>
+            )}
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-black text-indigo-700 font-mono">{formatCurrency(totalInvestedAFN, 'AFN')}</h3>
@@ -340,13 +356,15 @@ export const Finances: React.FC = () => {
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between relative group hover:border-emerald-200 transition-all">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-slate-500 font-bold mb-1">سرمایه اولیه (دالر)</p>
-            <button 
-              onClick={() => setIsCapitalModalOpen(true)}
-              className="text-[10px] text-emerald-600 hover:text-emerald-800 font-bold opacity-80 group-hover:opacity-100 flex items-center gap-0.5"
-              title="تنظیم سرمایه دالری"
-            >
-              <Edit2 className="w-3 h-3" /> تنظیم
-            </button>
+            {canManageCapital && (
+              <button 
+                onClick={() => setIsCapitalModalOpen(true)}
+                className="text-[10px] text-emerald-600 hover:text-emerald-800 font-bold opacity-80 group-hover:opacity-100 flex items-center gap-0.5 cursor-pointer"
+                title="تنظیم سرمایه دالری"
+              >
+                <Edit2 className="w-3 h-3" /> تنظیم
+              </button>
+            )}
           </div>
           <div>
             <h3 className="text-base sm:text-lg font-black text-emerald-700 font-mono" dir="ltr">${totalInvestedUSD.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
@@ -376,10 +394,19 @@ export const Finances: React.FC = () => {
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
           <p className="text-[11px] text-slate-500 font-bold mb-1">مفاد خالص کل</p>
           <div>
-            <h3 className={`text-base sm:text-lg font-black font-mono ${profitAFN >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {profitAFN >= 0 ? '+' : ''}{formatCurrency(profitAFN, 'AFN')}
-            </h3>
-            <p className="text-[10px] text-slate-400 mt-1 font-mono" dir="ltr">~ {profitUSD >= 0 ? '+' : ''}${profitUSD.toFixed(2)}</p>
+            {canViewProfit ? (
+              <>
+                <h3 className={`text-base sm:text-lg font-black font-mono ${profitAFN >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {profitAFN >= 0 ? '+' : ''}{formatCurrency(profitAFN, 'AFN')}
+                </h3>
+                <p className="text-[10px] text-slate-400 mt-1 font-mono" dir="ltr">~ {profitUSD >= 0 ? '+' : ''}${profitUSD.toFixed(2)}</p>
+              </>
+            ) : (
+              <div className="flex items-center gap-1 text-slate-400 text-xs py-1">
+                <Lock className="w-3.5 h-3.5" />
+                <span>محرمانه مالک</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -390,12 +417,14 @@ export const Finances: React.FC = () => {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm text-slate-300 font-bold">موجودی نقد صندوق (افغانی)</p>
-            <button
-              onClick={openCashEditor}
-              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
-            >
-              <Edit2 className="w-3.5 h-3.5" /> ویرایش
-            </button>
+            {canEditCash && (
+              <button
+                onClick={openCashEditor}
+                className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+              >
+                <Edit2 className="w-3.5 h-3.5" /> ویرایش
+              </button>
+            )}
           </div>
           <h2 className="text-3xl font-black font-mono tracking-widest mt-2">{formatCurrency(state.cashRegister?.balanceAFN || 0, 'AFN')}</h2>
           <CreditCard className="absolute left-6 bottom-6 w-12 h-12 text-white/10" />
@@ -405,12 +434,14 @@ export const Finances: React.FC = () => {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm text-emerald-100 font-bold">موجودی نقد صندوق (دالر)</p>
-            <button
-              onClick={openCashEditor}
-              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
-            >
-              <Edit2 className="w-3.5 h-3.5" /> ویرایش
-            </button>
+            {canEditCash && (
+              <button
+                onClick={openCashEditor}
+                className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+              >
+                <Edit2 className="w-3.5 h-3.5" /> ویرایش
+              </button>
+            )}
           </div>
           <h2 className="text-3xl font-black font-mono tracking-widest mt-2" dir="ltr">${(state.cashRegister?.balanceUSD || 0).toFixed(2)}</h2>
           <DollarSign className="absolute left-6 bottom-6 w-12 h-12 text-white/10" />
