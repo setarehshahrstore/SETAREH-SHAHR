@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Calendar, Clock, CheckCircle2, XCircle, AlertCircle, Plus, 
-  CalendarDays, User, Users, Filter, Edit3, Trash2, ShieldCheck, 
-  FileText, Check, X, Sparkles, ChevronRight, ChevronLeft, Sun, Moon, Coffee, Briefcase
+  CalendarDays, User, Users, Edit3, Trash2, 
+  FileText, Check, X, Sun, Moon, Coffee, Briefcase, Store
 } from 'lucide-react';
-import { AppUser, WeeklySchedule, DailyShift, LeaveRequest, LeaveType } from '../types';
+import { AppUser, WeeklySchedule, DailyShift, LeaveRequest, LeaveType, StoreOperatingHours } from '../types';
 import { useAppState } from '../AppContext';
+import { formatTime12h, parse24hTo12hParts, convert12hPartsTo24h, getStoreHours } from '../utils';
 
 interface EmployeeScheduleManagerProps {
   employees: AppUser[];
@@ -22,6 +23,31 @@ const DAYS_OF_WEEK: { key: keyof WeeklySchedule; nameFa: string; en: string }[] 
   { key: 'Thursday', nameFa: 'پنج‌شنبه', en: 'Thursday' },
   { key: 'Friday', nameFa: 'جمعه (تعطیل عمومی)', en: 'Friday' }
 ];
+
+export const getCurrentWeekDates = (): { key: keyof WeeklySchedule; nameFa: string; en: string; dateStr: string; isToday: boolean; formattedFaDate: string }[] => {
+  const now = new Date();
+  const currentDayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const daysSinceSaturday = (currentDayOfWeek + 1) % 7; // Sunday (0) -> 1; Monday (1) -> 2; ... Friday (5) -> 6; Saturday (6) -> 0
+  
+  const saturdayDate = new Date(now);
+  saturdayDate.setDate(now.getDate() - daysSinceSaturday);
+  
+  const todayIso = now.toISOString().split('T')[0];
+
+  return DAYS_OF_WEEK.map((d, index) => {
+    const dayDate = new Date(saturdayDate);
+    dayDate.setDate(saturdayDate.getDate() + index);
+    const dateStr = dayDate.toISOString().split('T')[0];
+    const month = (dayDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = dayDate.getDate().toString().padStart(2, '0');
+    return {
+      ...d,
+      dateStr,
+      isToday: dateStr === todayIso,
+      formattedFaDate: `${month}/${day}`
+    };
+  });
+};
 
 export const DEFAULT_WEEKLY_SCHEDULE: WeeklySchedule = {
   Saturday: { day: 'Saturday', dayNameFa: 'شنبه', shiftType: 'Morning', startTime: '08:00', endTime: '16:00', isOff: false },
@@ -68,6 +94,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
   const [leaveStatusFilter, setLeaveStatusFilter] = useState<'ALL' | 'Pending' | 'Approved' | 'Rejected'>('ALL');
 
   const leaveRequests: LeaveRequest[] = state.leaveRequests || [];
+  const storeHours = getStoreHours();
 
   // Helper to get day of week in english from current date
   const getTodayDayOfWeekKey = (): keyof WeeklySchedule => {
@@ -86,6 +113,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
 
   const todayKey = getTodayDayOfWeekKey();
   const todayDateStr = new Date().toISOString().split('T')[0];
+  const currentWeekDates = getCurrentWeekDates();
 
   // Open Edit Schedule
   const openEditSchedule = (emp: AppUser) => {
@@ -111,20 +139,32 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
     setEditingScheduleEmp(null);
   };
 
-  // Apply Schedule Presets
-  const applyPreset = (presetType: 'MORNING' | 'EVENING' | 'FULL_DAY' | 'ALL_OFF') => {
+  // Apply Schedule Presets (Strict 12-Hour format times)
+  const applyPreset = (presetType: 'MORNING' | 'EVENING' | 'FULL_DAY' | 'STORE_HOURS') => {
     const updated: WeeklySchedule = { ...tempSchedule };
     DAYS_OF_WEEK.forEach(d => {
       if (d.key === 'Friday') {
-        updated[d.key] = {
-          day: d.key,
-          dayNameFa: d.nameFa,
-          shiftType: 'Off',
-          startTime: '',
-          endTime: '',
-          isOff: true,
-          note: 'تعطیل هفتگی'
-        };
+        if (presetType === 'STORE_HOURS' && storeHours.Friday.isOpen) {
+          updated[d.key] = {
+            day: d.key,
+            dayNameFa: d.nameFa,
+            shiftType: 'Evening',
+            startTime: storeHours.Friday.openTime,
+            endTime: storeHours.Friday.closeTime,
+            isOff: false,
+            note: 'شیفت کاری جمعه (بعد از نماز)'
+          };
+        } else {
+          updated[d.key] = {
+            day: d.key,
+            dayNameFa: d.nameFa,
+            shiftType: 'Off',
+            startTime: '',
+            endTime: '',
+            isOff: true,
+            note: 'تعطیل هفتگی'
+          };
+        }
       } else {
         if (presetType === 'MORNING') {
           updated[d.key] = {
@@ -153,6 +193,18 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
             endTime: '20:00',
             isOff: false
           };
+        } else if (presetType === 'STORE_HOURS') {
+          const storeDay = storeHours[d.key as keyof StoreOperatingHours] as any;
+          if (storeDay && storeDay.isOpen) {
+            updated[d.key] = {
+              day: d.key,
+              dayNameFa: d.nameFa,
+              shiftType: 'FullDay',
+              startTime: storeDay.openTime,
+              endTime: storeDay.closeTime,
+              isOff: false
+            };
+          }
         }
       }
     });
@@ -217,10 +269,11 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
     );
   };
 
+  // 12-Hour formatted shift badge
   const getShiftBadge = (shift?: DailyShift, isOnLeave?: boolean) => {
     if (isOnLeave) {
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">
+        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-xs">
           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
           مرخصی تایید شده
         </span>
@@ -235,33 +288,36 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
       );
     }
 
+    const formattedStart = formatTime12h(shift.startTime, { usePersianMeridiem: true });
+    const formattedEnd = formatTime12h(shift.endTime, { usePersianMeridiem: true });
+
     switch (shift.shiftType) {
       case 'Morning':
         return (
           <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-lg">
             <Sun className="w-3 h-3 text-amber-500" />
-            صبح ({shift.startTime || '08:00'}-{shift.endTime || '16:00'})
+            صبح ({formattedStart} تا {formattedEnd})
           </span>
         );
       case 'Evening':
         return (
           <span className="inline-flex items-center gap-1 bg-purple-50 text-purple-800 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded-lg">
             <Moon className="w-3 h-3 text-purple-600" />
-            عصر ({shift.startTime || '14:00'}-{shift.endTime || '22:00'})
+            عصر ({formattedStart} تا {formattedEnd})
           </span>
         );
       case 'FullDay':
         return (
           <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
             <Briefcase className="w-3 h-3 text-amber-600" />
-            تمام وقت ({shift.startTime || '08:30'}-{shift.endTime || '20:00'})
+            تمام وقت ({formattedStart} تا {formattedEnd})
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-lg">
             <Clock className="w-3 h-3 text-slate-600" />
-            {shift.startTime} - {shift.endTime}
+            {formattedStart} تا {formattedEnd}
           </span>
         );
     }
@@ -281,7 +337,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
   const pendingLeaveCount = leaveRequests.filter(r => r.status === 'Pending').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans" dir="rtl">
       
       {/* Top Header Card */}
       <div className="bg-gradient-to-r from-[#0B1F3A] via-[#123B66] to-[#0B1F3A] text-white rounded-3xl p-5 sm:p-6 shadow-xl border border-slate-700">
@@ -292,13 +348,13 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-black flex items-center gap-2">
-                برنامه‌ریزی شیفت، تقویم کاری و سیستم درخواست مرخصی پرسنل
+                برنامه‌ریزی شیفت ۱ هفته، تقویم کاری و سیستم مرخصی پرسنل
                 <span className="bg-[#D4AF37] text-[#0B1F3A] text-xs px-2.5 py-0.5 rounded-full font-black">
-                  هوشمند
+                  فرمت ۱۲ ساعته
                 </span>
               </h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                تنظیم روزهای حضور، شیفت‌های کاری هفتگی، مرخصی‌های روزانه/ساعتی و بررسی درخواست‌های عدم حضور
+                تنظیم روزهای حضور ۱ هفته‌ای (شنبه تا جمعه)، ساعات قبل/بعد از ظهر و بررسی درخواست‌های عدم حضور
               </p>
             </div>
           </div>
@@ -317,8 +373,21 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
           </div>
         </div>
 
+        {/* PROMINENT SCHEDULE NOTICE (AS REQUESTED) */}
+        <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-200 flex items-start gap-3 text-xs">
+          <AlertCircle className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-black text-white block mb-0.5">
+              ⚠️ توجه بسیار مهم: برنامه کاری ممکن است تغییر کند، لطفاً همواره بررسی نمایید!
+            </span>
+            <p className="text-slate-200 leading-relaxed">
+              ساعات کاری و شیفت‌های هفتگی پرسنل و زمان‌بندی باز بودن فروشگاه ممکن است بر اساس نیاز فروشگاه، مناسبت‌ها و تغییرات مدیریتی به‌روزرسانی شود. لطفاً همواره شیفت خود را از این جدول یا تابلوی اعلانات بررسی نمایید.
+            </p>
+          </div>
+        </div>
+
         {/* Sub Navigation Tabs */}
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/10 overflow-x-auto text-xs font-bold">
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/10 overflow-x-auto text-xs font-bold">
           <button
             onClick={() => setActiveSubTab('ROSTER')}
             className={`px-4 py-2 rounded-xl flex items-center gap-2 transition-all cursor-pointer ${
@@ -328,7 +397,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
             }`}
           >
             <Calendar className="w-4 h-4" />
-            جدول شیفت هفتگی پرسنل (Roster)
+            جدول شیفت ۱ هفته پرسنل (Weekly Roster)
           </button>
 
           <button
@@ -378,7 +447,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
       </div>
 
       {/* ========================================================================= */}
-      {/* SUB-TAB 1: WEEKLY ROSTER MATRIX */}
+      {/* SUB-TAB 1: WEEKLY ROSTER MATRIX (1 WEEK VIEW) */}
       {/* ========================================================================= */}
       {activeSubTab === 'ROSTER' && (
         <div className="space-y-4">
@@ -388,7 +457,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
               <div>
                 <h3 className="font-black text-sm text-[#0B1F3A] flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-indigo-600" />
-                  ماتریس شیفت‌های هفتگی پرسنل (شنبه تا جمعه)
+                  برنامه کاری ۱ هفته‌ای پرسنل (شنبه تا جمعه - فرمت ۱۲ ساعته)
                 </h3>
                 <p className="text-[11px] text-slate-500">
                   برای تغییر برنامه کاری یا روزهای تعطیل هر کارمند، بر روی دکمه «ویرایش شیفت» کلیک کنید.
@@ -418,10 +487,11 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-black">
                     <th className="py-3 px-4 rounded-r-2xl">کارمند / کد پرسنلی</th>
-                    {DAYS_OF_WEEK.map(d => (
-                      <th key={d.key} className={`py-3 px-3 text-center ${d.key === todayKey ? 'bg-amber-100/70 text-amber-950 font-black' : ''}`}>
+                    {currentWeekDates.map(d => (
+                      <th key={d.key} className={`py-3 px-3 text-center ${d.isToday ? 'bg-amber-100/70 text-amber-950 font-black' : ''}`}>
                         {d.nameFa}
-                        {d.key === todayKey && (
+                        <span className="block text-[10px] text-slate-400 font-normal mt-0.5">{d.formattedFaDate}</span>
+                        {d.isToday && (
                           <span className="block text-[9px] text-amber-800 font-normal">(امروز)</span>
                         )}
                       </th>
@@ -453,12 +523,12 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                           </div>
                         </td>
 
-                        {DAYS_OF_WEEK.map(d => {
+                        {currentWeekDates.map(d => {
                           const shift = schedule[d.key];
-                          const onLeave = isEmployeeOnLeaveToday(emp.username);
+                          const onLeave = isEmployeeOnLeaveToday(emp.username, d.dateStr);
                           return (
-                            <td key={d.key} className={`py-3 px-2 text-center ${d.key === todayKey ? 'bg-amber-50/50' : ''}`}>
-                              {getShiftBadge(shift, d.key === todayKey && onLeave)}
+                            <td key={d.key} className={`py-3 px-2 text-center ${d.isToday ? 'bg-amber-50/50' : ''}`}>
+                              {getShiftBadge(shift, onLeave)}
                             </td>
                           );
                         })}
@@ -466,10 +536,10 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                         <td className="py-3 px-4 text-center">
                           <button
                             onClick={() => openEditSchedule(emp)}
-                            className="bg-slate-100 hover:bg-[#0B1F3A] hover:text-white text-slate-700 font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 mx-auto text-xs cursor-pointer active:scale-95"
+                            className="bg-slate-100 hover:bg-[#0B1F3A] hover:text-[#D4AF37] text-slate-700 font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 mx-auto text-xs cursor-pointer active:scale-95"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
-                            تنظیم شیفت
+                            ویرایش شیفت
                           </button>
                         </td>
                       </tr>
@@ -596,7 +666,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                       </div>
                     </div>
 
-                    {/* Attendance live status */}
+                    {/* Attendance live status (12-hour formatted) */}
                     <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                       <span className="text-slate-500 font-medium">وضعیت تردد کیوسک:</span>
                       <div>
@@ -605,11 +675,11 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                         ) : isCurrentlyPresent ? (
                           <span className="text-emerald-700 font-black flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                            حاضر در فروشگاه (ورود: {todayRecord.clockInTime.slice(11, 16)})
+                            حاضر در فروشگاه (ورود: {formatTime12h(todayRecord.clockInTime)})
                           </span>
                         ) : todayRecord?.clockOutTime ? (
                           <span className="text-slate-700 font-bold">
-                            پایان شیفت (خروج: {todayRecord.clockOutTime.slice(11, 16)})
+                            پایان شیفت (خروج: {formatTime12h(todayRecord.clockOutTime)})
                           </span>
                         ) : shift?.isOff ? (
                           <span className="text-slate-400 font-medium">روز رخصتی</span>
@@ -834,10 +904,10 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
               <div>
                 <h3 className="font-black text-sm text-[#0B1F3A] flex items-center gap-2">
                   <User className="w-4 h-4 text-indigo-600" />
-                  برنامه کاری، روزهای موظف و وضعیت درخواست‌های پرسنل
+                  برنامه کاری ۱ هفته‌ای و وضعیت مرخصی‌های پرسنل
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  کارمند محترم می‌تواند شیفت هفتگی و وضعیت مرخصی‌های خود را در این بخش مشاهده کند.
+                  کارمند محترم می‌تواند شیفت هفتگی با فرمت ۱۲ ساعته و وضعیت مرخصی‌های خود را مشاهده کند.
                 </p>
               </div>
 
@@ -902,29 +972,37 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
 
                   {/* 7-Day Card Grid */}
                   <div>
-                    <h4 className="font-black text-xs text-slate-700 mb-2.5">برنامه هفتگی موظفیت:</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-black text-xs text-slate-700">برنامه کاری ۱ هفته‌ای موظفیت:</h4>
+                      <span className="text-[11px] text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                        ⚠️ برنامه کاری ممکن است تغییر کند، لطفاً همواره بررسی نمایید
+                      </span>
+                    </div>
+
                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-                      {DAYS_OF_WEEK.map(d => {
+                      {currentWeekDates.map(d => {
                         const shift = schedule[d.key];
-                        const isToday = d.key === todayKey;
+                        const isToday = d.isToday;
+                        const onLeave = isEmployeeOnLeaveToday(currentEmp.username, d.dateStr);
                         return (
                           <div 
                             key={d.key} 
                             className={`p-3 rounded-2xl border text-center transition-all ${
                               isToday 
                                 ? 'bg-amber-50/80 border-amber-300 shadow-sm ring-2 ring-amber-400' 
-                                : shift?.isOff 
+                                : shift?.isOff || onLeave
                                   ? 'bg-slate-50 border-slate-200' 
                                   : 'bg-white border-slate-200 shadow-sm'
                             }`}
                           >
                             <span className={`text-[11px] font-black block ${isToday ? 'text-amber-900 font-black' : 'text-slate-700'}`}>
                               {d.nameFa}
-                              {isToday && <span className="text-[9px] text-amber-700 block font-normal">(امروز)</span>}
+                              <span className="block text-[10px] text-slate-400 font-normal mt-0.5">{d.formattedFaDate}</span>
+                              {isToday && <span className="text-[9px] text-amber-700 block font-normal mt-0.5">(امروز)</span>}
                             </span>
 
                             <div className="mt-2">
-                              {getShiftBadge(shift)}
+                              {getShiftBadge(shift, onLeave)}
                             </div>
                           </div>
                         );
@@ -987,22 +1065,22 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 1: EDIT EMPLOYEE SCHEDULE */}
+      {/* MODAL 1: EDIT EMPLOYEE SCHEDULE (STRICT 12-HOUR FORMAT) */}
       {/* ========================================================================= */}
       {editingScheduleEmp && (
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[140] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh]">
+          <div className="bg-white w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col my-auto max-h-[92vh]">
             
             {/* Header */}
             <div className="bg-[#0B1F3A] text-white p-4 px-6 flex items-center justify-between">
               <div>
                 <h3 className="font-black text-sm text-white flex items-center gap-2">
-                  تنظیم شیفت و روزهای کاری پرسنل: {editingScheduleEmp.fullName}
+                  تنظیم شیفت ۱ هفته‌ای: {editingScheduleEmp.fullName}
                   <span className="bg-[#D4AF37] text-[#0B1F3A] font-mono text-xs px-2 py-0.5 rounded font-black">
                     {editingScheduleEmp.employeeCode}
                   </span>
                 </h3>
-                <p className="text-[11px] text-slate-300">ساعات کاری و روزهای تعطیل هفتگی را برای این کارمند تنظیم کنید.</p>
+                <p className="text-[11px] text-slate-300">ساعات کاری با فرمت ۱۲ ساعته (قبل از ظهر / بعد از ظهر) تنظیم می‌شود.</p>
               </div>
               <button
                 onClick={() => setEditingScheduleEmp(null)}
@@ -1020,21 +1098,29 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                 onClick={() => applyPreset('MORNING')}
                 className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
               >
-                شیفت ثابت صبح (۰۸:۰۰ - ۱۶:۰۰)
+                شیفت صبح (۰۸:۰۰ ق.ظ - ۰۴:۰۰ ب.ظ)
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('EVENING')}
                 className="bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
               >
-                شیفت ثابت عصر (۱۴:۰۰ - ۲۲:۰۰)
+                شیفت عصر (۰۲:۰۰ ب.ظ - ۱۰:۰۰ ب.ظ)
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('FULL_DAY')}
                 className="bg-white hover:bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
               >
-                تمام وقت استاندارد (جمعه تعطیل)
+                تمام وقت استاندارد (۰۸:۳۰ ق.ظ - ۰۸:۰۰ ب.ظ)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset('STORE_HOURS')}
+                className="bg-[#0B1F3A] hover:bg-[#123B66] text-[#D4AF37] px-2.5 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <Store className="w-3 h-3" />
+                مطابق با ساعات رسمی فروشگاه
               </button>
             </div>
 
@@ -1049,6 +1135,9 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                   endTime: '16:00',
                   isOff: false
                 };
+
+                const startParts = parse24hTo12hParts(currentDayShift.startTime || '08:00');
+                const endParts = parse24hTo12hParts(currentDayShift.endTime || '16:00');
 
                 return (
                   <div 
@@ -1082,7 +1171,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                     </div>
 
                     {!currentDayShift.isOff && (
-                      <div className="flex items-center gap-2 flex-1 flex-wrap text-xs">
+                      <div className="flex items-center gap-3 flex-1 flex-wrap text-xs">
                         <select
                           value={currentDayShift.shiftType}
                           onChange={(e) => {
@@ -1105,31 +1194,111 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                           <option value="Custom">ساعات سفارشی</option>
                         </select>
 
-                        <div className="flex items-center gap-1 font-mono">
-                          <span className="text-slate-500 text-[11px]">از:</span>
-                          <input
-                            type="time"
-                            value={currentDayShift.startTime}
+                        {/* 12-Hour formatted start/end selector */}
+                        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                          <span className="text-slate-500 font-bold text-[10px]">از:</span>
+                          <select
+                            value={startParts.hour}
                             onChange={(e) => {
+                              const newH = parseInt(e.target.value, 10);
+                              const newTime24 = convert12hPartsTo24h(newH, startParts.minute, startParts.meridiem);
                               setTempSchedule(prev => ({
                                 ...prev,
-                                [d.key]: { ...currentDayShift, startTime: e.target.value }
+                                [d.key]: { ...currentDayShift, startTime: newTime24 }
                               }));
                             }}
-                            className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs"
-                          />
-                          <span className="text-slate-500 text-[11px]">تا:</span>
-                          <input
-                            type="time"
-                            value={currentDayShift.endTime}
+                            className="bg-white border border-slate-300 rounded-lg px-1.5 py-1 text-xs font-mono font-bold"
+                          >
+                            {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                              <option key={h} value={h}>{h.toString().padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <span className="text-slate-400">:</span>
+                          <select
+                            value={startParts.minute}
                             onChange={(e) => {
+                              const newM = parseInt(e.target.value, 10);
+                              const newTime24 = convert12hPartsTo24h(startParts.hour, newM, startParts.meridiem);
                               setTempSchedule(prev => ({
                                 ...prev,
-                                [d.key]: { ...currentDayShift, endTime: e.target.value }
+                                [d.key]: { ...currentDayShift, startTime: newTime24 }
                               }));
                             }}
-                            className="bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-xs"
-                          />
+                            className="bg-white border border-slate-300 rounded-lg px-1.5 py-1 text-xs font-mono font-bold"
+                          >
+                            {[0, 15, 30, 45].map(m => (
+                              <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newMer = startParts.meridiem === 'AM' ? 'PM' : 'AM';
+                              const newTime24 = convert12hPartsTo24h(startParts.hour, startParts.minute, newMer);
+                              setTempSchedule(prev => ({
+                                ...prev,
+                                [d.key]: { ...currentDayShift, startTime: newTime24 }
+                              }));
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-black cursor-pointer ${
+                              startParts.meridiem === 'AM' ? 'bg-indigo-600 text-white' : 'bg-purple-600 text-white'
+                            }`}
+                          >
+                            {startParts.meridiem === 'AM' ? 'ق.ظ' : 'ب.ظ'}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                          <span className="text-slate-500 font-bold text-[10px]">تا:</span>
+                          <select
+                            value={endParts.hour}
+                            onChange={(e) => {
+                              const newH = parseInt(e.target.value, 10);
+                              const newTime24 = convert12hPartsTo24h(newH, endParts.minute, endParts.meridiem);
+                              setTempSchedule(prev => ({
+                                ...prev,
+                                [d.key]: { ...currentDayShift, endTime: newTime24 }
+                              }));
+                            }}
+                            className="bg-white border border-slate-300 rounded-lg px-1.5 py-1 text-xs font-mono font-bold"
+                          >
+                            {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                              <option key={h} value={h}>{h.toString().padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <span className="text-slate-400">:</span>
+                          <select
+                            value={endParts.minute}
+                            onChange={(e) => {
+                              const newM = parseInt(e.target.value, 10);
+                              const newTime24 = convert12hPartsTo24h(endParts.hour, newM, endParts.meridiem);
+                              setTempSchedule(prev => ({
+                                ...prev,
+                                [d.key]: { ...currentDayShift, endTime: newTime24 }
+                              }));
+                            }}
+                            className="bg-white border border-slate-300 rounded-lg px-1.5 py-1 text-xs font-mono font-bold"
+                          >
+                            {[0, 15, 30, 45].map(m => (
+                              <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newMer = endParts.meridiem === 'AM' ? 'PM' : 'AM';
+                              const newTime24 = convert12hPartsTo24h(endParts.hour, endParts.minute, newMer);
+                              setTempSchedule(prev => ({
+                                ...prev,
+                                [d.key]: { ...currentDayShift, endTime: newTime24 }
+                              }));
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-black cursor-pointer ${
+                              endParts.meridiem === 'AM' ? 'bg-indigo-600 text-white' : 'bg-purple-600 text-white'
+                            }`}
+                          >
+                            {endParts.meridiem === 'AM' ? 'ق.ظ' : 'ب.ظ'}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -1152,7 +1321,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
                 onClick={handleSaveSchedule}
                 className="bg-[#0B1F3A] hover:bg-[#123B66] text-[#D4AF37] font-black px-6 py-2 rounded-xl text-xs shadow-md transition-all cursor-pointer active:scale-95"
               >
-                ذخیره برنامه هفتگی
+                ذخیره برنامه ۱ هفته‌ای
               </button>
             </div>
 
@@ -1256,31 +1425,30 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
               )}
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">علت و توضیحات درخواست:</label>
+                <label className="font-bold text-slate-700 block mb-1">دلیل و توضیحات درخواست:</label>
                 <textarea
                   rows={3}
                   required
-                  placeholder="علت درخواست مرخصی یا روز تعطیل را شرح دهید..."
                   value={leaveReason}
                   onChange={(e) => setLeaveReason(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800"
+                  placeholder="لطفاً دلیل نیاز به مرخصی یا جابجایی روز تعطیل را شرح دهید..."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-3 flex items-center justify-end gap-2">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsLeaveModalOpen(false)}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#0B1F3A] hover:bg-[#123B66] text-[#D4AF37] font-black px-6 py-2 rounded-xl text-xs shadow-md transition-all cursor-pointer active:scale-95"
+                  className="bg-[#0B1F3A] hover:bg-[#123B66] text-[#D4AF37] font-black px-6 py-2 rounded-xl shadow-md cursor-pointer active:scale-95 transition-all"
                 >
-                  ارسال درخواست
+                  ثبت و ارسال به مدیریت
                 </button>
               </div>
             </form>
@@ -1290,68 +1458,65 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL 3: REVIEW / APPROVE LEAVE REQUEST BY MANAGER */}
+      {/* MODAL 3: MANAGER REVIEW CONFIRMATION */}
       {/* ========================================================================= */}
       {reviewingRequest && (
-        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[140] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[150] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-200 flex flex-col my-auto">
             
-            <div className="bg-[#0B1F3A] text-white p-4 px-6 flex items-center justify-between">
-              <h3 className="font-black text-sm text-white">بررسی درخواست مرخصی مدیریت</h3>
-              <button
-                onClick={() => setReviewingRequest(null)}
-                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
-              >
+            <div className={`p-4 text-white flex items-center justify-between ${reviewAction === 'Approved' ? 'bg-emerald-700' : 'bg-rose-700'}`}>
+              <h3 className="font-black text-sm flex items-center gap-2">
+                {reviewAction === 'Approved' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                {reviewAction === 'Approved' ? 'تایید درخواست مرخصی پرسنل' : 'رد درخواست مرخصی'}
+              </h3>
+              <button onClick={() => setReviewingRequest(null)} className="text-white hover:opacity-80 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1">
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-bold">کارمند:</span>
+                  <span className="text-slate-500 font-bold">نام پرسنل:</span>
                   <span className="font-black text-slate-900">{reviewingRequest.employeeName} ({reviewingRequest.employeeCode})</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-bold">نوع مرخصی:</span>
-                  <span className="font-bold text-indigo-700">{getLeaveTypeFa(reviewingRequest.type)}</span>
+                  <span className="text-slate-500 font-bold">بازه تاریخ:</span>
+                  <span className="font-mono text-slate-800 font-bold">از {reviewingRequest.startDate} تا {reviewingRequest.endDate}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500 font-bold">بازه زمانی:</span>
-                  <span className="font-mono font-bold text-slate-800">{reviewingRequest.startDate} تا {reviewingRequest.endDate}</span>
-                </div>
-                <div className="pt-2 border-t border-slate-200 text-slate-700">
-                  <span className="text-slate-400 font-bold block text-[10px]">دلیل کارمند:</span>
-                  <p className="mt-0.5">{reviewingRequest.reason}</p>
+                  <span className="text-slate-500 font-bold">نوع:</span>
+                  <span className="font-bold text-indigo-700">{getLeaveTypeFa(reviewingRequest.type)}</span>
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">یادداشت / نظر مدیر:</label>
+                <label className="font-bold text-slate-700 block mb-1">یادداشت و دستور مدیر (اختیاری):</label>
                 <input
                   type="text"
                   value={reviewNoteInput}
                   onChange={(e) => setReviewNoteInput(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-medium text-slate-800"
+                  placeholder="مثلاً: تایید شد، همکار جانشین تعیین گردید."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setReviewingRequest(null)}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs cursor-pointer"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmReview}
-                  className={`font-black px-6 py-2 rounded-xl text-xs shadow-md transition-all cursor-pointer active:scale-95 text-white ${
+                  className={`font-black px-6 py-2 rounded-xl text-white shadow-md cursor-pointer transition-all active:scale-95 ${
                     reviewAction === 'Approved' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'
                   }`}
                 >
-                  تایید و اعمال ({reviewAction === 'Approved' ? 'تایید' : 'رد'})
+                  ثبت تصمیم نهایی
                 </button>
               </div>
             </div>

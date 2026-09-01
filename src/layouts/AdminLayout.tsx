@@ -7,9 +7,8 @@ import {
   LayoutDashboard, Package, Grid, ShoppingCart, Truck, ClipboardList, 
   Users, Building2, Warehouse, CreditCard, DollarSign, Receipt, 
   BarChart3, UserCog, Settings, Bell, Search, Plus, Menu, X, LogOut,
-  Store, MessageCircle, PhoneCall, Clock, Camera, QrCode, ShieldCheck
+  Store, MessageCircle, PhoneCall, QrCode, ShieldCheck
 } from 'lucide-react';
-import { AttendanceKioskModal } from '../components/AttendanceKioskModal';
 import { ROLE_CONFIGS } from '../utils/permissions';
 
 const MENU_ITEMS = [
@@ -38,119 +37,6 @@ export const AdminLayout: React.FC = () => {
   const { state } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isClockedIn, setIsClockedIn] = useState(false);
-  const [clockInTime, setClockInTime] = useState<string | null>(null);
-  const [isKioskOpen, setIsKioskOpen] = useState(false);
-
-  const DEFAULT_USERS_FALLBACK = [
-    { username: 'admin@stc.com', passwordHash: 'Admin$', fullName: 'مالک فروشگاه', role: 'Owner', status: 'Active', baseSalaryAFN: 0, payments: [], timeRecords: [] },
-    { username: 'admin', passwordHash: 'Admin$', fullName: 'مالک فروشگاه', role: 'Owner', status: 'Active', baseSalaryAFN: 0, payments: [], timeRecords: [] },
-    { username: 'manager', passwordHash: 'manager', fullName: 'مدیر کل', role: 'Manager', status: 'Active', baseSalaryAFN: 25000, payments: [], timeRecords: [] },
-    { username: 'cashier', passwordHash: 'cashier', fullName: 'صندوق‌دار', role: 'Cashier', status: 'Active', baseSalaryAFN: 15000, payments: [], timeRecords: [] },
-    { username: 'warehouse', passwordHash: 'warehouse', fullName: 'مسئول گدام', role: 'Warehouse Staff', status: 'Active', baseSalaryAFN: 12000, payments: [], timeRecords: [] }
-  ];
-
-  const getSystemUsers = (): any[] => {
-    const saved = localStorage.getItem('AFG_STORE_USERS');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {}
-    }
-    return DEFAULT_USERS_FALLBACK;
-  };
-
-  useEffect(() => {
-    if (user) {
-      const usersList = getSystemUsers();
-      const currentUser = usersList.find((u: any) => 
-        u.username?.toLowerCase() === user.username?.toLowerCase() ||
-        u.fullName?.toLowerCase() === user.fullName?.toLowerCase() ||
-        u.fullName?.toLowerCase() === user.username?.toLowerCase()
-      );
-      if (currentUser && currentUser.timeRecords && currentUser.timeRecords.length > 0) {
-        const lastRecord = currentUser.timeRecords[currentUser.timeRecords.length - 1];
-        if (!lastRecord.clockOutTime) {
-          setIsClockedIn(true);
-          setClockInTime(lastRecord.clockInTime);
-        } else {
-          setIsClockedIn(false);
-          setClockInTime(null);
-        }
-      } else {
-        setIsClockedIn(false);
-        setClockInTime(null);
-      }
-    }
-  }, [user]);
-
-  const handleToggleClock = () => {
-    if (!user) {
-      alert('لطفاً ابتدا وارد حساب کاربری خود شوید.');
-      return;
-    }
-    const usersList = getSystemUsers();
-    let userIndex = usersList.findIndex((u: any) => 
-      u.username?.toLowerCase() === user.username?.toLowerCase() ||
-      u.fullName?.toLowerCase() === user.fullName?.toLowerCase() ||
-      u.fullName?.toLowerCase() === user.username?.toLowerCase()
-    );
-
-    // If user object not found in list (e.g. newly created role), create or append entry
-    if (userIndex === -1) {
-      const newEmpEntry = {
-        username: user.username,
-        passwordHash: '123456',
-        fullName: user.fullName || user.username,
-        role: user.role,
-        status: 'Active',
-        baseSalaryAFN: 0,
-        payments: [],
-        timeRecords: []
-      };
-      usersList.push(newEmpEntry);
-      userIndex = usersList.length - 1;
-    }
-    
-    const now = new Date().toISOString();
-    const formattedTime = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-    
-    if (isClockedIn) {
-      // Clock out
-      const timeRecords = usersList[userIndex].timeRecords || [];
-      if (timeRecords.length > 0 && !timeRecords[timeRecords.length - 1].clockOutTime) {
-        timeRecords[timeRecords.length - 1].clockOutTime = now;
-      } else {
-        timeRecords.push({
-          id: `time-${Date.now()}`,
-          date: new Date().toISOString().split('T')[0],
-          clockInTime: now,
-          clockOutTime: now
-        });
-      }
-      usersList[userIndex].timeRecords = timeRecords;
-      setIsClockedIn(false);
-      setClockInTime(null);
-      alert(`پایان شیفت کاری و خروج شما در ساعت ${formattedTime} با موفقیت ثبت شد.`);
-    } else {
-      // Clock in
-      const newRecord = {
-        id: `time-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
-        clockInTime: now
-      };
-      if (!usersList[userIndex].timeRecords) {
-        usersList[userIndex].timeRecords = [];
-      }
-      usersList[userIndex].timeRecords.push(newRecord);
-      setIsClockedIn(true);
-      setClockInTime(now);
-      alert(`شروع شیفت کاری و ورود شما در ساعت ${formattedTime} با موفقیت ثبت شد.`);
-    }
-    
-    localStorage.setItem('AFG_STORE_USERS', JSON.stringify(usersList));
-  };
 
   const totalUnreadChats = (state.chatSessions || []).reduce((sum, s) => sum + s.unreadByAdmin, 0);
   const totalPendingInquiries = (state.inquiries || []).filter(i => i.status === 'Pending').length;
@@ -283,38 +169,6 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Live Camera & QR Kiosk Punch Button */}
-            <button
-              onClick={() => setIsKioskOpen(true)}
-              title="کیوسک هوشمند حضور و غیاب (دوربین، اسکن QR و چهره)"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-[#0B1F3A] to-[#123B66] hover:from-[#123B66] hover:to-[#0B1F3A] text-white transition-all shadow-sm cursor-pointer border border-[#D4AF37]/30"
-            >
-              <Camera className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span className="hidden sm:inline">کیوسک تردد</span>
-            </button>
-
-            {/* Clock In / Out Quick Action */}
-            <button 
-              onClick={handleToggleClock}
-              title={isClockedIn ? 'پایان شیفت کاری' : 'شروع شیفت کاری'}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer border ${
-                isClockedIn 
-                  ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100' 
-                  : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-              }`}
-            >
-              <Clock className={`w-3.5 h-3.5 ${isClockedIn ? 'text-rose-600 animate-spin' : 'text-emerald-600'}`} />
-              <span className="hidden sm:inline">
-                {isClockedIn ? 'ثبت خروج (پایان کار)' : 'ثبت ورود (شروع کار)'}
-              </span>
-              <span className="sm:hidden">
-                {isClockedIn ? 'خروج' : 'ورود'}
-              </span>
-              {isClockedIn && (
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping mr-0.5"></span>
-              )}
-            </button>
-
             {/* Role-Based Quick Buttons */}
             {(user?.role === 'Owner' || user?.role === 'Manager' || user?.role === 'Cashier') && (
               <Link to="/admin/sales" className="hidden sm:flex items-center gap-1.5 bg-[#0B1F3A] hover:bg-[#123B66] text-white px-3 py-2 rounded-xl text-xs font-bold transition-colors">
@@ -409,32 +263,6 @@ export const AdminLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
-
-      {/* Live Attendance Kiosk Modal */}
-      <AttendanceKioskModal
-        isOpen={isKioskOpen}
-        onClose={() => setIsKioskOpen(false)}
-        onAttendanceRecorded={() => {
-          if (user) {
-            const usersList = getSystemUsers();
-            const currentUser = usersList.find((u: any) => 
-              u.username?.toLowerCase() === user.username?.toLowerCase() ||
-              u.fullName?.toLowerCase() === user.fullName?.toLowerCase() ||
-              u.fullName?.toLowerCase() === user.username?.toLowerCase()
-            );
-            if (currentUser && currentUser.timeRecords && currentUser.timeRecords.length > 0) {
-              const lastRecord = currentUser.timeRecords[currentUser.timeRecords.length - 1];
-              if (!lastRecord.clockOutTime) {
-                setIsClockedIn(true);
-                setClockInTime(lastRecord.clockInTime);
-              } else {
-                setIsClockedIn(false);
-                setClockInTime(null);
-              }
-            }
-          }
-        }}
-      />
 
     </div>
   );

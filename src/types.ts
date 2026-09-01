@@ -230,6 +230,26 @@ export interface ChatSession {
   unreadByCustomer: number;
 }
 
+export interface StoreDailyHours {
+  day: 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
+  dayNameFa: string; // شنبه، یکشنبه، ...
+  isOpen: boolean;
+  openTime: string; // HH:mm e.g. "08:00"
+  closeTime: string; // HH:mm e.g. "21:00"
+  specialNote?: string; // e.g. "بعد از نماز جمعه باز است"
+}
+
+export type StoreOperatingHours = {
+  Saturday: StoreDailyHours;
+  Sunday: StoreDailyHours;
+  Monday: StoreDailyHours;
+  Tuesday: StoreDailyHours;
+  Wednesday: StoreDailyHours;
+  Thursday: StoreDailyHours;
+  Friday: StoreDailyHours;
+  generalNote?: string;
+};
+
 export interface DailyShift {
   day: 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
   dayNameFa: string; // شنبه، یکشنبه، ...

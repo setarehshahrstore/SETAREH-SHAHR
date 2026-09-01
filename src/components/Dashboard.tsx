@@ -13,7 +13,7 @@ import {
   CreditCard, Printer, Activity, CheckCircle, XCircle, Tag, FileText, Sparkles
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export const Dashboard: React.FC = () => {
   const { state, updateExchangeRate } = useAppState();
@@ -107,10 +107,10 @@ export const Dashboard: React.FC = () => {
 
   // Chart Data preparation
   const chartData = useMemo(() => {
-    const dataMap: Record<string, { date: string, فروش: number, مفاد: number }> = {};
+    const dataMap: Record<string, { date: string, فروش: number, مفاد: number, مشتریان: number }> = {};
     filteredSales.forEach(s => {
       const d = s.date.split('T')[0];
-      if (!dataMap[d]) dataMap[d] = { date: d, فروش: 0, مفاد: 0 };
+      if (!dataMap[d]) dataMap[d] = { date: d, فروش: 0, مفاد: 0, مشتریان: 0 };
       
       const sCostUSD = (s.items || []).reduce((sum, item) => {
         const prod = state.products.find(p => p.id === item.productId);
@@ -119,6 +119,7 @@ export const Dashboard: React.FC = () => {
 
       dataMap[d].فروش += s.finalAFN;
       dataMap[d].مفاد += (s.finalAFN - (sCostUSD * state.exchangeRate));
+      dataMap[d].مشتریان += 1;
     });
     return Object.values(dataMap).sort((a, b) => a.date.localeCompare(b.date));
   }, [filteredSales, state.products, state.exchangeRate]);
@@ -204,17 +205,20 @@ export const Dashboard: React.FC = () => {
             </h3>
             <div className="h-72 w-full" dir="ltr">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                   <XAxis dataKey="date" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                  <YAxis tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} />
+                  <YAxis yAxisId="left" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} />
+                  <YAxis yAxisId="right" orientation="right" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
                   <Tooltip 
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [formatCurrency(value, 'AFN'), '']}
+                    formatter={(value: number, name: string) => name === 'مشتریان' ? [value, name] : [formatCurrency(value, 'AFN'), name]}
                   />
-                  <Line type="monotone" dataKey="فروش" stroke="#0ea5e9" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
-                  <Line type="monotone" dataKey="مفاد" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
-                </LineChart>
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                  <Bar yAxisId="right" dataKey="مشتریان" fill="#e2e8f0" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Line yAxisId="left" type="monotone" dataKey="فروش" stroke="#0ea5e9" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                  <Line yAxisId="left" type="monotone" dataKey="مفاد" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>

@@ -12,6 +12,7 @@ import { useAppState } from '../AppContext';
 import { AttendanceKioskModal } from './AttendanceKioskModal';
 import { EmployeeIdCardModal } from './EmployeeIdCardModal';
 import { EmployeeScheduleManager, DEFAULT_WEEKLY_SCHEDULE } from './EmployeeScheduleManager';
+import { StoreHoursManager } from './StoreHoursManager';
 import { AppUser, PaymentRecord, TimeRecord, WeeklySchedule } from '../types';
 
 export const generateNextStsCode = (users: AppUser[]): string => {
@@ -120,7 +121,7 @@ const PRESET_AVATARS = [
 export const Employees: React.FC = () => {
   const { addExpense, deleteExpense } = useAppState();
   const [employees, setEmployees] = useState<AppUser[]>([]);
-  const [activeTab, setActiveTab] = useState<'STAFF' | 'SCHEDULE_LEAVE' | 'ATTENDANCE_LOGS' | 'BULK_ATTENDANCE' | 'QR_BADGES'>('STAFF');
+  const [activeTab, setActiveTab] = useState<'STAFF' | 'SCHEDULE_LEAVE' | 'ATTENDANCE_LOGS' | 'BULK_ATTENDANCE' | 'QR_BADGES' | 'STORE_HOURS'>('STAFF');
   
   // Modals
   const [isKioskOpen, setIsKioskOpen] = useState(false);
@@ -699,7 +700,25 @@ export const Employees: React.FC = () => {
           <QrCode className="w-4 h-4" />
           کارت‌های شناسایی و QR
         </button>
+        <button
+          onClick={() => setActiveTab('STORE_HOURS')}
+          className={`py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            activeTab === 'STORE_HOURS'
+              ? 'bg-[#0B1F3A] text-[#D4AF37] shadow-sm font-black'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
+          <Clock className="w-4 h-4 text-emerald-500" />
+          ساعات کار فروشگاه
+        </button>
       </div>
+
+      {/* ========================================================================= */}
+      {/* TAB 0: Store Hours Manager */}
+      {/* ========================================================================= */}
+      {activeTab === 'STORE_HOURS' && (
+        <StoreHoursManager />
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 1: Staff Profiles, Cards, Salaries */}
