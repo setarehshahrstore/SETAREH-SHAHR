@@ -28,7 +28,7 @@ export const CustomerAccount: React.FC = () => {
         phone: '',
         address: '',
         city: '',
-        type: 'retail' as const,
+        
         debtAFN: 0,
         debtUSD: 0,
         username: user.username,

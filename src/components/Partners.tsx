@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../AppContext';
 import { formatCurrency } from '../utils';
 import { getAfgGeography } from '../geography';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../firebase';
 import { SecurityGateModal } from './SecurityGate';
 import { 
   Users, 
