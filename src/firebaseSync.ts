@@ -62,11 +62,9 @@ export const startFirebaseListeners = (setState: React.Dispatch<React.SetStateAc
         collection(db, col),
         (snapshot) => {
           const data = snapshot.docs.map(d => d.data());
-          if (data.length > 0) {
-            setState(prev => { 
-              return { ...prev, [col]: data, _fromFirebase: true } as AppState; 
-            });
-          }
+          setState(prev => { 
+            return { ...prev, [col]: data, _fromFirebase: true } as AppState; 
+          });
         },
         (error) => {
           console.debug(`Firestore sync notification for '${col}':`, error.message);
