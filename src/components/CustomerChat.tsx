@@ -43,7 +43,7 @@ export const CustomerChat: React.FC = () => {
             {
               id: Date.now().toString() + '-init',
               sender: 'AI',
-              text: 'سلام! به فروشگاه ستاره شهر خوش آمدید. چطور می‌توانم کمکتان کنم؟',
+              text: `سلام! به ${state.storeConfig?.storeName || "فروشگاه ستاره شهر"} خوش آمدید. چطور می‌توانم کمکتان کنم؟`,
               timestamp: new Date().toISOString()
             }
           ]
@@ -100,7 +100,7 @@ export const CustomerChat: React.FC = () => {
         escalate = true;
       }
       else if (lowerMsg.includes('سلام') || lowerMsg.includes('درود')) {
-        aiResponse = 'سلام! چطور می‌توانم در خرید از فروشگاه ستاره شهر به شما کمک کنم؟ برای ارتباط با پشتیبانی کلمه "ادمین" را ارسال کنید.';
+        aiResponse = `سلام! چطور می‌توانم در خرید از ${state.storeConfig?.storeName || "فروشگاه ستاره شهر"} به شما کمک کنم؟ برای ارتباط با پشتیبانی کلمه "ادمین" را ارسال کنید.`;
       }
       else if (lowerMsg.includes('سفارش') || lowerMsg.includes('پیگیری') || lowerMsg.includes('رسید')) {
         aiResponse = 'برای پیگیری سفارش خود می‌توانید روی دکمه «پیگیری سفارش» در بالای سایت کلیک کنید. اگر مشکل خاصی هست، کلمه "پشتیبانی" را بفرستید.';

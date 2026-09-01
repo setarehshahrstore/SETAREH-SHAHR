@@ -542,7 +542,7 @@ export const POS: React.FC = () => {
         {/* Sku & Barcode input scanning box */}
         <div className="space-y-3">
           <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-            پیشخوان فروش فوری و مدیریت صندوق (فروشگاه ستاره شهر)
+            پیشخوان فروش فوری و مدیریت صندوق ({state.storeConfig?.storeName || "فروشگاه ستاره شهر"})
           </label>
           
           <div className="flex gap-2">
@@ -1758,7 +1758,7 @@ export const POS: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl space-y-4 text-right animate-fade-in print-receipt">
             {/* Header branding */}
             <div className="text-center space-y-1.5 border-b pb-4">
-              <span className="text-xl font-black text-slate-800 tracking-tight">فروشگاه ستاره شهر</span>
+              <span className="text-xl font-black text-slate-800 tracking-tight">{state.storeConfig?.storeName || "فروشگاه ستاره شهر"}</span>
               <p className="text-[10px] text-slate-400 font-bold">مرکز بزرگ موبایل، صرافی و گدام عمومی واردات کالا</p>
               <div className="flex justify-center gap-1.5 text-[9px] text-slate-500 font-mono mt-1">
                 <span>تلفن: ۰۷۹۹۵۵۴۴۳۳</span>

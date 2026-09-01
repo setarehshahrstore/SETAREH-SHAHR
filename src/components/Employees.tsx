@@ -1743,7 +1743,7 @@ export const Employees: React.FC = () => {
             </div>
 
             <div className="p-4 px-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between print:hidden">
-              <span className="text-[11px] text-slate-400">این سند به عنوان رسید معتبر مالی پرسنل در فروشگاه ستاره شهر صادر گردیده است.</span>
+              <span className="text-[11px] text-slate-400">این سند به عنوان رسید معتبر مالی پرسنل در {state.storeConfig?.storeName || "فروشگاه ستاره شهر"} صادر گردیده است.</span>
               <button
                 onClick={() => setReceiptData(null)}
                 className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"

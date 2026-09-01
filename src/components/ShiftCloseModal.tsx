@@ -79,7 +79,7 @@ export const ShiftCloseModal: React.FC<ShiftCloseModalProps> = ({ onClose }) => 
         {/* Scrollable Printable Area */}
         <div className="p-5 sm:p-8 overflow-y-auto flex-1 print:overflow-visible print:p-4" dir="rtl">
           <div className="text-center mb-6 border-b-2 border-slate-200 pb-5">
-            <h1 className="text-2xl sm:text-3xl font-black text-[#0B1F3A] mb-1.5">فروشگاه ستاره شهر</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0B1F3A] mb-1.5">{state.storeConfig?.storeName || "فروشگاه ستاره شهر"}</h1>
             <h2 className="text-lg font-bold text-slate-600 mb-3">گزارش پایان روز (شیفت)</h2>
             <div className="text-xs sm:text-sm text-slate-500 font-mono">
               تاریخ و ساعت گزارش: {new Date().toLocaleString('fa-IR')}

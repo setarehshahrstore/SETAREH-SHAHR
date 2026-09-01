@@ -140,7 +140,7 @@ export const Dashboard: React.FC = () => {
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white flex items-center gap-3">
-            وقت شما بخیر، مدیریت محترم فروشگاه ستاره شهر
+            وقت شما بخیر، مدیریت محترم {state.storeConfig?.storeName || "فروشگاه ستاره شهر"}
           </h1>
           <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
             روز پربرکتی داشته باشید. گزارش زنده فروشات، حساب‌های اسعار، وضعیت موجودی گدام و طلبات مشتریان به شکل لحظه‌ای در دسترس شماست.

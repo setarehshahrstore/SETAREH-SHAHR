@@ -12,7 +12,7 @@ export const StorefrontLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { cart, setIsCartOpen } = useAppState();
+  const { state, cart, setIsCartOpen } = useAppState();
 
   const handleNav = (target: string) => {
     setIsMobileMenuOpen(false);
@@ -68,7 +68,7 @@ export const StorefrontLayout: React.FC = () => {
               className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden mb-2 flex flex-col w-48"
             >
               <a 
-                href="tel:+93796626004" 
+                href={`tel:${state.storeConfig?.phone || "+93 796 626 004"}`} 
                 className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-brand-navy font-bold border-b border-slate-100"
               >
                 <Phone className="w-5 h-5 text-emerald-500" />
@@ -108,7 +108,7 @@ export const StorefrontLayout: React.FC = () => {
           
           <Link to="/" className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center border-2 border-brand-gold shadow-[0_0_10px_rgba(212,175,55,0.2)] overflow-hidden">
-              <img src="/logo.png" alt="فروشگاه ستاره شهر" className="w-full h-full object-contain" />
+              <img src="/logo.png" alt={state.storeConfig?.storeName || "فروشگاه ستاره شهر"} className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-brand-gold tracking-wide">ستاره شهر</h1>
@@ -229,7 +229,7 @@ export const StorefrontLayout: React.FC = () => {
                 </div>
               </div>
               <p className="text-slate-400 leading-relaxed max-w-sm mb-6">
-                فروشگاه ستاره شهر، تامین‌کننده مطمئن انواع اجناس ضروری منزل و دکان شما با بهترین کیفیت و نازل‌ترین قیمت در سطح شهر.
+                {state.storeConfig?.storeName || "فروشگاه ستاره شهر"}، تامین‌کننده مطمئن انواع اجناس ضروری منزل و دکان شما با بهترین کیفیت و نازل‌ترین قیمت در سطح شهر.
               </p>
             </div>
             
@@ -251,11 +251,11 @@ export const StorefrontLayout: React.FC = () => {
               <ul className="space-y-4">
                 <li className="flex items-start gap-3 text-slate-300">
                   <MapPin className="w-5 h-5 text-brand-gold shrink-0 mt-0.5" />
-                  <span>شهر مزار شریف مرکز</span>
+                  <span>{state.storeConfig?.address || "شهر مزار شریف مرکز"}</span>
                 </li>
                 <li className="flex items-center gap-3 text-slate-300">
                   <Phone className="w-5 h-5 text-brand-gold shrink-0" />
-                  <a href="tel:+93796626004" className="hover:text-white" dir="ltr">+93 796 626 004</a>
+                  <a href={`tel:${state.storeConfig?.phone || "+93 796 626 004"}`} className="hover:text-white" dir="ltr">{state.storeConfig?.phone || "+93 796 626 004"}</a>
                 </li>
                 <li className="flex items-center gap-3 text-slate-300">
                   <Mail className="w-5 h-5 text-brand-gold shrink-0" />
@@ -267,7 +267,7 @@ export const StorefrontLayout: React.FC = () => {
           
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm">
-              &copy; {new Date().getFullYear()} فروشگاه ستاره شهر. تمامی حقوق محفوظ است.
+              &copy; {new Date().getFullYear()} {state.storeConfig?.storeName || "فروشگاه ستاره شهر"}. تمامی حقوق محفوظ است.
             </p>
           </div>
         </div>

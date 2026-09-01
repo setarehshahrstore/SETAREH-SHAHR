@@ -135,7 +135,7 @@ export const Categories: React.FC = () => {
               {/* Category Details */}
               <div className="p-5 flex-1 flex flex-col justify-between">
                 <p className="text-xs text-slate-500 leading-relaxed min-h-[36px] line-clamp-2">
-                  {cat.description || visual.description || 'اجناس مرغوب فروشگاه ستاره شهر'}
+                  {cat.description || visual.description || `اجناس مرغوب ${state.storeConfig?.storeName || "فروشگاه ستاره شهر"}`}
                 </p>
                 
                 <div className="flex items-center gap-2 pt-4 border-t border-slate-100 mt-4">

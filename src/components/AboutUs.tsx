@@ -7,7 +7,9 @@ import {
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 
+import { useAppState } from "../AppContext";
 export const AboutUs: React.FC = () => {
+  const { state } = useAppState();
   return (
     <div className="min-h-screen bg-slate-50 font-sans" dir="rtl">
       
@@ -29,7 +31,7 @@ export const AboutUs: React.FC = () => {
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-6 leading-tight">
-              درباره <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#F5D76E] via-[#D4AF37] to-amber-200">فروشگاه ستاره شهر</span>
+              درباره <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#F5D76E] via-[#D4AF37] to-amber-200">{state.storeConfig?.storeName || 'فروشگاه ستاره شهر'}</span>
             </h1>
             
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed">

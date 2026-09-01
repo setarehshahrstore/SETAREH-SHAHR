@@ -753,7 +753,7 @@ export const Storefront: React.FC = () => {
             <div className="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm text-right print:border-none print:shadow-none print:p-0">
               <div className="flex justify-between items-start mb-6 border-b pb-4">
                 <div>
-                  <h3 className="text-xl font-black text-[#0B1F3A]">رسید رسمی سفارش - فروشگاه ستاره شهر</h3>
+                  <h3 className="text-xl font-black text-[#0B1F3A]">رسید رسمی سفارش - {state.storeConfig?.storeName || "فروشگاه ستاره شهر"}</h3>
                   <p className="text-xs text-slate-500 mt-1 font-mono">شماره فاکتور: {successfulOrder.invoiceNo}</p>
                 </div>
                 <div className="text-left text-xs text-slate-500">

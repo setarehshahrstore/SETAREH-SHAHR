@@ -825,7 +825,7 @@ export const Purchases: React.FC = () => {
           
           <div className="bg-white p-6 rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl space-y-4 text-right print-receipt">
             <div className="text-center space-y-1.5 border-b pb-4 border-slate-100">
-              <span className="text-xl font-black text-slate-800 tracking-tight">فروشگاه ستاره شهر</span>
+              <span className="text-xl font-black text-slate-800 tracking-tight">{state.storeConfig?.storeName || "فروشگاه ستاره شهر"}</span>
               <p className="text-[10px] text-slate-400 font-bold">فاکتور خرید کالا از تامین‌کننده</p>
             </div>
 

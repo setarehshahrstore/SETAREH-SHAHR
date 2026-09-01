@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './AppContext';
 import { AuthProvider } from './AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { DynamicTitle } from './components/DynamicTitle';
 
 import { StorefrontLayout } from './layouts/StorefrontLayout';
 import { AdminLayout } from './layouts/AdminLayout';
@@ -82,6 +83,7 @@ export default function App() {
       <AuthProvider>
       <AppProvider>
         <BrowserRouter>
+          <DynamicTitle />
           <StaffAlerts />
           <Routes>
             {/* Public Storefront Routes */}
