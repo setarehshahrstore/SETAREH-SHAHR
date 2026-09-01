@@ -38,7 +38,8 @@ const QUICK_PRESETS = [
 ];
 
 export const POS: React.FC = () => {
-  const { state, addSale, addProduct, editSale, deleteSale, deleteSales, addCustomer } = useAppState();
+  // @ts-ignore
+  const { state, addSale, addProduct, editSale, deleteSale, deleteSales, addCustomer, updateCustomCategories } = useAppState();
   const { user } = useAuth();
   
   const canDeleteInvoices = Permissions.canDeleteSales(user?.role);
@@ -121,13 +122,13 @@ export const POS: React.FC = () => {
   const [newCustomerForm, setNewCustomerForm] = useState({ name: '', phone: '', company: '' });
 
   // Local storage custom categories load
-  const [localCategories, setLocalCategories] = useState<string[]>(() => {
-    const saved = localStorage.getItem('AFG_CUSTOM_CATEGORIES');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
+  const [localCategories, setLocalCategories] = useState<string[]>(state.customCategories || ['مواد بهداشتی و آرایشی', 'نوشیدنی‌ها', 'میوه خشک و خسته‌باب', 'خوارباره و مواد غذایی', 'حبوبات و غلات افغانی']);
+
+  useEffect(() => {
+    if (state.customCategories) {
+      setLocalCategories(state.customCategories);
     }
-    return ['مواد بهداشتی و آرایشی', 'نوشیدنی‌ها', 'میوه خشک و خسته‌باب', 'خوارباره و مواد غذایی', 'حبوبات و غلات افغانی'];
-  });
+  }, [state.customCategories]);
 
   const categories = ['All', ...Array.from(new Set([
     ...localCategories,
@@ -291,7 +292,7 @@ export const POS: React.FC = () => {
     if (quickCustomCatText.trim() && !localCategories.includes(quickCustomCatText.trim())) {
       const updated = [...localCategories, quickCustomCatText.trim()];
       setLocalCategories(updated);
-      localStorage.setItem('AFG_CUSTOM_CATEGORIES', JSON.stringify(updated));
+      updateCustomCategories(updated);
       setQuickCat(quickCustomCatText.trim());
       setQuickCustomCatText('');
       setQuickCustomCatOpen(false);
@@ -1788,7 +1789,7 @@ export const POS: React.FC = () => {
               </div>
               <div className="flex justify-between border-t border-slate-200/60 pt-1 text-[10px] text-slate-400">
                 <span>صندوقدار مسئول:</span>
-                <span>{localStorage.getItem('AFG_STORE_CASHIER') || 'مدیر سیستم (ادمین)'}</span>
+                <span>{user?.fullName || 'مدیر سیستم (ادمین)'}</span>
               </div>
             </div>
 

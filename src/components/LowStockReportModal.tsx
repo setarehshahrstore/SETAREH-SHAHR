@@ -47,9 +47,9 @@ export const LowStockReportModal: React.FC<Props> = ({
 
   const totalEstimatedCostAFN = totalEstimatedCostUSD * exchangeRate;
 
-  const storeName = localStorage.getItem('AFG_STORE_NAME') || 'فروشگاه ستاره شهر';
-  const storePhone = localStorage.getItem('AFG_STORE_PHONE') || '0799445566';
-  const storeAddress = localStorage.getItem('AFG_STORE_ADDRESS') || 'کابل، افغانستان';
+  const storeName = state.storeConfig?.storeName || 'فروشگاه ستاره شهر';
+  const storePhone = state.storeConfig?.phone || '0799445566';
+  const storeAddress = state.storeConfig?.address || 'کابل، افغانستان';
   const currentDate = new Intl.DateTimeFormat('fa-AF', {
     year: 'numeric',
     month: 'long',

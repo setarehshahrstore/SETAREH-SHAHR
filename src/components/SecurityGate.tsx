@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Key, X } from 'lucide-react';
+import { useAppState } from '../AppContext';
 
 interface SecurityGateModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const SecurityGateModal: React.FC<SecurityGateModalProps> = ({
 }) => {
   const [securityPassword, setSecurityPassword] = useState('');
   const [errorFlag, setErrorFlag] = useState(false);
+  const { state } = useAppState();
 
   if (!isOpen) return null;
 
@@ -27,18 +29,10 @@ export const SecurityGateModal: React.FC<SecurityGateModalProps> = ({
 
     // Prompt specifies: "نیاز به رمز تایید ادمین دارد که Admin$ است"
     let isValid = securityPassword === 'Admin$';
-    if (!isValid) {
-      const savedUsers = localStorage.getItem('AFG_STORE_USERS');
-      if (savedUsers) {
-        try {
-          const parsed = JSON.parse(savedUsers);
-          if (Array.isArray(parsed)) {
-            const adminUser = parsed.find(u => u.role === 'Owner' || u.username?.toUpperCase() === 'ADMIN@STC.COM');
-            if (adminUser && adminUser.passwordHash === securityPassword) {
-              isValid = true;
-            }
-          }
-        } catch (e) {}
+    if (!isValid && state.users) {
+      const adminUser = state.users.find(u => u.role === 'Owner' || u.username?.toUpperCase() === 'ADMIN@STC.COM');
+      if (adminUser && adminUser.passwordHash === securityPassword) {
+        isValid = true;
       }
     }
 

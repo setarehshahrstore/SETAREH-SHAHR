@@ -107,7 +107,7 @@ export const Inventory: React.FC = () => {
     ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
 
     // Enterprise logo emblem
-    const storeTitleText = localStorage.getItem('AFG_STORE_NAME') || 'فرشگاه ستاره شهر';
+    const storeTitleText = state.storeConfig?.storeName || 'فرشگاه ستاره شهر';
     ctx.fillStyle = '#10b981'; // Professional emerald
     ctx.font = 'bold 13px Tahoma, sans-serif';
     ctx.textAlign = 'center';

@@ -91,7 +91,7 @@ export const Products: React.FC = () => {
     ctx.strokeStyle = '#0B1F3A'; ctx.lineWidth = 2; ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
 
     ctx.fillStyle = '#2E7D5B'; ctx.font = 'bold 13px Tahoma, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(localStorage.getItem('AFG_STORE_NAME') || 'فروشگاه ستاره شهر', canvas.width / 2, 28);
+    ctx.fillText(state.storeConfig?.storeName || 'فروشگاه ستاره شهر', canvas.width / 2, 28);
     
     ctx.fillStyle = '#0f172a'; ctx.font = 'bold 15px Tahoma, sans-serif';
     ctx.fillText(barcodeProduct.name.length > 32 ? barcodeProduct.name.slice(0, 29) + '...' : barcodeProduct.name, canvas.width / 2, 56);

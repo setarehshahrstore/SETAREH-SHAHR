@@ -16,8 +16,8 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const storeName = localStorage.getItem('AFG_STORE_NAME') || 'فروشگاه ستاره شهر';
-  const logoBase64 = localStorage.getItem('AFG_STORE_LOGO');
+  const storeName = state.storeConfig?.storeName || 'فروشگاه ستاره شهر';
+  const logoBase64 = state.storeConfig?.logoBase64;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +26,7 @@ export const Login: React.FC = () => {
     const trimmedUser = username.trim().toLowerCase();
     const trimmedPass = password.trim();
 
-    // Load registered users from local storage or use defaults
-    let usersList = [
+    let usersList = state.users && state.users.length > 0 ? state.users : [
       {
         username: 'admin@stc.com',
         passwordHash: 'Admin$',
@@ -57,26 +56,8 @@ export const Login: React.FC = () => {
         passwordHash: 'warehouse',
         fullName: 'مسئول گدام',
         role: 'Warehouse Staff'
-      },
-      {
-        username: 'customer',
-        passwordHash: 'customer',
-        fullName: 'مشتری تست',
-        role: 'Customer'
       }
     ];
-
-    const savedUsers = localStorage.getItem('AFG_STORE_USERS');
-    if (savedUsers) {
-      try {
-        const parsed = JSON.parse(savedUsers);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          usersList = parsed;
-        }
-      } catch (err) {
-        console.error("Failed to parse system users list", err);
-      }
-    }
 
     const foundEmployee = usersList.find(
       u => u.username.toLowerCase() === trimmedUser && u.passwordHash === trimmedPass

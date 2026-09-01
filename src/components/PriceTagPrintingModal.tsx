@@ -162,7 +162,7 @@ export const PriceTagPrintingModal: React.FC<Props> = ({
 
   const totalTagsCount = itemsToPrint.reduce((acc, item) => acc + item.count, 0);
 
-  const storeName = localStorage.getItem('AFG_STORE_NAME') || 'فروشگاه ستاره شهر';
+  const storeName = state.storeConfig?.storeName || 'فروشگاه ستاره شهر';
   const currentDate = new Intl.DateTimeFormat('fa-AF', {
     year: 'numeric',
     month: 'numeric',

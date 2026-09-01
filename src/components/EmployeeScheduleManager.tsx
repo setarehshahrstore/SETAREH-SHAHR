@@ -94,7 +94,7 @@ export const EmployeeScheduleManager: React.FC<EmployeeScheduleManagerProps> = (
   const [leaveStatusFilter, setLeaveStatusFilter] = useState<'ALL' | 'Pending' | 'Approved' | 'Rejected'>('ALL');
 
   const leaveRequests: LeaveRequest[] = state.leaveRequests || [];
-  const storeHours = getStoreHours();
+  const storeHours = state.storeHours || getStoreHours();
 
   // Helper to get day of week in english from current date
   const getTodayDayOfWeekKey = (): keyof WeeklySchedule => {

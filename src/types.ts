@@ -345,5 +345,17 @@ export interface AppState {
   exchangeRate: number; // 1 USD = X AFN (defaults to 71.5)
   inquiries?: CustomerInquiry[];
   leaveRequests?: LeaveRequest[];
+  users?: AppUser[];
+  storeConfig?: {
+    storeName: string;
+    phone: string;
+    city: string;
+    address: string;
+    logoBase64: string;
+  };
+  provinces?: string[];
+  districts?: Record<string, string[]>;
+  storeHours?: StoreOperatingHours;
+  customCategories?: string[];
 }
 

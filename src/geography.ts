@@ -131,86 +131,25 @@ export const DEFAULT_AFG_GEOGRAPHY: ProvinceData = {
   ]
 };
 
-// Local storage keys
-const CUSTOM_PROVINCES_KEY = 'AFG_CUSTOM_PROVINCES';
-const CUSTOM_DISTRICTS_KEY = 'AFG_CUSTOM_DISTRICTS';
-
-export function getAfgGeography(): ProvinceData {
+export function getAfgGeography(customProvinces: string[] = [], customDistricts: Record<string, string[]> = {}): ProvinceData {
   const geo = { ...DEFAULT_AFG_GEOGRAPHY };
   
   // Load custom provinces
-  const savedProvinces = localStorage.getItem(CUSTOM_PROVINCES_KEY);
-  if (savedProvinces) {
-    try {
-      const parsedPr: string[] = JSON.parse(savedProvinces);
-      parsedPr.forEach(pr => {
-        if (!geo[pr]) {
-          geo[pr] = ['مرکز اصلی ولایت'];
-        }
-      });
-    } catch (e) {
-      console.error(e);
+  customProvinces.forEach(pr => {
+    if (!geo[pr]) {
+      geo[pr] = ['مرکز اصلی ولایت'];
     }
-  }
+  });
 
   // Load custom districts
-  const savedDistricts = localStorage.getItem(CUSTOM_DISTRICTS_KEY);
-  if (savedDistricts) {
-    try {
-      const parsedDist: { [prov: string]: string[] } = JSON.parse(savedDistricts);
-      Object.keys(parsedDist).forEach(prov => {
-        if (!geo[prov]) {
-          geo[prov] = [];
-        }
-        // Unique merge
-        geo[prov] = Array.from(new Set([...geo[prov], ...parsedDist[prov]]));
-      });
-    } catch (e) {
-      console.error(e);
+  Object.keys(customDistricts).forEach(prov => {
+    if (!geo[prov]) {
+      geo[prov] = [];
     }
-  }
+    // Unique merge
+    geo[prov] = Array.from(new Set([...geo[prov], ...customDistricts[prov]]));
+  });
 
   return geo;
 }
 
-export function saveCustomProvince(provinceName: string): void {
-  if (!provinceName.trim()) return;
-  const pruned = provinceName.trim();
-  
-  const savedProvinces = localStorage.getItem(CUSTOM_PROVINCES_KEY);
-  let arr: string[] = [];
-  if (savedProvinces) {
-    try {
-      arr = JSON.parse(savedProvinces);
-    } catch (e) {
-      arr = [];
-    }
-  }
-  if (!arr.includes(pruned)) {
-    arr.push(pruned);
-    localStorage.setItem(CUSTOM_PROVINCES_KEY, JSON.stringify(arr));
-  }
-}
-
-export function saveCustomDistrict(provinceName: string, districtName: string): void {
-  if (!provinceName.trim() || !districtName.trim()) return;
-  const prov = provinceName.trim();
-  const dist = districtName.trim();
-
-  const savedDistricts = localStorage.getItem(CUSTOM_DISTRICTS_KEY);
-  let dict: { [prov: string]: string[] } = {};
-  if (savedDistricts) {
-    try {
-      dict = JSON.parse(savedDistricts);
-    } catch (e) {
-      dict = {};
-    }
-  }
-  if (!dict[prov]) {
-    dict[prov] = [];
-  }
-  if (!dict[prov].includes(dist)) {
-    dict[prov].push(dist);
-    localStorage.setItem(CUSTOM_DISTRICTS_KEY, JSON.stringify(dict));
-  }
-}

@@ -69,13 +69,13 @@ export const Purchases: React.FC = () => {
   const [newSupplierForm, setNewSupplierForm] = useState({ name: '', phone: '', company: '' });
 
   // Custom Categories
-  const [localCategories, setLocalCategories] = useState<string[]>(() => {
-    const saved = localStorage.getItem('AFG_CUSTOM_CATEGORIES');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
+  const [localCategories, setLocalCategories] = useState<string[]>(state.customCategories || ['مواد بهداشتی و آرایشی', 'نوشیدنی‌ها', 'میوه خشک و خسته‌باب', 'خوارباره و مواد غذایی', 'حبوبات و غلات افغانی']);
+
+  useEffect(() => {
+    if (state.customCategories) {
+      setLocalCategories(state.customCategories);
     }
-    return ['مواد بهداشتی و آرایشی', 'نوشیدنی‌ها', 'میوه خشک و خسته‌باب', 'خوارباره و مواد غذایی', 'حبوبات و غلات افغانی'];
-  });
+  }, [state.customCategories]);
 
   const categories = ['All', ...Array.from(new Set([
     ...localCategories,

@@ -4,6 +4,7 @@ import {
   AlertCircle, RefreshCw, KeyRound, Sparkles, Clock, Volume2, ShieldCheck, Download
 } from 'lucide-react';
 import jsQR from 'jsqr';
+import { useAppState } from '../AppContext';
 
 export interface TimeRecord {
   id: string;
@@ -39,6 +40,8 @@ interface AttendanceKioskModalProps {
 }
 
 export const AttendanceKioskModal: React.FC<AttendanceKioskModalProps> = ({ isOpen, onClose, onAttendanceRecorded }) => {
+  // @ts-ignore
+  const { state, updateUsers } = useAppState();
   const [mode, setMode] = useState<'QR_SCAN' | 'FACE_SNAP' | 'EMPLOYEE_ID'>('QR_SCAN');
   const [employees, setEmployees] = useState<AppUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
@@ -67,21 +70,14 @@ export const AttendanceKioskModal: React.FC<AttendanceKioskModalProps> = ({ isOp
   const [loading, setLoading] = useState(false);
 
   const loadUsers = (): AppUser[] => {
-    const saved = localStorage.getItem('AFG_STORE_USERS');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Normalize codes to STS + 4 digits if legacy EMP
-          return parsed.map((u: any, idx: number) => ({
-            ...u,
-            employeeCode: u.employeeCode && u.employeeCode.startsWith('STS')
-              ? u.employeeCode
-              : `STS${1001 + idx}`,
-            avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'
-          }));
-        }
-      } catch (e) {}
+    if (state.users && state.users.length > 0) {
+      return state.users.map((u: any, idx: number) => ({
+        ...u,
+        employeeCode: u.employeeCode && u.employeeCode.startsWith('STS')
+          ? u.employeeCode
+          : `STS${1001 + idx}`,
+        avatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'
+      }));
     }
     return [
       { username: 'admin@stc.com', passwordHash: 'Admin$', fullName: 'مالک فروشگاه', role: 'Owner', employeeCode: 'STS1001', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80', status: 'Active', baseSalaryAFN: 0, payments: [], timeRecords: [] },
@@ -306,7 +302,7 @@ export const AttendanceKioskModal: React.FC<AttendanceKioskModalProps> = ({ isOp
     }
 
     allUsers[index].timeRecords = records;
-    localStorage.setItem('AFG_STORE_USERS', JSON.stringify(allUsers));
+    updateUsers(allUsers);
     setEmployees(allUsers);
 
     setFeedback({

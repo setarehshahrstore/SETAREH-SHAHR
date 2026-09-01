@@ -45,19 +45,31 @@ interface AppUser {
 type TabType = 'store' | 'pricing' | 'users' | 'backup';
 
 export const Settings: React.FC = () => {
-  const { state, updateExchangeRate, resetState, editProduct } = useAppState();
+  // @ts-ignore
+  const { state, updateExchangeRate, resetState, editProduct, updateStoreConfig, updateUsers } = useAppState();
   const { user } = useAuth();
 
   // Active Tab State
   const [activeTab, setActiveTab] = useState<TabType>('store');
 
   // Store Brand Settings & Monogram Custom Logo
-  const [storeName, setStoreName] = useState(() => localStorage.getItem('AFG_STORE_NAME') || 'فروشگاه ستاره شهر');
-  const [phone, setPhone] = useState(() => localStorage.getItem('AFG_STORE_PHONE') || '0799445566');
-  const [city, setCity] = useState(() => localStorage.getItem('AFG_STORE_CITY') || 'کابل');
-  const [address, setAddress] = useState(() => localStorage.getItem('AFG_STORE_ADDRESS') || 'چهارراهی پشتونستان، مرکز تجارتی ستاره');
-  const [logoPreview, setLogoPreview] = useState(() => localStorage.getItem('AFG_STORE_LOGO') || '');
+  const [storeName, setStoreName] = useState(state.storeConfig?.storeName || 'فروشگاه ستاره شهر');
+  const [phone, setPhone] = useState(state.storeConfig?.phone || '0799445566');
+  const [city, setCity] = useState(state.storeConfig?.city || 'کابل');
+  const [address, setAddress] = useState(state.storeConfig?.address || 'چهارراهی پشتونستان، مرکز تجارتی ستاره');
+  const [logoPreview, setLogoPreview] = useState(state.storeConfig?.logoBase64 || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Sync state when loaded from firebase
+  React.useEffect(() => {
+    if (state.storeConfig) {
+      setStoreName(state.storeConfig.storeName || 'فروشگاه ستاره شهر');
+      setPhone(state.storeConfig.phone || '0799445566');
+      setCity(state.storeConfig.city || 'کابل');
+      setAddress(state.storeConfig.address || 'چهارراهی پشتونستان، مرکز تجارتی ستاره');
+      setLogoPreview(state.storeConfig.logoBase64 || '');
+    }
+  }, [state.storeConfig]);
 
   // Exchange rate setting
   const [rateInput, setRateInput] = useState(state.exchangeRate.toString());
@@ -77,43 +89,22 @@ export const Settings: React.FC = () => {
   // Users Database & Inputs
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [usersList, setUsersList] = useState<AppUser[]>(() => {
-    const saved = localStorage.getItem('AFG_STORE_USERS');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (err) {
-        console.error("Failed to parse local users", err);
-      }
-    }
-    return [
-      {
-        username: 'ADMIN@STC.COM',
-        passwordHash: 'Admin$',
-        fullName: 'مدیر کل سیستم (ادمین)',
-        role: 'Owner'
-      }
-    ];
-  });
+  const usersList = state.users && state.users.length > 0 ? state.users : [
+    {
+      username: 'ADMIN@STC.COM',
+      passwordHash: 'Admin$',
+      fullName: 'مدیر کل سیستم (ادمین)',
+      role: 'Owner'
+    } as AppUser
+  ];
 
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newFullName, setNewFullName] = useState('');
   const [newUserRole, setNewUserRole] = useState<'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff'>('Cashier');
 
-  // Active Cashier Shift Tracker
-  const [cashierList, setCashierList] = useState<string[]>(() => {
-    const saved = localStorage.getItem('AFG_CASHIER_LIST');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { }
-    }
-    return [
-      'مدیر کل سیستم (ادمین)',
-      'احمد جاوید (صندوقدار نوبت صبح)',
-      'سهراب کابلی (صندوقدار نوبت بعد از ظهر)'
-    ];
-  });
+  // Active Cashier Shift Tracker (Deprecating local storage list since we have users)
+  const cashierList = usersList.map(u => u.fullName);
 
   const triggerSecureAction = (title: string, desc: string, callback: () => void) => {
     setSecurityTitle(title);
@@ -132,15 +123,17 @@ export const Settings: React.FC = () => {
 
   const handleSaveBrand = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('AFG_STORE_NAME', storeName);
-    localStorage.setItem('AFG_STORE_PHONE', phone);
-    localStorage.setItem('AFG_STORE_CITY', city);
-    localStorage.setItem('AFG_STORE_ADDRESS', address);
+    updateStoreConfig({
+      storeName,
+      phone,
+      city,
+      address,
+      logoBase64: logoPreview
+    });
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
-      window.location.reload();
-    }, 1200);
+    }, 2000);
   };
 
   const handleUpdateExchangeRateSubmit = (e: React.FormEvent) => {
@@ -197,15 +190,7 @@ export const Settings: React.FC = () => {
       `آیا تایید می‌فرمایید که کاربر [${fname}] با نقش [${roleLabels[newUserRole]}] ایجاد گردد؟`,
       () => {
         const updated = [...usersList, newUser];
-        setUsersList(updated);
-        localStorage.setItem('AFG_STORE_USERS', JSON.stringify(updated));
-
-        const updatedShifts = [...cashierList];
-        if (!updatedShifts.includes(fname)) {
-          updatedShifts.push(fname);
-          setCashierList(updatedShifts);
-          localStorage.setItem('AFG_CASHIER_LIST', JSON.stringify(updatedShifts));
-        }
+        updateUsers(updated);
 
         setNewUsername('');
         setNewPassword('');
@@ -227,12 +212,7 @@ export const Settings: React.FC = () => {
       `آیا مطمئن هستید که می‌خواهید دسترسی [ ${fullNameToDelete} ] را به طور کامل از سیستم حذف کنید؟`,
       () => {
         const updated = usersList.filter(u => u.username !== usernameToDelete);
-        setUsersList(updated);
-        localStorage.setItem('AFG_STORE_USERS', JSON.stringify(updated));
-
-        const updatedShifts = cashierList.filter(c => c !== fullNameToDelete);
-        setCashierList(updatedShifts);
-        localStorage.setItem('AFG_CASHIER_LIST', JSON.stringify(updatedShifts));
+        updateUsers(updated);
 
         const curUserRaw = localStorage.getItem('AFG_CURRENT_USER');
         if (curUserRaw) {
@@ -240,7 +220,6 @@ export const Settings: React.FC = () => {
             const parsed = JSON.parse(curUserRaw);
             if (parsed.username === usernameToDelete) {
               localStorage.removeItem('AFG_CURRENT_USER');
-              localStorage.setItem('AFG_STORE_CASHIER', 'مدیر کل سیستم (ادمین)');
               window.location.reload();
               return;
             }
@@ -483,7 +462,7 @@ export const Settings: React.FC = () => {
                       reader.onloadend = () => {
                         if (typeof reader.result === 'string') {
                           setLogoPreview(reader.result);
-                          localStorage.setItem('AFG_STORE_LOGO', reader.result);
+                          updateStoreConfig({ storeName, phone, city, address, logoBase64: reader.result });
                         }
                       };
                       reader.readAsDataURL(file);
@@ -506,7 +485,7 @@ export const Settings: React.FC = () => {
                     onClick={() => {
                       if (confirm('آیا می‌خواهید لوگوی بارگذاری شده حذف شود؟')) {
                         setLogoPreview('');
-                        localStorage.removeItem('AFG_STORE_LOGO');
+                        updateStoreConfig({ storeName, phone, city, address, logoBase64: '' });
                       }
                     }}
                     className="bg-rose-50 hover:bg-rose-100 text-rose-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border border-rose-200"

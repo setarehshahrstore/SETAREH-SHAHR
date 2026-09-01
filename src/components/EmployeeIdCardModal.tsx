@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { AppUser } from '../types';
+import { useAppState } from '../AppContext';
 
 interface EmployeeIdCardModalProps {
   isOpen: boolean;
@@ -17,15 +18,16 @@ export const EmployeeIdCardModal: React.FC<EmployeeIdCardModalProps> = ({
   onClose,
   employee
 }) => {
+  const { state } = useAppState();
   const [cardLayout, setCardLayout] = useState<'VERTICAL' | 'HORIZONTAL'>('VERTICAL');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   // Store information
-  const storeName = localStorage.getItem('AFG_STORE_NAME') || 'مرکز تجارتی ستاره شهر';
-  const storePhone = localStorage.getItem('AFG_STORE_PHONE') || '0799445566';
-  const storeCity = localStorage.getItem('AFG_STORE_CITY') || 'کابل';
-  const storeAddress = localStorage.getItem('AFG_STORE_ADDRESS') || 'چهارراهی پشتونستان، مرکز تجارتی ستاره شهر';
+  const storeName = state.storeConfig?.storeName || 'مرکز تجارتی ستاره شهر';
+  const storePhone = state.storeConfig?.phone || '0799445566';
+  const storeCity = state.storeConfig?.city || 'کابل';
+  const storeAddress = state.storeConfig?.address || 'چهارراهی پشتونستان، مرکز تجارتی ستاره شهر';
 
   useEffect(() => {
     if (employee) {

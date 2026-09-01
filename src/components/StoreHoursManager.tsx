@@ -6,9 +6,10 @@ import {
 } from 'lucide-react';
 import { StoreOperatingHours, StoreDailyHours } from '../types';
 import { 
-  DEFAULT_STORE_OPERATING_HOURS, getStoreHours, saveStoreHours, 
+  DEFAULT_STORE_OPERATING_HOURS,
   formatTime12h, parse24hTo12hParts, convert12hPartsTo24h, checkStoreOpenStatus 
 } from '../utils';
+import { useAppState } from '../AppContext';
 
 const DAYS_LIST: { key: keyof StoreOperatingHours; nameFa: string; isWeekend?: boolean }[] = [
   { key: 'Saturday', nameFa: 'شنبه' },
@@ -31,7 +32,9 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
   requireAdminPin,
   onApplyToEmployeeShifts
 }) => {
-  const [storeHours, setStoreHours] = useState<StoreOperatingHours>(() => getStoreHours());
+  const { state, updateStoreHours } = useAppState() as any;
+  const storeHours = state.storeHours || DEFAULT_STORE_OPERATING_HOURS;
+  
   const [editingDay, setEditingDay] = useState<keyof StoreOperatingHours | null>(null);
   
   // 12-Hour Editor State for modal/in-place edit
@@ -52,24 +55,16 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
   const [openStatus, setOpenStatus] = useState(() => checkStoreOpenStatus(storeHours));
 
   useEffect(() => {
+    setGeneralNoteInput(storeHours.generalNote || '');
+    setOpenStatus(checkStoreOpenStatus(storeHours));
+  }, [storeHours]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setOpenStatus(checkStoreOpenStatus(storeHours));
     }, 30000);
     return () => clearInterval(timer);
   }, [storeHours]);
-
-  const loadFresh = () => {
-    const fresh = getStoreHours();
-    setStoreHours(fresh);
-    setGeneralNoteInput(fresh.generalNote || '');
-    setOpenStatus(checkStoreOpenStatus(fresh));
-  };
-
-  useEffect(() => {
-    const handleUpdate = () => loadFresh();
-    window.addEventListener('store_hours_updated', handleUpdate);
-    return () => window.removeEventListener('store_hours_updated', handleUpdate);
-  }, []);
 
   const openDayEdit = (dayKey: keyof StoreOperatingHours) => {
     if (dayKey === 'generalNote') return;
@@ -112,7 +107,7 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
       };
 
       setStoreHours(updated);
-      saveStoreHours(updated);
+      updateStoreHours(updated);
       setEditingDay(null);
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 3000);
@@ -132,7 +127,7 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
         generalNote: generalNoteInput.trim()
       };
       setStoreHours(updated);
-      saveStoreHours(updated);
+      updateStoreHours(updated);
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 3000);
     };
@@ -199,7 +194,7 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
 
       setStoreHours(updated);
       setGeneralNoteInput(updated.generalNote || '');
-      saveStoreHours(updated);
+      updateStoreHours(updated);
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 3000);
     };

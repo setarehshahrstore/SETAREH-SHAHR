@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage, CartItem } from './types';
+import { AppState, Product, Customer, Supplier, Sale, Purchase, DebtPayment, CashRegister, CustomerInquiry, Category, ChatSession, ChatMessage, CartItem, AppUser, StoreOperatingHours } from './types';
 import { useAuth } from './AuthContext';
 import { INITIAL_APP_STATE } from './mockData';
 import { syncToFirebase, startFirebaseListeners } from './firebaseSync';
@@ -76,6 +76,11 @@ interface AppContextType {
   deleteLeaveRequest: (id: string) => void;
 
   resetState: () => void;
+  updateUsers: (users: AppUser[]) => void;
+  updateStoreConfig: (config: any) => void;
+  updateStoreHours: (hours: StoreOperatingHours) => void;
+  updateGeography: (provinces: string[], districts: Record<string, string[]>) => void;
+  updateCustomCategories: (cats: string[]) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -83,31 +88,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const LOCAL_STORAGE_KEY = 'AFG_ERP_STATE';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [reactState, setReactState] = useState<AppState>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (!parsed.inquiries) parsed.inquiries = [];
-        if (!parsed.sales) parsed.sales = [];
-        if (!parsed.products) parsed.products = [];
-        if (!parsed.purchases) parsed.purchases = [];
-        if (!parsed.payments) parsed.payments = [];
-        if (!parsed.customers) parsed.customers = [];
-        if (!parsed.suppliers) parsed.suppliers = [];
-        if (!parsed.categories) parsed.categories = [];
-        if (!parsed.expenses) parsed.expenses = [];
-        if (!parsed.transactions) parsed.transactions = []; // Ensure generic transactions exist if needed
-        if (!parsed.chatSessions) parsed.chatSessions = [];
-        if (!parsed.leaveRequests) parsed.leaveRequests = [];
-        if (!parsed.exchangeRate) parsed.exchangeRate = 72.5;
-        return parsed;
-      } catch (e) {
-        console.error("Failed to parse saved state", e);
-      }
-    }
-    return INITIAL_APP_STATE;
-  });
+  const [reactState, setReactState] = useState<AppState>(INITIAL_APP_STATE);
 
   const setState = (updater: AppState | ((prev: AppState) => AppState)) => {
     setReactState(prev => {
@@ -158,10 +139,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   }, [cart, user]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(reactState));
-  }, [reactState]);
 
   useEffect(() => {
     return startFirebaseListeners(setState as any);
@@ -1021,6 +998,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(INITIAL_APP_STATE);
   };
 
+  const updateUsers = (users: AppUser[]) => {
+    setState(prev => ({ ...prev, users }));
+  };
+
+  const updateStoreConfig = (config: any) => {
+    setState(prev => ({ ...prev, storeConfig: config }));
+  };
+
+  const updateStoreHours = (hours: StoreOperatingHours) => {
+    setState(prev => ({ ...prev, storeHours: hours }));
+  };
+
+  const updateGeography = (provinces: string[], districts: Record<string, string[]>) => {
+    setState(prev => ({ ...prev, provinces, districts }));
+  };
+
+  const updateCustomCategories = (cats: string[]) => {
+    setState(prev => ({ ...prev, customCategories: cats }));
+  };
+
   return (
     <AppContext.Provider value={{
       state,
@@ -1082,7 +1079,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       cart,
       setCart,
       isCartOpen,
-      setIsCartOpen
+      setIsCartOpen,
+      // @ts-ignore
+      updateUsers,
+      // @ts-ignore
+      updateStoreConfig,
+      // @ts-ignore
+      updateStoreHours,
+      // @ts-ignore
+      updateGeography,
+      // @ts-ignore
+      updateCustomCategories
     }}>
       {children}
     </AppContext.Provider>

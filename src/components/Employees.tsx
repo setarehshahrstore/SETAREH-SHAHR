@@ -119,7 +119,8 @@ const PRESET_AVATARS = [
 ];
 
 export const Employees: React.FC = () => {
-  const { addExpense, deleteExpense } = useAppState();
+  // @ts-ignore
+  const { addExpense, deleteExpense, state, updateUsers, updateStoreHours } = useAppState();
   const [employees, setEmployees] = useState<AppUser[]>([]);
   const [activeTab, setActiveTab] = useState<'STAFF' | 'SCHEDULE_LEAVE' | 'ATTENDANCE_LOGS' | 'BULK_ATTENDANCE' | 'QR_BADGES' | 'STORE_HOURS'>('STAFF');
   
@@ -185,41 +186,34 @@ export const Employees: React.FC = () => {
   const [receiptData, setReceiptData] = useState<{ payment: PaymentRecord; emp: AppUser } | null>(null);
 
   const loadFromStorage = () => {
-    const saved = localStorage.getItem('AFG_STORE_USERS');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Normalize codes to STS + 4 digits format if EMP
-          const normalized = parsed.map((u: any, idx: number) => {
-            let code = u.employeeCode;
-            if (!code || !code.startsWith('STS')) {
-              code = `STS${1001 + idx}`;
-            }
-            return {
-              ...u,
-              employeeCode: code,
-              avatar: u.avatar || PRESET_AVATARS[idx % PRESET_AVATARS.length],
-              schedule: u.schedule || DEFAULT_WEEKLY_SCHEDULE,
-              timeRecords: u.timeRecords || [],
-              payments: u.payments || []
-            };
-          });
-          setEmployees(normalized);
-          return;
+    if (state.users && state.users.length > 0) {
+      const normalized = state.users.map((u: any, idx: number) => {
+        let code = u.employeeCode;
+        if (!code || !code.startsWith('STS')) {
+          code = `STS${1001 + idx}`;
         }
-      } catch (err) {}
+        return {
+          ...u,
+          employeeCode: code,
+          avatar: u.avatar || PRESET_AVATARS[idx % PRESET_AVATARS.length],
+          schedule: u.schedule || DEFAULT_WEEKLY_SCHEDULE,
+          timeRecords: u.timeRecords || [],
+          payments: u.payments || []
+        };
+      });
+      setEmployees(normalized);
+    } else {
+      setEmployees(DEFAULT_USERS);
     }
-    setEmployees(DEFAULT_USERS);
   };
 
   useEffect(() => {
     loadFromStorage();
-  }, []);
+  }, [state.users]);
 
   const saveToStorage = (users: AppUser[]) => {
     setEmployees(users);
-    localStorage.setItem('AFG_STORE_USERS', JSON.stringify(users));
+    updateUsers(users);
   };
 
   const requireAdminPin = (action: () => void) => {
@@ -230,18 +224,10 @@ export const Employees: React.FC = () => {
 
   const verifyPinAndExecute = () => {
     let isValid = pinInput === 'Admin$' || pinInput === 'admin';
-    if (!isValid) {
-      const savedUsers = localStorage.getItem('AFG_STORE_USERS');
-      if (savedUsers) {
-        try {
-          const parsed = JSON.parse(savedUsers);
-          if (Array.isArray(parsed)) {
-            const adminUser = parsed.find((u: any) => u.role === 'Owner' || u.username?.toLowerCase() === 'admin@stc.com' || u.username?.toLowerCase() === 'admin');
-            if (adminUser && adminUser.passwordHash === pinInput) {
-              isValid = true;
-            }
-          }
-        } catch (e) {}
+    if (!isValid && state.users) {
+      const adminUser = state.users.find((u: any) => u.role === 'Owner' || u.username?.toLowerCase() === 'admin@stc.com' || u.username?.toLowerCase() === 'admin');
+      if (adminUser && adminUser.passwordHash === pinInput) {
+        isValid = true;
       }
     }
 

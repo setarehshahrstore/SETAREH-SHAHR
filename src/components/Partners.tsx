@@ -34,7 +34,9 @@ export const Partners: React.FC = () => {
     addPayment,
     editInquiry,
     deleteInquiry,
-    deleteInquiries
+    deleteInquiries,
+    // @ts-ignore
+    updateGeography
   } = useAppState();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -55,7 +57,12 @@ export const Partners: React.FC = () => {
   const [newCreditLimit, setNewCreditLimit] = useState('5000');
 
   // Interactive Afghanistan Geography select states
-  const [afgGeo, setAfgGeo] = useState(() => getAfgGeography());
+  const [afgGeo, setAfgGeo] = useState(() => getAfgGeography(state.provinces || [], state.districts || {}));
+  
+  useEffect(() => {
+    setAfgGeo(getAfgGeography(state.provinces || [], state.districts || {}));
+  }, [state.provinces, state.districts]);
+
   const [selectedProvince, setSelectedProvince] = useState('کابل');
   const [selectedDistrict, setSelectedDistrict] = useState('کابل (مرکز)');
   
@@ -105,12 +112,10 @@ export const Partners: React.FC = () => {
     if (!customProvinceInput.trim()) return;
 
     const prName = customProvinceInput.trim();
-    saveCustomProvince(prName);
     
-    // Reload geography state
-    const updatedGeo = getAfgGeography();
-    setAfgGeo(updatedGeo);
-
+    const newProvinces = Array.from(new Set([...(state.provinces || []), prName]));
+    updateGeography(newProvinces, state.districts || {});
+    
     setSelectedProvince(prName);
     setSelectedDistrict('مرکز اصلی ولایت');
 
@@ -125,11 +130,13 @@ export const Partners: React.FC = () => {
     if (!customDistrictInput.trim()) return;
 
     const distName = customDistrictInput.trim();
-    saveCustomDistrict(selectedProvince, distName);
-
-    // Reload geography state
-    const updatedGeo = getAfgGeography();
-    setAfgGeo(updatedGeo);
+    
+    const newDistricts = { ...(state.districts || {}) };
+    if (!newDistricts[selectedProvince]) newDistricts[selectedProvince] = [];
+    newDistricts[selectedProvince] = Array.from(new Set([...newDistricts[selectedProvince], distName]));
+    
+    updateGeography(state.provinces || [], newDistricts);
+    
     setSelectedDistrict(distName);
 
     setCustomDistrictInput('');
