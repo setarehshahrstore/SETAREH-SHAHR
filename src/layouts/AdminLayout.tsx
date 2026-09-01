@@ -42,7 +42,7 @@ export const AdminLayout: React.FC = () => {
   const totalPendingInquiries = (state.inquiries || []).filter(i => i.status === 'Pending').length;
   const newOrdersCount = (state.sales || []).filter(s => s.status !== 'Completed' && s.status !== 'Delivered' && s.status !== 'Cancelled').length;
 
-  const totalNotifications = totalUnreadChats + totalPendingInquiries + newOrdersCount;
+  const totalNotifications = (totalUnreadChats > 0 ? 1 : 0) + (totalPendingInquiries > 0 ? 1 : 0) + (newOrdersCount > 0 ? 1 : 0);
 
   const handleLogout = () => {
     logout();

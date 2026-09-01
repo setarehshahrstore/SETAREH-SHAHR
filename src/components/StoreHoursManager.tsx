@@ -106,7 +106,7 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
         }
       };
 
-      setStoreHours(updated);
+      
       updateStoreHours(updated);
       setEditingDay(null);
       setSavedToast(true);
@@ -126,7 +126,7 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
         ...storeHours,
         generalNote: generalNoteInput.trim()
       };
-      setStoreHours(updated);
+      
       updateStoreHours(updated);
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 3000);
@@ -192,7 +192,7 @@ export const StoreHoursManager: React.FC<StoreHoursManagerProps> = ({
         updated.generalNote = 'ساعات کاری ویژه شبانه از ۰۹:۰۰ صبح الی ۱۱:۳۰ شب (همراه با شیفت بعد از افطار)';
       }
 
-      setStoreHours(updated);
+      
       setGeneralNoteInput(updated.generalNote || '');
       updateStoreHours(updated);
       setSavedToast(true);

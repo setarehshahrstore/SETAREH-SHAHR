@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../AppContext';
 import { formatCurrency } from '../utils';
-import { getAfgGeography, saveCustomProvince, saveCustomDistrict } from '../geography';
+import { getAfgGeography } from '../geography';
 import { SecurityGateModal } from './SecurityGate';
 import { 
   Users, 

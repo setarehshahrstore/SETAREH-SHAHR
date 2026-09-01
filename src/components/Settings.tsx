@@ -34,13 +34,7 @@ import {
 import { formatCurrency } from '../utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { ExchangeRateDisplay } from './ExchangeRateDisplay';
-
-interface AppUser {
-  username: string;
-  passwordHash: string;
-  fullName: string;
-  role: 'Owner' | 'Manager' | 'Cashier' | 'Warehouse Staff';
-}
+import { AppUser } from '../types';
 
 type TabType = 'store' | 'pricing' | 'users' | 'backup';
 
@@ -175,7 +169,13 @@ export const Settings: React.FC = () => {
       username: uname,
       passwordHash: pass,
       fullName: fname,
-      role: newUserRole
+      role: newUserRole as any,
+      employeeCode: `STS${1000 + usersList.length + 1}`,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      status: 'Active',
+      baseSalaryAFN: 0,
+      payments: [],
+      timeRecords: []
     };
 
     const roleLabels: Record<string, string> = {

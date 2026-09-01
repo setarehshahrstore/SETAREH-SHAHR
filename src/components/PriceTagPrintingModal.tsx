@@ -16,6 +16,7 @@ import {
   Eye,
   Layers
 } from 'lucide-react';
+import { useAppState } from '../AppContext';
 
 interface Props {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const PriceTagPrintingModal: React.FC<Props> = ({
   products,
   exchangeRate
 }) => {
+  const { state } = useAppState();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'changed' | 'selected'>('all');
   const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});

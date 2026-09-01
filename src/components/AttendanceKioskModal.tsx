@@ -5,33 +5,7 @@ import {
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import { useAppState } from '../AppContext';
-
-export interface TimeRecord {
-  id: string;
-  date: string; // YYYY-MM-DD
-  clockInTime: string; // ISO string
-  clockOutTime?: string; // ISO string
-  clockInPhoto?: string; // Base64 snapshot image
-  clockOutPhoto?: string; // Base64 snapshot image
-  clockInMethod?: 'QR_CODE' | 'FACE_SCAN' | 'EMPLOYEE_ID' | 'BULK_ADMIN' | 'MANUAL';
-  clockOutMethod?: 'QR_CODE' | 'FACE_SCAN' | 'EMPLOYEE_ID' | 'BULK_ADMIN' | 'MANUAL';
-  deviceInfo?: string;
-  note?: string;
-}
-
-export interface AppUser {
-  username: string;
-  passwordHash: string;
-  fullName: string;
-  role: string;
-  employeeCode?: string;
-  phone?: string;
-  status?: 'Active' | 'Inactive';
-  avatar?: string;
-  baseSalaryAFN?: number;
-  payments?: any[];
-  timeRecords?: TimeRecord[];
-}
+import { AppUser, TimeRecord } from '../types';
 
 interface AttendanceKioskModalProps {
   isOpen: boolean;

@@ -389,7 +389,7 @@ export const INITIAL_SALES: Sale[] = [
     paidAFN: 9860.00,
     paymentMethod: 'Cash',
     exchangeRate: 72.5,
-    status: 'Pending Delivery',
+    status: 'Completed',
     deliveryAddress: 'سرک دروازه هرات، جنب خراسان بانک',
     deliveryCity: 'هرات',
     deliveryStatus: 'Pending'

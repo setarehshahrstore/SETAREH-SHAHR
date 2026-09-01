@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Product } from '../types';
 import { formatCurrency } from '../utils';
+import { useAppState } from '../AppContext';
 import { 
   AlertTriangle, 
   Printer, 
@@ -28,6 +29,7 @@ export const LowStockReportModal: React.FC<Props> = ({
   products,
   exchangeRate
 }) => {
+  const { state } = useAppState();
   const printRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
