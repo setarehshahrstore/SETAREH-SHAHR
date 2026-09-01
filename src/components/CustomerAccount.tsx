@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
+import { getAuth, deleteUser } from 'firebase/auth';
+import { auth } from '../firebase';
 import { useAppState } from '../AppContext';
 import { LogOut, Package, MapPin, Clock, CheckCircle, XCircle, LayoutDashboard, CreditCard, UserCircle, Edit3, Save, Lock } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -49,6 +51,28 @@ export const CustomerAccount: React.FC = () => {
     if (!customer) return [];
     return state.payments.filter(p => p.partnerId === customer.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [state.payments, customer]);
+
+  
+  const handleDeleteAccount = async () => {
+    if (window.confirm('آیا از حذف کامل حساب کاربری خود مطمئن هستید؟ این عمل غیرقابل بازگشت است.')) {
+      if (customer) {
+        try {
+          if (auth.currentUser) {
+            await deleteUser(auth.currentUser);
+          }
+          deleteCustomer(customer.id);
+          logout();
+          navigate('/');
+        } catch (error: any) {
+          if (error.code === 'auth/requires-recent-login') {
+            alert('برای حذف اکانت به دلایل امنیتی، لطفا ابتدا یک بار خارج شده و دوباره وارد شوید.');
+          } else {
+            alert('خطا در حذف اکانت: ' + error.message);
+          }
+        }
+      }
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -331,6 +355,15 @@ export const CustomerAccount: React.FC = () => {
                 </div>
               </div>
             )}
+            <div className="flex justify-between items-center pt-6 mt-6 border-t border-red-100">
+              <div>
+                <h4 className="font-bold text-red-600 text-sm">حذف حساب کاربری</h4>
+                <p className="text-xs text-red-400">با این کار تمام اطلاعات شما پاک خواهد شد.</p>
+              </div>
+              <button type="button" onClick={handleDeleteAccount} className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl font-bold text-xs transition-colors">
+                حذف اکانت
+              </button>
+            </div>
           </div>
         )}
       </main>

@@ -167,6 +167,11 @@ const ProductCard: React.FC<{
                     </span>
                   )}
                 </div>
+                <div className="text-[9px] text-amber-700/80 mb-0.5 mt-0.5">
+                  {product.units?.carton ? کارتن:   : 
+                   product.units?.box ? بسته:   : 
+                   product.units?.dozen ? جین:   : ''}
+                </div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="font-black text-amber-700 font-mono text-base">{formatCurrency(product.wholesalePriceAFN || 0, 'AFN')}</span>
                   {product.originalWholesalePriceAFN && product.originalWholesalePriceAFN !== product.wholesalePriceAFN && (
@@ -384,7 +389,7 @@ export const Storefront: React.FC = () => {
       const minQty = item.type === 'Wholesale' && item.product.minWholesaleQty ? item.product.minWholesaleQty : 1;
       
       if (item.type === 'Wholesale' && newQty < minQty && delta < 0) {
-        alert(حداقل خرید عمده برای این کالا   است.);
+        alert(`حداقل خرید عمده برای این کالا ${minQty} ${item.product.baseUnit || 'دانه'} است.`);
         return prev;
       }
 
