@@ -528,12 +528,12 @@ export const INITIAL_CATEGORIES = [
 ];
 
 export const INITIAL_APP_STATE: AppState = {
-  products: INITIAL_PRODUCTS,
-  customers: INITIAL_CUSTOMERS,
-  suppliers: INITIAL_SUPPLIERS,
-  sales: INITIAL_SALES,
-  purchases: INITIAL_PURCHASES,
-  payments: INITIAL_PAYMENTS,
+  products: [],
+  customers: [],
+  suppliers: [],
+  sales: [],
+  purchases: [],
+  payments: [],
   cashRegister: { balanceUSD: 0, balanceAFN: 0 },
   exchangeRate: 71.5,
   inquiries: [],

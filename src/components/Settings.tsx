@@ -299,8 +299,11 @@ export const Settings: React.FC = () => {
       () => {
         resetState();
         localStorage.clear();
-        alert('سیستم با موفقیت به حالت اولیه کارخانه بازگردانده شد.');
-        window.location.reload();
+        alert('سیستم در حال پاکسازی نهایی پایگاه داده است. لطفا ۳ ثانیه صبر کنید...');
+        setTimeout(() => {
+          alert('سیستم با موفقیت به حالت اولیه کارخانه بازگردانده شد.');
+          window.location.reload();
+        }, 3000);
       }
     );
   };
