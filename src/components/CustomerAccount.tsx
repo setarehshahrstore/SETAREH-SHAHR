@@ -31,6 +31,7 @@ export const CustomerAccount: React.FC = () => {
         
         debtAFN: 0,
         debtUSD: 0,
+        creditLimitUSD: 0,
         username: user.username,
         passwordHash: '*** (Secured)'
       };
