@@ -9,7 +9,7 @@ import { formatCurrency } from '../utils';
 
 export const CustomerAccount: React.FC = () => {
   const { user, logout } = useAuth();
-  const { state, editCustomer, addCustomer } = useAppState();
+  const { state, editCustomer, addCustomer, deleteCustomer } = useAppState();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'Overview' | 'Orders' | 'Finances' | 'Profile'>('Overview');
