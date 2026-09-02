@@ -48,6 +48,7 @@ export const Inventory: React.FC = () => {
   
   const canViewCost = Permissions.canViewCostPrices(user?.role);
   const canDelete = Permissions.canDeleteProducts(user?.role);
+  const wholesaleUnitsList = Array.from(new Set(state.products.map(p => p.minWholesaleUnit).filter(Boolean)));
   const canEditPrices = Permissions.canEditProductPrices(user?.role);
   
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -882,7 +883,7 @@ export const Inventory: React.FC = () => {
                           <option value="جین" />
                           <option value="دانه" />
                           <option value="قوطی" />
-                          {wholesaleUnitsList.map(u => <option key={u} value={u} />)}
+                          {wholesaleUnitsList.map((u: any) => <option key={u} value={u} />)}
                         </datalist>
                       </div>
                   </div>
