@@ -160,6 +160,8 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
           const minStock = parseInt(row['حداقل هشدار کسری'] || row['هشدار کسری'] || row['Min Stock'] || 5) || 5;
           const location = String(row['موقعیت انبار'] || row['موقعیت'] || row['Location'] || '').trim();
           const cartonMultiplier = parseInt(row['تعداد در کارتن (اختیاری)'] || row['تعداد در کارتن'] || row['Carton Qty'] || 0) || 0;
+            const minWholesaleQty = parseInt(row['حداقل فروش عمده (تعداد)'] || row['حداقل عمده'] || row['Min Wholesale Qty'] || 0) || undefined;
+            const minWholesaleUnit = String(row['واحد فروش عمده'] || row['واحد عمده'] || row['Wholesale Unit'] || '').trim() || undefined;
 
           if (!name) {
             validationErrors.push(`سطر ${rowNum}: نام کالا الزامی است.`);
@@ -191,6 +193,8 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
               piece: baseUnit || 'عدد',
               ...(cartonMultiplier > 0 ? { carton: { name: 'کارتن', multiplier: cartonMultiplier } } : {})
             },
+              minWholesaleQty,
+              minWholesaleUnit,
             status: 'draft',
             isDraft: true
           };

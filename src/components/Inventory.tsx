@@ -246,7 +246,7 @@ export const Inventory: React.FC = () => {
     hasCarton: true, cartonName: 'کارتن', cartonQty: '0',
     hasDozen: false, dozenName: 'درجن', dozenQty: '12',
     hasPacket: false, packetName: 'پاکت', packetQty: '0',
-    minWholesaleQty: '', isDiscounted: false, isBestSeller: false
+    minWholesaleQty: '', minWholesaleUnit: 'کارتن', isDiscounted: false, isBestSeller: false
   });
 
   const handleUSDChange = (field: 'costPrice' | 'wholesalePrice' | 'retailPrice', val: string) => {
@@ -390,6 +390,7 @@ export const Inventory: React.FC = () => {
         ...(formData.hasPacket && { packet: { name: formData.packetName, multiplier: parseInt(formData.packetQty) || 1 } })
       },
       minWholesaleQty: parseInt(formData.minWholesaleQty) || undefined,
+        minWholesaleUnit: formData.minWholesaleUnit,
       isDiscounted: formData.isDiscounted,
       isBestSeller: formData.isBestSeller
     };
@@ -423,6 +424,7 @@ export const Inventory: React.FC = () => {
       hasDozen: !!p.units.dozen, dozenName: p.units.dozen?.name || 'درجن', dozenQty: (p.units.dozen?.multiplier || 12).toString(),
       hasPacket: !!p.units.packet, packetName: p.units.packet?.name || 'پاکت', packetQty: (p.units.packet?.multiplier || 0).toString(),
       minWholesaleQty: p.minWholesaleQty ? p.minWholesaleQty.toString() : '',
+      minWholesaleUnit: p.minWholesaleUnit || 'کارتن',
       isDiscounted: p.isDiscounted || false,
       isBestSeller: p.isBestSeller || false
     });
@@ -871,9 +873,18 @@ export const Inventory: React.FC = () => {
                       <input type="number" step="0.01" required value={formData.wholesalePriceAFN} onChange={e => handleAFNChange('wholesalePrice', e.target.value)} className="w-full p-2 border border-amber-200 rounded-lg text-sm bg-white font-mono text-left focus:border-amber-500" dir="ltr" />
                     </div>
                     <div className="flex items-center gap-2 pt-2 border-t border-amber-100/50">
-                      <span className="text-[10px] font-bold text-slate-500">حداقل خرید عمده:</span>
-                      <input type="number" min="1" value={formData.minWholesaleQty} onChange={e => setFormData({...formData, minWholesaleQty: e.target.value})} className="w-full p-1 border border-amber-200 rounded text-xs bg-white font-mono text-left" dir="ltr" placeholder="اختیاری" />
-                    </div>
+                        <span className="text-[10px] font-bold text-slate-500">حداقل خرید عمده:</span>
+                        <input type="number" min="1" value={formData.minWholesaleQty} onChange={e => setFormData({...formData, minWholesaleQty: e.target.value})} className="w-16 p-1 border border-amber-200 rounded text-xs bg-white font-mono text-center" dir="ltr" placeholder="تعداد" />
+                        <input list="wholesale-units" type="text" value={formData.minWholesaleUnit} onChange={e => setFormData({...formData, minWholesaleUnit: e.target.value})} className="w-full p-1 border border-amber-200 rounded text-xs bg-white text-center" placeholder="واحد (مثلاً کارتن)" />
+                        <datalist id="wholesale-units">
+                          <option value="کارتن" />
+                          <option value="بسته" />
+                          <option value="جین" />
+                          <option value="دانه" />
+                          <option value="قوطی" />
+                          {wholesaleUnitsList.map(u => <option key={u} value={u} />)}
+                        </datalist>
+                      </div>
                   </div>
 
                   {/* Retail Price */}

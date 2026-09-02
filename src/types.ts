@@ -47,7 +47,8 @@ export interface Product {
   imageUrl?: string; // Image for storefront
 
   // Advanced features
-  minWholesaleQty?: number; // Minimum quantity to allow wholesale pricing
+  minWholesaleQty?: number;
+  minWholesaleUnit?: string; // Minimum quantity to allow wholesale pricing
   isDiscounted?: boolean;   // Clearance flag
   isBestSeller?: boolean;   // Best-seller flag
   discountPercentage?: number; // Percentage discount (e.g. 10 for 10%)

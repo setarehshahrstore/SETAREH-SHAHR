@@ -163,7 +163,7 @@ const ProductCard: React.FC<{
                   <span className="text-[10px] font-bold text-amber-900 block">نرخ عمده (کارتن/بسته)</span>
                   {product.minWholesaleQty && product.minWholesaleQty > 1 && (
                     <span className="text-[9px] font-bold text-amber-700 bg-amber-200/60 px-1.5 py-0.2 rounded">
-                      حداقل: {product.minWholesaleQty}
+                      حداقل: {product.minWholesaleQty} {product.minWholesaleUnit || \'\'}
                     </span>
                   )}
                 </div>
